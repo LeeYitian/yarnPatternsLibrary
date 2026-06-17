@@ -59,22 +59,31 @@ yarn-patterns-library/
 
 ## 5. 資料流／狀態
 
-### IndexedDB(`indexedDB.open("weaving-lib", 2)`)
+### IndexedDB(`indexedDB.open("weaving-lib")`,DB name `weaving-lib`)
 
+- **不指定版本開啟**(沿用瀏覽器現有版本),若缺 `thumbs`／`kv` store 才升一版補建。
+  - 為什麼:早期寫死 `open("weaving-lib", 2)`,若使用者瀏覽器裡的資料庫版本已較新,`open` 會直接失敗 → 所有讀寫被吞掉 → **每次重新整理都要重選資料夾**。改成不指定版本即可避免這個雷。
 - store `thumbs`:封面圖。key = `` `${name}|${size}|${lastModified}|w${THUMB_W}` ``,value = JPEG `Blob`。
   - key 帶上 `w${THUMB_W}`,所以**改 `THUMB_W` 會自動讓舊封面失效重畫**。
 - store `kv`:
   - `"items"`:清單 meta 陣列 `{name, ext, type, size, lastModified}`(不含 handle,因為要可序列化)。
+    - **掃描完就先 `persistItems()` 寫入一次**(在畫封面之前),`size`／`lastModified` 在掃描時用 `getFile()` 取得。這樣即使封面還沒畫完就重新整理,下次也能直接載入、免重選資料夾。
   - `"dir"`:使用者選的 `FileSystemDirectoryHandle`(可被 structured-clone 存起來)。
 
 ### localStorage
 
 - `"wlib-size"`:檢視大小索引(0／1／2)。
+- `"wlib-sort"`:排序模式,`"name"`(依檔名)或 `"time"`(依修改時間,時間軸版面)。
 
 ### 開啟流程(`init()`)
 
-1. 讀 `kv.items`。**有** → 直接渲染卡片 + 從 `thumbs` 快取貼封面(**免選資料夾**)。**無** → 顯示首頁說明。
+1. 讀 `kv.items`。**有** → `render()` 渲染卡片 + 從 `thumbs` 快取貼封面(**免選資料夾**)。**無** → 顯示首頁說明。
 2. 同時讀 `kv.dir` 備用(給「重新整理」「開啟檔案」用)。
+
+### 渲染(`render()` / `ensureCards()`)
+
+- 卡片 DOM **只建立一次**(`ensureCards()`,存在 `it._card`、`card.__item` 互指),切換排序／大小時只是**搬移既有節點**,不重建,所以已畫好的封面不會掉。
+- `render()` 依 `sortMode` 切換 `#grid` 的 `mode-name`(一般網格)或 `mode-timeline`(時間軸),再呼叫 `renderFlat()` 或 `renderTimeline()`。
 
 ---
 
@@ -83,28 +92,36 @@ yarn-patterns-library/
 | 功能         | 說明                                                                                                                      | 相關程式                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | 選資料夾     | 首次用 `showDirectoryPicker` 選**裝著 PDF／圖片的那層資料夾**(不再自動鑽 `collection`)                                    | `getHandle()`、`start(true)`                               |
-| 重新整理     | 沿用上次資料夾把手重新掃描,只補畫新／變動的封面                                                                           | `start(false)`                                             |
-| 更換資料夾   | 強制跳出選擇視窗改選別的資料夾                                                                                            | `start(true)`                                              |
+| 重新整理     | 沿用上次資料夾把手重新掃描,只補畫新／變動的封面。**在頂欄右側「設定」齒輪下拉選單內**                                      | `start(false)`、`#settingsBtn`                             |
+| 更換資料夾   | 強制跳出選擇視窗改選別的資料夾。**同在「設定」下拉選單內**                                                                | `start(true)`、`#settingsBtn`                              |
 | 產生封面     | PDF 用 PDF.js 畫第 1 頁;圖片縮圖。並發 3,寫入 `thumbs` 快取                                                               | `generateThumbs()`、`renderPdfCover()`、`downscaleImage()` |
 | 開啟檔案     | 點封面 → 用 file handle 取出該檔 → blob URL 開新分頁。快取載入時用 `dirHandle.getFileHandle(name)` 重新取得(會跳一次授權) | `openFile()`                                               |
 | 放大預覽     | 卡片中央 hover 出現的放大鏡(Iconify lucide:search 內嵌 SVG)→ 開燈箱                                                       | `.expand`、`openViewer()`                                  |
-| 燈箱／幻燈片 | 大圖瀏覽,**純手動**(◀ ▶ ／ ← → ／ Esc),**無自動播放**。只顯示標題。開啟時鎖背景捲動                                       | `openViewer／showSlide／step／closeViewer`                 |
-| 搜尋         | 即時依檔名過濾                                                                                                            | `applyFilter()`                                            |
-| 檢視大小     | 寬大／標準／緊湊,切換欄數**與裁切比例**(class `size-wide／std／compact`,改 `--min`／`--ar`／`--pos`)                      | `SIZES`、`applySize()`                                     |
+| 燈箱／幻燈片 | 大圖瀏覽(`max 94vw／80vh`),**純手動**(◀ ▶ ／ ← → ／ Esc),**無自動播放**。只顯示標題;單擊圖片=開啟原始檔。開啟時鎖背景捲動。**無縮放／拖曳**(曾做過滾輪縮放+拖曳,實測不實用已移除)。`vList` 依畫面實際排列(含時間軸順序)取得 | `openViewer／showSlide／step／closeViewer` |
+| 搜尋         | 即時依檔名過濾。時間軸模式下,**整月都被濾掉的月份區塊會收起**不留白                                                       | `applyFilter()`                                            |
+| 幻燈片入口   | 頂欄的 icon 按鈕(Iconify 風格內嵌 SVG)→ `openViewer(0)` 從第一張開始                                                      | `#slideBtn`                                                |
+| 檢視大小     | 寬大／標準／緊湊,切換欄數**與裁切比例**(class `size-wide／std／compact`,改 `--min`／`--ar`／`--pos`)。**按鈕在側邊浮動列 `.dock`** | `SIZES`、`applySize()`、`#sizeBtn`                          |
+| 排序         | 檔名 ↔ 時間切換。**按鈕在側邊浮動列 `.dock`**;選時間 → 切到時間軸版面                                                     | `sortMode`、`#sortBtn`、`render()`                         |
+| 時間軸版面   | `sortMode==="time"` 時左側一條垂直軸線,依 `lastModified` **以月分組(新→舊)**,空月自動跳過。月份圓點在軸線上            | `renderTimeline()`、`.grid.mode-timeline`、`.tl-month`     |
+| 頂欄收合     | 往下捲收起頂欄、往上捲或回頂端再顯示(`transform: translateY`)                                                            | `header.nav-hidden` + `scroll` 監聽                        |
 
 ---
 
 ## 7. 設計風格
 
-- 自然冥想風配色:`--accent`(尤加利綠 `#5aa088`)、`--accent2`(藍 `#74a7c8`),柔和漸層背景。
+- 自然冥想風配色,**已整體加深、降彩度走現代俐落感**:淺色 `--accent`(綠 `#4f9a80`)、`--accent2`(藍 `#6699bd`),深色 `--accent` `#6dbd9f`。背景為多層 radial 光暈 + 線性漸層,並用 `background-attachment: fixed`(捲動時背景固定)。
 - 支援淺色／深色(`prefers-color-scheme`)。
+- **頁面左右留白用 `--gutter`**(`clamp(20px,7vw,112px)`,手機 16px),同時套在 `header` 與 `main` 的左右內距,內容往內縮、兩側空出來放浮動按鈕列 `.dock`。
 - 俐落畫廊:小圓角(卡片 9px)、緊密間隙、卡片底部毛玻璃標題列 + 主題色直條,類型標籤(PDF／JPG)在右上角實心填色。
+- **側邊浮動按鈕 `.dock`**:`position: fixed` 靠右**垂直置中**(手機版同樣置中,只縮小按鈕),圓角方塊「icon + 小標籤」;目前放「檢視大小」與「排序」兩顆。
+- **頂欄 `header`**:`position: sticky`,捲動方向控制 `.nav-hidden`(`translateY(-100%)`)收合。手機版 `flex-wrap` 成兩行(搜尋自己一行、幻燈片+設定一行)。
+- **時間軸版面**:`.grid.mode-timeline` 左側 `::before` 畫垂直線,每個 `.tl-month` 用 `::before` 在線上點一個主題色圓點,月份標題 `.tl-head`,卡片放 `.tl-grid`(沿用 `--min`/`--ar`/`--pos` 變數)。
 - 燈箱遮罩:半透明深藍綠 `rgba(15,55,54,.9)`,**不用毛玻璃**(避免閃動)。
 
 ### 封面裁切比例(`--ar`)
 
 - 寬大 = `16/9`(寬版裁切,`object-fit: cover` 不變形只顯示局部)。
-- 標準／緊湊 = `3/4`(直式完整)。
+- 標準／緊湊 = `1/1`(正方形裁切)。
 - `--pos` 控制裁切焦點(預設 `center 32%`,偏上以對到封面主照片)。
 
 ---
@@ -132,11 +149,16 @@ yarn-patterns-library/
 
 ## 10. 可能的後續工作(尚未做)
 
-- 排序選項(檔名／修改時間／類型)。
+- 排序選項:檔名、修改時間**已做**(見 §6);還缺「依類型」。
+- 時間軸排序目前只用 `lastModified`(File System Access API **拿不到建立時間**,只有修改時間)。
 - Masonry(瀑布流)版面。
 - 把已產生的封面一鍵匯出成檔案。
 - 子資料夾遞迴掃描／分類。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
+- **標籤(tag)系統**:URL 條目跟本機檔案(PDF／圖片)都能下 hashtag,可按 tag 篩選。
+  - Markdown 格式(見 spec.md §4)的解析器設計上「不認識的欄位保留原樣」,代表未來加 `- tags: #a #b` 欄位不會破壞現有資料。
+  - UI 還沒做:需要新增／編輯時的 tag 輸入框、列表頁的 tag 篩選列。
+  - 本機檔案目前完全靠掃資料夾,沒進 markdown;要做 tag 的話這個架構要先擴。
 
 ---
 
@@ -148,3 +170,6 @@ yarn-patterns-library/
 - **不要**重新寫死任何資料夾名稱(例如 `collection`);讀使用者選的 handle。
 - 改封面解析度就改 `THUMB_W`(快取會自動失效重畫)。
 - 全部邏輯都在 `index.html` 的 `<script>` 裡,沒有其他 JS 檔。
+- **卡片只在 `ensureCards()` 建一次**;切換排序／大小請走 `render()` 搬節點,**不要**整批重建 DOM(會弄丟已畫好的封面與 blob URL)。
+- 時間軸的月份分組靠**先排序、再線性掃描**(相同月份連續才分到同一塊),所以 `renderTimeline()` 一定要先 sort 再分組。
+- File System Access API **只有 `lastModified`**(沒有建立時間),時間排序／時間軸都以它為準。
