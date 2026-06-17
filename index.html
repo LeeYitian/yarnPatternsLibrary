@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>織圖圖書館</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  :root {
+    --bg1: #eaf5ee; --bg2: #e4eef5; --bg3: #eef3ec;
+    --card: rgba(255,255,255,.66); --card-solid: #f3f8f4;
+    --ink: #2a3a35; --muted: #6f827b; --line: rgba(110,150,135,.22);
+    --accent: #5aa088; --accent2: #74a7c8;
+    --shadow: 0 10px 34px rgba(70,110,95,.14);
+    --shadow-lg: 0 20px 50px rgba(60,100,85,.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg1: #0e1c19; --bg2: #0f1a22; --bg3: #101e1b;
+      --card: rgba(32,44,42,.55); --card-solid: #1c2a27;
+      --ink: #e4ede9; --muted: #9fb2ab; --line: rgba(150,185,172,.16);
+      --accent: #82c8ad; --accent2: #94c2dd;
+      --shadow: 0 12px 36px rgba(0,0,0,.45); --shadow-lg: 0 22px 56px rgba(0,0,0,.55);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0; color: var(--ink);
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(1100px 700px at 12% -8%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+      radial-gradient(1000px 700px at 100% 0%, color-mix(in srgb, var(--accent2) 20%, transparent), transparent 55%),
+      linear-gradient(165deg, var(--bg1), var(--bg2) 55%, var(--bg3));
+    background-repeat: no-repeat;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg1) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(1.2);
+    border-bottom: 1px solid var(--line);
+    padding: 14px clamp(16px,4vw,52px); display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  h1 { font-size: 18px; margin: 0; letter-spacing: .06em; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+  h1 .logo-ico { width: 26px; height: 26px; object-fit: contain; border-radius: 6px; }
+  h1 .sub { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+  .grow { flex: 1; }
+  #status { font-size: 12px; color: var(--muted); }
+  .btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 9px 15px; border-radius: 999px; cursor: pointer; font-size: 13.5px;
+    transition: .18s; white-space: nowrap; backdrop-filter: blur(6px);
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; }
+  .btn.primary:hover { filter: brightness(1.05); color: #fff; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  #search {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink); backdrop-filter: blur(6px);
+    padding: 9px 14px; border-radius: 999px; font-size: 13.5px; min-width: 150px; outline: none;
+  }
+  #search:focus { border-color: var(--accent); }
+
+  main { padding: clamp(18px,4vw,52px); }
+
+  /* ---------- 首頁說明 ---------- */
+  .intro { max-width: 600px; margin: 8vh auto; text-align: center; }
+  .intro .logo { width: 64px; height: 64px; object-fit: contain; border-radius: 14px; filter: drop-shadow(0 4px 10px rgba(90,160,136,.4)); }
+  .intro h2 { font-size: 25px; margin: 10px 0 20px; letter-spacing: .04em; }
+  .why {
+    text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+    padding: 24px 26px; box-shadow: var(--shadow); line-height: 1.9; font-size: 14.5px; backdrop-filter: blur(10px);
+  }
+  .why b { color: var(--accent); }
+  .why p { margin: 0 0 13px; } .why p:last-child { margin-bottom: 0; }
+  .intro .big { margin-top: 24px; font-size: 16px; padding: 13px 30px; box-shadow: var(--shadow); }
+  .warn { font-size: 12px; color: var(--muted); margin-top: 22px; }
+
+  /* ---------- 畫廊 ---------- */
+  .grid {
+    --min: 320px; --ar: 3/4; --pos: center 32%;
+    display: grid; gap: clamp(8px,1vw,13px);
+    grid-template-columns: repeat(auto-fill, minmax(var(--min), 1fr));
+    max-width: 1800px; margin: 0 auto;
+  }
+  /* 寬大：寬版裁切，少欄、大張 */
+  .grid.size-wide    { --min: 520px; --ar: 16/9;  --pos: center 30%; }
+  /* 標準：直式完整封面 */
+  .grid.size-std     { --min: 300px; --ar: 3/4;   --pos: center 32%; }
+  /* 緊湊：直式、多欄 */
+  .grid.size-compact { --min: 200px; --ar: 3/4;   --pos: center 32%; }
+  .card {
+    position: relative; border-radius: 9px; overflow: hidden; cursor: pointer;
+    background: var(--card-solid); border: 1px solid var(--line); box-shadow: var(--shadow);
+    transition: transform .2s cubic-bezier(.2,.7,.3,1), box-shadow .2s;
+    animation: rise .5s both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .thumb {
+    aspect-ratio: var(--ar, 3/4); position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-solid));
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, center 32%); display: block; transition: transform .4s ease; }
+  .card:hover .thumb img { transform: scale(1.04); }
+  .thumb .spin {
+    width: 30px; height: 30px; border: 3px solid var(--line); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .thumb .ph { font-size: 13px; color: var(--muted); text-align: center; padding: 10px; }
+  .badge {
+    position: absolute; top: 11px; right: 11px; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    padding: 4px 9px; border-radius: 6px; color: #fff;
+    background: color-mix(in srgb, var(--accent) 82%, #000 8%);
+    box-shadow: 0 2px 8px rgba(0,0,0,.18); z-index: 2;
+  }
+  .badge.image { background: color-mix(in srgb, var(--accent2) 82%, #000 8%); }
+  .expand {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(.85);
+    width: 76px; height: 76px; border-radius: 50%; border: none; cursor: pointer; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(40,55,50,.28); backdrop-filter: blur(3px); opacity: 0;
+    transition: opacity .18s, transform .18s, background .18s; z-index: 2;
+  }
+  .expand svg { width: 38px; height: 38px; }
+  .card:hover .expand { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  .expand:hover { background: var(--accent); transform: translate(-50%,-50%) scale(1.08); }
+  .label {
+    position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 9px; align-items: flex-end;
+    padding: 12px 14px; color: #fff;
+    background: rgba(28,76,70,.42);
+    backdrop-filter: blur(9px) saturate(1.15);
+    -webkit-backdrop-filter: blur(9px) saturate(1.15);
+    border-top: 1px solid rgba(255,255,255,.14);
+  }
+  .label .bar { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px;
+    background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .label .txt { min-width: 0; }
+  .label .name { font-size: 13.5px; font-weight: 600; line-height: 1.35; text-shadow: 0 1px 2px rgba(0,0,0,.35);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .label .size { font-size: 11px; opacity: .78; margin-top: 3px; }
+  .empty { text-align: center; color: var(--muted); padding: 12vh 0; }
+  .hidden { display: none !important; }
+
+  /* ---------- 燈箱 / 幻燈片 ---------- */
+  #viewer {
+    position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+    background: rgba(15,55,54,.9); padding: clamp(14px,3vw,40px);
+  }
+  #viewer.show { display: flex; animation: fade .25s; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 100%; max-height: 100%; }
+  .stage .frame {
+    background: var(--card-solid); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-lg);
+    border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+  }
+  .stage img { display: block; max-width: 86vw; max-height: 70vh; object-fit: contain; }
+  .stage .cap { text-align: center; color: var(--ink); }
+  .stage .cap .t { font-size: 17px; font-weight: 600; }
+  .stage .cap .i { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .vbtns { display: flex; gap: 10px; align-items: center; }
+  /* 控制項用半透明實底，不再各自開毛玻璃（避免疊在已模糊的覆蓋層上造成閃動） */
+  .vnav {
+    position: absolute; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); cursor: pointer; font-size: 22px;
+    transition: .18s;
+  }
+  .vnav:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .vnav.prev { left: clamp(10px,3vw,40px); } .vnav.next { right: clamp(10px,3vw,40px); }
+  .vclose { position: absolute; top: 18px; right: 20px; width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); cursor: pointer; font-size: 20px; }
+  .vclose:hover { background: var(--accent); color: #fff; }
+  .vcount { position: absolute; top: 22px; left: 24px; color: var(--ink); font-size: 13px; background: var(--card-solid);
+    padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line); }
+  #viewer .btn { backdrop-filter: none; background: var(--card-solid); }
+  #viewer .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  body.no-scroll { overflow: hidden; }
+</style>
+</head>
+<body>
+<header class="hidden" id="bar">
+  <h1><img class="logo-ico" src="favicon.png" alt="">織圖圖書館 <span class="sub" id="count"></span></h1>
+  <span id="status"></span>
+  <div class="grow"></div>
+  <input id="search" type="search" placeholder="搜尋名稱…" autocomplete="off">
+  <button class="btn" id="sizeBtn" title="調整預覽大小">檢視：寬大</button>
+  <button class="btn" id="slideBtn" title="從第一張開始瀏覽">幻燈片</button>
+  <button class="btn" id="refresh" title="新增或刪除檔案後，按這裡重新掃描並補上新封面">重新整理</button>
+  <button class="btn" id="rechoose" title="改選其他資料夾">更換資料夾</button>
+</header>
+
+<main>
+  <div class="intro hidden" id="intro">
+    <img class="logo" src="favicon.png" alt="">
+    <h2>編織圖圖書館</h2>
+    <div class="why">
+      <p>第一次使用，請按下面的按鈕，選取要預覽的資料夾。</p>
+      <p>基於瀏覽器的安全規定，網頁<b>不能自己讀取你電腦裡的檔案</b>，必須由你親自授權一次，網頁才能讀到檔案。</p>
+      <p>授權過後，所有封面會畫好並<b>存進快取</b>。之後再打開這個網頁會<b>自動載入，不必再選資料夾</b>。<br>
+         只有當你<b>新增或刪除檔案</b>時，才需要按右上角的「重新整理」再選一次，補上新封面。</p>
+    </div>
+    <button class="btn primary big" id="pickBtn">選擇資料夾</button>
+    <p class="warn">※ 請使用 Chrome 或 Edge 開啟。所有檔案只在你電腦本機讀取，不會上傳到任何地方。</p>
+  </div>
+
+  <div class="grid hidden" id="grid"></div>
+  <div class="empty hidden" id="empty"></div>
+</main>
+
+<!-- 燈箱 / 幻燈片 -->
+<div id="viewer">
+  <button class="vclose" id="vClose" title="關閉 (Esc)">✕</button>
+  <div class="vcount" id="vCount"></div>
+  <button class="vnav prev" id="vPrev" title="上一張 (←)">‹</button>
+  <div class="stage">
+    <div class="frame"><img id="vImg" alt=""></div>
+    <div class="cap"><div class="t" id="vTitle"></div></div>
+    <div class="vbtns">
+      <button class="btn primary" id="vOpen">開啟檔案</button>
+    </div>
+  </div>
+  <button class="vnav next" id="vNext" title="下一張 (→)">›</button>
+</div>
+
+<script src="./lib/pdf.min.js"></script>
+<script>
+const pdfjsLib = globalThis.pdfjsLib;
+pdfjsLib.GlobalWorkerOptions.workerSrc = "./lib/pdf.worker.min.js";
+
+const IMG_EXT = new Set(["png","jpg","jpeg","webp","gif","bmp"]);
+const THUMB_W = 600;        // 封面解析度（大圖也清楚）
+
+// ---------- 迷你 IndexedDB ----------
+const DB = (() => {
+  let p;
+  const open = () => (p ||= new Promise((res, rej) => {
+    const r = indexedDB.open("weaving-lib", 2);
+    r.onupgradeneeded = () => { const db = r.result;
+      if (!db.objectStoreNames.contains("thumbs")) db.createObjectStore("thumbs");
+      if (!db.objectStoreNames.contains("kv")) db.createObjectStore("kv"); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (store, mode, fn) => { const db = await open();
+    return new Promise((res, rej) => { const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
+      t.oncomplete = () => res(req?.result); t.onerror = () => rej(t.error); }); };
+  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)) };
+})();
+
+const $ = id => document.getElementById(id);
+const grid = $("grid"), intro = $("intro"), bar = $("bar"), empty = $("empty"), status = $("status");
+let items = [];
+let dirHandle = null;
+
+const thumbKey = it => `${it.name}|${it.size}|${it.lastModified}|w${THUMB_W}`;
+
+$("pickBtn").onclick = () => start(true);
+$("refresh").onclick = () => start(false);
+$("rechoose").onclick = () => start(true);
+$("search").oninput = applyFilter;
+$("sizeBtn").onclick = cycleSize;
+$("slideBtn").onclick = () => openViewer(0);
+
+// 預覽大小（欄數 + 裁切比例）
+const SIZES = [["寬大","size-wide"],["標準","size-std"],["緊湊","size-compact"]];
+let sizeIdx = +(localStorage.getItem("wlib-size") ?? 0);
+if (!(sizeIdx >= 0 && sizeIdx < SIZES.length)) sizeIdx = 0;
+function applySize() {
+  const [name, cls] = SIZES[sizeIdx];
+  grid.classList.remove("size-wide","size-std","size-compact");
+  grid.classList.add(cls);
+  $("sizeBtn").textContent = "檢視：" + name;
+}
+function cycleSize() { sizeIdx = (sizeIdx + 1) % SIZES.length; localStorage.setItem("wlib-size", sizeIdx); applySize(); }
+applySize();
+
+init();
+
+async function init() {
+  if (!window.indexedDB || !window.showDirectoryPicker) {
+    showIntro();
+    intro.querySelector(".warn").innerHTML = "⚠ 你的瀏覽器不支援讀取本機資料夾，請改用 <b>Chrome</b> 或 <b>Edge</b> 開啟本頁。";
+    $("pickBtn").disabled = true; return;
+  }
+  let meta = null;
+  try { meta = await DB.get("kv", "items"); } catch (_) {}
+  try { dirHandle = await DB.get("kv", "dir"); } catch (_) {}
+  if (meta && meta.length) { items = meta; showLibrary(); renderCards(); fillThumbsFromCache(); }
+  else showIntro();
+}
+
+function showIntro() { intro.classList.remove("hidden"); bar.classList.add("hidden"); grid.classList.add("hidden"); }
+function showLibrary() {
+  intro.classList.add("hidden"); bar.classList.remove("hidden");
+  $("count").textContent = `（${items.length} 件）`;
+  empty.classList.toggle("hidden", items.length > 0);
+  if (!items.length) empty.textContent = "資料夾裡沒有 PDF 或圖片。";
+  grid.classList.toggle("hidden", items.length === 0);
+}
+
+async function ensureRead(h) {
+  if (!h) return false;
+  if (await h.queryPermission({ mode: "read" }) === "granted") return true;
+  return await h.requestPermission({ mode: "read" }) === "granted";
+}
+
+async function getHandle(forcePick) {
+  if (!forcePick && await ensureRead(dirHandle)) return dirHandle;
+  return await window.showDirectoryPicker({ id: "weaving-folder", mode: "read" });
+}
+
+async function start(forcePick) {
+  let handle;
+  try { handle = await getHandle(forcePick); } catch (e) { return; }
+  dirHandle = handle;
+  try { await DB.set("kv", "dir", handle); } catch (_) {}
+
+  status.textContent = "讀取資料夾…";
+  const found = [];
+  for await (const entry of handle.values()) {
+    if (entry.kind !== "file") continue;
+    const dot = entry.name.lastIndexOf("."); if (dot < 0) continue;
+    const ext = entry.name.slice(dot + 1).toLowerCase();
+    if (ext === "pdf") found.push({ entry, ext, type: "pdf" });
+    else if (IMG_EXT.has(ext)) found.push({ entry, ext, type: "image" });
+  }
+  found.sort((a, b) => a.entry.name.localeCompare(b.entry.name, "zh-Hant", { numeric: true }));
+  items = found.map(f => ({ name: f.entry.name, ext: f.ext, type: f.type, _entry: f.entry }));
+  showLibrary(); renderCards(); await generateThumbs();
+  const meta = items.map(({ name, ext, type, size, lastModified }) => ({ name, ext, type, size, lastModified }));
+  try { await DB.set("kv", "items", meta); } catch (_) {}
+  status.textContent = "";
+}
+
+function renderCards() {
+  grid.innerHTML = "";
+  items.forEach((it, idx) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.animationDelay = Math.min(idx * 22, 600) + "ms";
+    card.dataset.name = it.name.toLowerCase();
+    card.innerHTML =
+      `<div class="thumb"><div class="spin"></div>` +
+      `<span class="badge ${it.type}">${it.type === "pdf" ? "PDF" : it.ext.toUpperCase()}</span>` +
+      `<button class="expand" title="放大預覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>` +
+      `<div class="label"><span class="bar"></span><div class="txt">` +
+      `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
+      `<div class="size">${it.size ? humanSize(it.size) : ""}</div></div></div></div>`;
+    card.onclick = () => openFile(it);
+    card.querySelector(".expand").onclick = (e) => { e.stopPropagation(); openViewer(visibleIndexOf(it)); };
+    it._card = card;
+    grid.appendChild(card);
+  });
+  applyFilter();
+}
+
+async function fillThumbsFromCache() {
+  for (const it of items) {
+    let blob = null; try { blob = await DB.get("thumbs", thumbKey(it)); } catch (_) {}
+    if (blob) paint(it, blob); else placeholder(it, "封面待產生");
+  }
+}
+
+async function generateThumbs() {
+  let done = 0; status.textContent = `產生封面… 0/${items.length}`;
+  const queue = [...items];
+  const worker = async () => {
+    while (queue.length) {
+      const it = queue.shift();
+      try { await makeThumb(it); } catch (e) { placeholder(it, "⚠ 無法產生封面"); }
+      done++; status.textContent = `產生封面… ${done}/${items.length}`;
+    }
+  };
+  await Promise.all(Array.from({ length: 3 }, worker));
+  status.textContent = "";
+}
+
+async function makeThumb(it) {
+  const file = await it._entry.getFile();
+  it.size = file.size; it.lastModified = file.lastModified;
+  const sizeEl = it._card.querySelector(".size"); if (sizeEl) sizeEl.textContent = humanSize(file.size);
+  const key = thumbKey(it);
+  let blob = null; try { blob = await DB.get("thumbs", key); } catch (_) {}
+  if (!blob) {
+    blob = it.type === "image" ? await downscaleImage(file) : await renderPdfCover(file);
+    if (blob) { try { await DB.set("thumbs", key, blob); } catch (_) {} }
+  }
+  if (blob) paint(it, blob); else placeholder(it, it.type === "pdf" ? "PDF" : "圖片");
+}
+
+function paint(it, blob) {
+  const url = URL.createObjectURL(blob); it._thumbUrl = url;
+  const img = new Image();
+  img.onload = () => { const t = it._card.querySelector(".thumb");
+    t.querySelector(".spin")?.remove(); t.querySelector(".ph")?.remove();
+    if (!t.querySelector("img")) t.insertBefore(img, t.querySelector(".badge")); };
+  img.src = url;
+}
+function placeholder(it, text) {
+  const t = it._card.querySelector(".thumb"); t.querySelector(".spin")?.remove();
+  if (!t.querySelector("img") && !t.querySelector(".ph")) t.insertAdjacentHTML("afterbegin", `<div class="ph">${text}</div>`);
+}
+
+async function renderPdfCover(file) {
+  const data = new Uint8Array(await file.arrayBuffer());
+  const doc = await pdfjsLib.getDocument({ data, disableAutoFetch: true, disableStream: true }).promise;
+  try {
+    const page = await doc.getPage(1);
+    const base = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({ scale: THUMB_W / base.width });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+    const ctx = canvas.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
+  } finally { await doc.destroy(); }
+}
+async function downscaleImage(file) {
+  const bmp = await createImageBitmap(file).catch(() => null); if (!bmp) return file;
+  const scale = Math.min(1, (THUMB_W * 1.6) / bmp.width);
+  const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+  const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(bmp, 0, 0, w, h); bmp.close();
+  return await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.88));
+}
+
+async function openFile(it) {
+  try {
+    let fh = it._entry;          // 本次有掃描資料夾時直接用
+    if (!fh) {                   // 純從快取載入時，用一開始選的資料夾把手重新取得
+      if (!await ensureRead(dirHandle)) { alert("請先選擇放編織圖的資料夾。"); return; }
+      fh = await dirHandle.getFileHandle(it.name);
+      it._entry = fh;
+    }
+    const file = await fh.getFile();
+    const url = URL.createObjectURL(file);
+    const win = window.open(url, "_blank");
+    if (!win) location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    alert("無法開啟檔案：" + (e && e.message ? e.message : e));
+  }
+}
+
+function applyFilter() {
+  const q = $("search").value.trim().toLowerCase(); let shown = 0;
+  for (const it of items) { const hit = !q || it.name.toLowerCase().includes(q);
+    it._card.classList.toggle("hidden", !hit); if (hit) shown++; }
+  if (items.length) { empty.classList.toggle("hidden", shown > 0); if (!shown) empty.textContent = "找不到符合的檔案。"; }
+}
+
+// ---------- 燈箱 / 幻燈片 ----------
+const viewer = $("viewer");
+let vList = [], vIdx = 0;
+const visible = () => items.filter(it => !it._card.classList.contains("hidden"));
+const visibleIndexOf = it => visible().indexOf(it);
+
+function openViewer(idx) {
+  vList = visible(); if (!vList.length) return;
+  vIdx = Math.max(0, idx); viewer.classList.add("show"); document.body.classList.add("no-scroll"); showSlide();
+}
+function showSlide() {
+  const it = vList[vIdx]; if (!it) return;
+  $("vImg").src = it._thumbUrl || "";
+  $("vTitle").textContent = prettyTitle(it.name);
+  $("vCount").textContent = `${vIdx + 1} / ${vList.length}`;
+  $("vOpen").onclick = () => openFile(it);
+}
+function step(d) { vIdx = (vIdx + d + vList.length) % vList.length; showSlide(); }
+function closeViewer() { viewer.classList.remove("show"); document.body.classList.remove("no-scroll"); }
+
+$("vPrev").onclick = () => step(-1);
+$("vNext").onclick = () => step(1);
+$("vClose").onclick = closeViewer;
+$("vImg").onclick = () => { const it = vList[vIdx]; if (it) openFile(it); };
+viewer.onclick = (e) => { if (e.target === viewer) closeViewer(); };
+document.addEventListener("keydown", (e) => {
+  if (!viewer.classList.contains("show")) return;
+  if (e.key === "Escape") closeViewer();
+  else if (e.key === "ArrowLeft") step(-1);
+  else if (e.key === "ArrowRight") step(1);
+});
+
+function prettyTitle(name) { return name.replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
+function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+function humanSize(n) { return n < 1024 ? n + " B" : n < 1048576 ? (n/1024).toFixed(0) + " KB" : (n/1048576).toFixed(1) + " MB"; }
+</script>
+</body>
+</html>
