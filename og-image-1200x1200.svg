@@ -1,0 +1,108 @@
+<svg viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans CJK TC','Noto Sans TC',sans-serif">
+  <defs>
+    <radialGradient id="glow1" cx="50%" cy="6%" r="50%">
+      <stop offset="0%" stop-color="#6dbd9f" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#6dbd9f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="85%" cy="96%" r="45%">
+      <stop offset="0%" stop-color="#6699bd" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#6699bd" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0e2522"/>
+      <stop offset="100%" stop-color="#0a1c1a"/>
+    </linearGradient>
+    <linearGradient id="panelBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6dbd9f" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#6699bd" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="cardFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#234943"/>
+      <stop offset="100%" stop-color="#1a3733"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <rect width="1200" height="1200" fill="url(#glow1)"/>
+  <rect width="1200" height="1200" fill="url(#glow2)"/>
+
+  <!-- ===== TOP: brand block, centered ===== -->
+  <g transform="translate(600,0)" text-anchor="middle">
+    <!-- logo mark -->
+    <g transform="translate(-46,108)">
+      <circle cx="46" cy="46" r="44" fill="none" stroke="#6dbd9f" stroke-width="2.6" opacity="0.9"/>
+      <path d="M 18 58 C 28 30, 64 30, 74 58" fill="none" stroke="#6dbd9f" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M 24 50 C 32 28, 60 28, 68 50" fill="none" stroke="#6dbd9f" stroke-width="2.1" stroke-linecap="round" opacity="0.7"/>
+      <path d="M 14 46 Q 46 70 78 46" fill="none" stroke="#6dbd9f" stroke-width="2.1" stroke-linecap="round" opacity="0.6"/>
+      <line x1="50" y1="14" x2="68" y2="-18" stroke="#6dbd9f" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="68" cy="-18" r="4.8" fill="#6dbd9f"/>
+      <line x1="62" y1="14" x2="86" y2="-12" stroke="#6dbd9f" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="86" cy="-12" r="4.8" fill="#6dbd9f"/>
+    </g>
+
+    <text x="0" y="300" fill="#8fb8a8" font-size="21" letter-spacing="4.5" font-weight="500">BIBLIOTHECA TEXTILIS</text>
+    <text x="0" y="368" fill="#f3f0e8" font-size="64" font-weight="800" letter-spacing="2">編織圖圖書館</text>
+    <text x="0" y="414" fill="#9fc9b9" font-size="25" font-weight="400" letter-spacing="0.5">本機編織圖瀏覽器・隱私優先・免安裝即用</text>
+  </g>
+
+  <!-- divider -->
+  <rect x="390" y="456" width="420" height="1" fill="#6dbd9f" opacity="0.25"/>
+
+  <!-- ===== MIDDLE: timeline mock, centered ===== -->
+  <g transform="translate(357,512)">
+    <rect width="486" height="402" rx="18" fill="url(#cardFill)" stroke="url(#panelBorder)" stroke-width="1.5"/>
+
+    <rect x="0" y="0" width="486" height="56" rx="18" fill="#2a534c"/>
+    <rect x="0" y="38" width="486" height="18" fill="#2a534c"/>
+    <circle cx="32" cy="28" r="13" fill="#0e2522"/>
+    <path d="M 24 32 C 27 20, 37 20, 40 32" fill="none" stroke="#6dbd9f" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="60" y="20" width="300" height="16" rx="8" fill="#1a3733" opacity="0.7"/>
+    <rect x="426" y="20" width="16" height="16" rx="3" fill="#6dbd9f" opacity="0.55"/>
+    <rect x="450" y="20" width="16" height="16" rx="3" fill="#6dbd9f" opacity="0.3"/>
+
+    <line x1="44" y1="86" x2="44" y2="372" stroke="#6dbd9f" stroke-width="2" opacity="0.4"/>
+
+    <circle cx="44" cy="100" r="5" fill="#6dbd9f"/>
+    <text x="60" y="105" fill="#8fb8a8" font-size="14" font-weight="600">2024 / 05</text>
+    <g transform="translate(60,118)">
+      <rect x="0" y="0" width="118" height="86" rx="8" fill="#13312c"/>
+      <rect x="0" y="62" width="118" height="24" rx="8" fill="#1d3f38"/>
+      <rect x="10" y="70" width="50" height="8" rx="4" fill="#3f6e63"/>
+      <rect x="132" y="0" width="118" height="86" rx="8" fill="#152e2c"/>
+      <rect x="132" y="62" width="118" height="24" rx="8" fill="#1d3f38"/>
+      <rect x="142" y="70" width="50" height="8" rx="4" fill="#3f6e63"/>
+      <rect x="264" y="0" width="118" height="86" rx="8" fill="#13312c"/>
+      <rect x="264" y="62" width="118" height="24" rx="8" fill="#1d3f38"/>
+      <rect x="274" y="70" width="50" height="8" rx="4" fill="#3f6e63"/>
+    </g>
+
+    <circle cx="44" cy="234" r="5" fill="#6699bd"/>
+    <text x="60" y="239" fill="#8fb8a8" font-size="14" font-weight="600">2024 / 04</text>
+    <g transform="translate(60,252)" opacity="0.6">
+      <rect x="0" y="0" width="118" height="86" rx="8" fill="#152e2c"/>
+      <rect x="132" y="0" width="118" height="86" rx="8" fill="#13312c"/>
+      <rect x="264" y="0" width="118" height="86" rx="8" fill="#152e2c"/>
+    </g>
+  </g>
+
+  <!-- ===== BOTTOM: three feature pills, centered row ===== -->
+  <g transform="translate(176,968)" fill="#cfe6da" font-size="17" font-weight="500">
+    <g>
+      <circle cx="10" cy="10" r="10" fill="none" stroke="#6dbd9f" stroke-width="1.7"/>
+      <path d="M5.5 10 l3.3 3.3 l6.7 -7.8" fill="none" stroke="#6dbd9f" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="28" y="15">檔案不上傳</text>
+    </g>
+    <g transform="translate(192,0)">
+      <circle cx="10" cy="10" r="10" fill="none" stroke="#6dbd9f" stroke-width="1.7"/>
+      <path d="M5.5 10 l3.3 3.3 l6.7 -7.8" fill="none" stroke="#6dbd9f" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="28" y="15">時間軸瀏覽</text>
+    </g>
+    <g transform="translate(384,0)">
+      <circle cx="10" cy="10" r="10" fill="none" stroke="#6dbd9f" stroke-width="1.7"/>
+      <path d="M5.5 10 l3.3 3.3 l6.7 -7.8" fill="none" stroke="#6dbd9f" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="28" y="15">免安裝免建置</text>
+    </g>
+  </g>
+
+  <text x="600" y="1056" fill="#5f8a7c" font-size="15" font-weight="500" letter-spacing="0.5" text-anchor="middle">Chrome / Edge ・ File System Access API</text>
+</svg>

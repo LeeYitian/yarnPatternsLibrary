@@ -53,7 +53,7 @@ yarn-patterns-library/
    → 「開啟檔案」不能用字串路徑,而是用 file handle 取出檔案、`URL.createObjectURL` 開新分頁。
 
 4. **效能:`backdrop-filter`(毛玻璃)不能濫用**。
-   → 幾十張卡片各開毛玻璃會造成嚴重重繪閃動。已把毛玻璃**只**留在:頂欄、按鈕、卡片底部標題列(`.label`)、首頁說明框。卡片本體、燈箱遮罩**不用**毛玻璃。若未來閃動,先查是不是又有大量元素開了 `backdrop-filter`。
+   → 幾十張卡片各開毛玻璃會造成嚴重重繪閃動。已把毛玻璃**只**留在:頂欄(`header`)、按鈕／搜尋框(`.btn`／`#search`)、側邊浮動按鈕(`.dock-btn`)、放大鏡鈕(`.expand`)。卡片本體、卡片標題列(`.label`,改走漸層)、首頁說明框(`.why`)、燈箱遮罩**都不用**毛玻璃。若未來閃動,先查是不是又有大量元素開了 `backdrop-filter`。
 
 ---
 
@@ -109,14 +109,19 @@ yarn-patterns-library/
 
 ## 7. 設計風格
 
-- 自然冥想風配色,**已整體加深、降彩度走現代俐落感**:淺色 `--accent`(綠 `#4f9a80`)、`--accent2`(藍 `#6699bd`),深色 `--accent` `#6dbd9f`。背景為多層 radial 光暈 + 線性漸層,並用 `background-attachment: fixed`(捲動時背景固定)。
-- 支援淺色／深色(`prefers-color-scheme`)。
+整體採 **Academia／古典學院風**(圖書館／古籍手稿氛圍),但**色調沿用原本的綠／藍**——綠色 `--accent` 扮演學院風裡「黃銅」的角色(全站互動色語言)。**只保留深色模式**。
+
+- **配色(深色 only)**:`:root` 直接寫深色值並加 `color-scheme: dark`,**已移除淺色模式與 `prefers-color-scheme`**。主色 `--accent` `#6dbd9f`(綠)、`--accent2` `#84b6d6`(藍);底色為夜色墨綠 `--bg1/2/3`。背景為多層 radial「館內燈光」光暈 + 線性漸層,`background-attachment: fixed`(捲動時背景固定)。
+- **字體(三套襯線,皆用 CSS 變數)**:`--font-head` 標題 = Cormorant Garamond、`--font-body` 內文 = Crimson Pro、`--font-disp` 標籤／顯示 = Cinzel(大寫、寬字距);三者都把 **Noto Serif TC** 排在後面接手中文(拉丁字才用前者)。**不要改回 sans-serif**。
+- **氛圍覆蓋層**:`body::before` 紙張紋理(SVG noise,opacity .035,`mix-blend: overlay`)、`body::after` 暈影(中央透明、邊緣壓暗);兩者 `position: fixed`、`pointer-events: none`、`z-index: 40`——**在燈箱(z 50)之下**,所以燈箱不受紋理/暈影影響。
+- **圓角一律 4px(不用膠囊／大圓角)**;主要按鈕走綠調「拋光金屬」線性漸層 + 鐫刻字陰影(一明一暗 `text-shadow`)。動效統一 `ease-out`、沉穩時長(`--t-fast/base/slow/drama` = 150/300/500/700ms,**不彈跳**),並附 `prefers-reduced-motion` 關閉動畫;鍵盤 focus 用綠色雙層 `box-shadow` 環。
 - **頁面左右留白用 `--gutter`**(`clamp(20px,7vw,112px)`,手機 16px),同時套在 `header` 與 `main` 的左右內距,內容往內縮、兩側空出來放浮動按鈕列 `.dock`。
-- 俐落畫廊:小圓角(卡片 9px)、緊密間隙、卡片底部毛玻璃標題列 + 主題色直條,類型標籤(PDF／JPG)在右上角實心填色。
-- **側邊浮動按鈕 `.dock`**:`position: fixed` 靠右**垂直置中**(手機版同樣置中,只縮小按鈕),圓角方塊「icon + 小標籤」;目前放「檢視大小」與「排序」兩顆。
-- **頂欄 `header`**:`position: sticky`,捲動方向控制 `.nav-hidden`(`translateY(-100%)`)收合。手機版 `flex-wrap` 成兩行(搜尋自己一行、幻燈片+設定一行)。
-- **時間軸版面**:`.grid.mode-timeline` 左側 `::before` 畫垂直線,每個 `.tl-month` 用 `::before` 在線上點一個主題色圓點,月份標題 `.tl-head`,卡片放 `.tl-grid`(沿用 `--min`/`--ar`/`--pos` 變數)。
-- 燈箱遮罩:半透明深藍綠 `rgba(15,55,54,.9)`,**不用毛玻璃**(避免閃動)。
+- **首頁說明(重點裝飾區)**:Cinzel overline「Bibliotheca Textilis」、華麗分隔線(中央 ❧ 字符)、`.why` 卡片四角花飾(`::before/::after` 畫角框)、首段首字下沉(`.why p:first-of-type::first-letter`,綠色大寫)。
+- **畫廊卡片**:`.card` 是「襯紙裱框」——4px 圓角、`padding: 7px` 把封面框住。封面 `.thumb` 為**方形(2px 圓角)、全彩**(早期試過的拱頂圓弧 `--arch` 與 sepia 濾鏡**已依需求移除**),hover 只做輕微放大。底部 `.label` 用**線性漸層**(不再毛玻璃)+ 主題色直條;類型標籤(PDF／JPG)在右上角,Cinzel 鐫刻小標。
+- **側邊浮動按鈕 `.dock`**:`position: fixed` 靠右**垂直置中**(手機版同樣置中,只縮小按鈕),4px 方塊「icon + Cinzel 小標籤」;目前放「檢視大小」與「排序」兩顆。
+- **頂欄 `header`**:`position: sticky`,捲動方向控制 `.nav-hidden`(`translateY(-100%)`)收合;標題 `h1` 用 Cormorant 襯線。手機版 `flex-wrap` 成兩行(搜尋自己一行、幻燈片+設定一行)。
+- **時間軸版面**:`.grid.mode-timeline` 左側 `::before` 畫垂直線,每個 `.tl-month` 用 `::before` 在線上點一個主題色圓點(外圈帶光暈),月份標題 `.tl-label` 用 Cormorant 襯線,卡片放 `.tl-grid`(沿用 `--min`/`--ar`/`--pos` 變數)。
+- **燈箱**:遮罩用深墨綠 `color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.92))`,**不用毛玻璃**(避免閃動);`.frame` 加四角花飾外框,標題 `.cap .t` 用 Cormorant 襯線。
 
 ### 封面裁切比例(`--ar`)
 
@@ -141,7 +146,7 @@ yarn-patterns-library/
 - **僅 Chromium 系**(Chrome／Edge)。其他瀏覽器顯示不支援提示。
 - IndexedDB 是 **per-origin**:把 `index.html` 搬到不同路徑／網域,快取會重來(需重選資料夾)。
 - 純快取載入後第一次「開啟檔案」會跳一次資料夾讀取授權(因為要重新拿 handle)。
-- `.label` 用了毛玻璃:理論上大量卡片捲動時在弱 GPU 上**可能**閃動。若發生,fallback 是改回漸層(`linear-gradient(to top, rgba(13,46,42,...), transparent)`)。
+- `.label` **已改用線性漸層(不再毛玻璃)**,正是為了避免大量卡片捲動時在弱 GPU 上閃動。**不要**為了視覺再把毛玻璃加回 `.label`。
 - 只掃描所選資料夾的**頂層**檔案,不遞迴子資料夾。
 - 支援副檔名:PDF + `png/jpg/jpeg/webp/gif/bmp`(見 `IMG_EXT`)。
 
@@ -173,3 +178,4 @@ yarn-patterns-library/
 - **卡片只在 `ensureCards()` 建一次**;切換排序／大小請走 `render()` 搬節點,**不要**整批重建 DOM(會弄丟已畫好的封面與 blob URL)。
 - 時間軸的月份分組靠**先排序、再線性掃描**(相同月份連續才分到同一塊),所以 `renderTimeline()` 一定要先 sort 再分組。
 - File System Access API **只有 `lastModified`**(沒有建立時間),時間排序／時間軸都以它為準。
+- 設計風格是 **Academia／古典學院風 + 綠色調 + 只深色**(見 §7)。**不要**重新加回淺色模式、封面拱頂圓弧(`--arch`)或 sepia 濾鏡,也**不要**把襯線字體換成 sans-serif——這些都是刻意移除／指定的。
