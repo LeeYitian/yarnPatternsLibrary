@@ -22,7 +22,8 @@ yarn-patterns-library/
 ├─ lib/
 │  ├─ pdf.min.js        ← PDF.js 主程式（pdfjs-dist 3.11.174，UMD 版）
 │  └─ pdf.worker.min.js ← PDF.js worker
-└─ README.md
+├─ spec/                ← 規格文件和設計參考文件
+└─ About.md
 ```
 
 - **沒有** build step、沒有 `node_modules`、沒有後端、沒有 manifest 檔。
@@ -89,21 +90,21 @@ yarn-patterns-library/
 
 ## 6. 功能總覽
 
-| 功能         | 說明                                                                                                                      | 相關程式                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 選資料夾     | 首次用 `showDirectoryPicker` 選**裝著 PDF／圖片的那層資料夾**(不再自動鑽 `collection`)                                    | `getHandle()`、`start(true)`                               |
-| 重新整理     | 沿用上次資料夾把手重新掃描,只補畫新／變動的封面。**在頂欄右側「設定」齒輪下拉選單內**                                      | `start(false)`、`#settingsBtn`                             |
-| 更換資料夾   | 強制跳出選擇視窗改選別的資料夾。**同在「設定」下拉選單內**                                                                | `start(true)`、`#settingsBtn`                              |
-| 產生封面     | PDF 用 PDF.js 畫第 1 頁;圖片縮圖。並發 3,寫入 `thumbs` 快取                                                               | `generateThumbs()`、`renderPdfCover()`、`downscaleImage()` |
-| 開啟檔案     | 點封面 → 用 file handle 取出該檔 → blob URL 開新分頁。快取載入時用 `dirHandle.getFileHandle(name)` 重新取得(會跳一次授權) | `openFile()`                                               |
-| 放大預覽     | 卡片中央 hover 出現的放大鏡(Iconify lucide:search 內嵌 SVG)→ 開燈箱                                                       | `.expand`、`openViewer()`                                  |
-| 燈箱／幻燈片 | 大圖瀏覽(`max 94vw／80vh`),**純手動**(◀ ▶ ／ ← → ／ Esc),**無自動播放**。只顯示標題;單擊圖片=開啟原始檔。開啟時鎖背景捲動。**無縮放／拖曳**(曾做過滾輪縮放+拖曳,實測不實用已移除)。`vList` 依畫面實際排列(含時間軸順序)取得 | `openViewer／showSlide／step／closeViewer` |
-| 搜尋         | 即時依檔名過濾。時間軸模式下,**整月都被濾掉的月份區塊會收起**不留白                                                       | `applyFilter()`                                            |
-| 幻燈片入口   | 頂欄的 icon 按鈕(Iconify 風格內嵌 SVG)→ `openViewer(0)` 從第一張開始                                                      | `#slideBtn`                                                |
-| 檢視大小     | 寬大／標準／緊湊,切換欄數**與裁切比例**(class `size-wide／std／compact`,改 `--min`／`--ar`／`--pos`)。**按鈕在側邊浮動列 `.dock`** | `SIZES`、`applySize()`、`#sizeBtn`                          |
-| 排序         | 檔名 ↔ 時間切換。**按鈕在側邊浮動列 `.dock`**;選時間 → 切到時間軸版面                                                     | `sortMode`、`#sortBtn`、`render()`                         |
-| 時間軸版面   | `sortMode==="time"` 時左側一條垂直軸線,依 `lastModified` **以月分組(新→舊)**,空月自動跳過。月份圓點在軸線上            | `renderTimeline()`、`.grid.mode-timeline`、`.tl-month`     |
-| 頂欄收合     | 往下捲收起頂欄、往上捲或回頂端再顯示(`transform: translateY`)                                                            | `header.nav-hidden` + `scroll` 監聽                        |
+| 功能         | 說明                                                                                                                                                                                                                        | 相關程式                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 選資料夾     | 首次用 `showDirectoryPicker` 選**裝著 PDF／圖片的那層資料夾**(不再自動鑽 `collection`)                                                                                                                                      | `getHandle()`、`start(true)`                               |
+| 重新整理     | 沿用上次資料夾把手重新掃描,只補畫新／變動的封面。**在頂欄右側「設定」齒輪下拉選單內**                                                                                                                                       | `start(false)`、`#settingsBtn`                             |
+| 更換資料夾   | 強制跳出選擇視窗改選別的資料夾。**同在「設定」下拉選單內**                                                                                                                                                                  | `start(true)`、`#settingsBtn`                              |
+| 產生封面     | PDF 用 PDF.js 畫第 1 頁;圖片縮圖。並發 3,寫入 `thumbs` 快取                                                                                                                                                                 | `generateThumbs()`、`renderPdfCover()`、`downscaleImage()` |
+| 開啟檔案     | 點封面 → 用 file handle 取出該檔 → blob URL 開新分頁。快取載入時用 `dirHandle.getFileHandle(name)` 重新取得(會跳一次授權)                                                                                                   | `openFile()`                                               |
+| 放大預覽     | 卡片中央 hover 出現的放大鏡(Iconify lucide:search 內嵌 SVG)→ 開燈箱                                                                                                                                                         | `.expand`、`openViewer()`                                  |
+| 燈箱／幻燈片 | 大圖瀏覽(`max 94vw／80vh`),**純手動**(◀ ▶ ／ ← → ／ Esc),**無自動播放**。只顯示標題;單擊圖片=開啟原始檔。開啟時鎖背景捲動。**無縮放／拖曳**(曾做過滾輪縮放+拖曳,實測不實用已移除)。`vList` 依畫面實際排列(含時間軸順序)取得 | `openViewer／showSlide／step／closeViewer`                 |
+| 搜尋         | 即時依檔名過濾。時間軸模式下,**整月都被濾掉的月份區塊會收起**不留白                                                                                                                                                         | `applyFilter()`                                            |
+| 幻燈片入口   | 頂欄的 icon 按鈕(Iconify 風格內嵌 SVG)→ `openViewer(0)` 從第一張開始                                                                                                                                                        | `#slideBtn`                                                |
+| 檢視大小     | 寬大／標準／緊湊,切換欄數**與裁切比例**(class `size-wide／std／compact`,改 `--min`／`--ar`／`--pos`)。**按鈕在側邊浮動列 `.dock`**                                                                                          | `SIZES`、`applySize()`、`#sizeBtn`                         |
+| 排序         | 檔名 ↔ 時間切換。**按鈕在側邊浮動列 `.dock`**;選時間 → 切到時間軸版面                                                                                                                                                       | `sortMode`、`#sortBtn`、`render()`                         |
+| 時間軸版面   | `sortMode==="time"` 時左側一條垂直軸線,依 `lastModified` **以月分組(新→舊)**,空月自動跳過。月份圓點在軸線上                                                                                                                 | `renderTimeline()`、`.grid.mode-timeline`、`.tl-month`     |
+| 頂欄收合     | 往下捲收起頂欄、往上捲或回頂端再顯示(`transform: translateY`)                                                                                                                                                               | `header.nav-hidden` + `scroll` 監聽                        |
 
 ---
 
@@ -179,3 +180,4 @@ yarn-patterns-library/
 - 時間軸的月份分組靠**先排序、再線性掃描**(相同月份連續才分到同一塊),所以 `renderTimeline()` 一定要先 sort 再分組。
 - File System Access API **只有 `lastModified`**(沒有建立時間),時間排序／時間軸都以它為準。
 - 設計風格是 **Academia／古典學院風 + 綠色調 + 只深色**(見 §7)。**不要**重新加回淺色模式、封面拱頂圓弧(`--arch`)或 sepia 濾鏡,也**不要**把襯線字體換成 sans-serif——這些都是刻意移除／指定的。
+- **花邊裝飾(卡片對角／燈箱四角／主按鈕)有獨立規格:見 `spec/FLOURISH.md`(改花邊前務必先讀)。** 重點守則:① 裝飾性花邊用**白色 SVG**(卡片／燈箱會壓在使用者照片上,靠「烤進 SVG 的深色描邊」維持可讀;按鈕背景可控,用**純白無描邊**)。② 綠 `--accent` 仍是**互動色**——別把花邊改成金 brass,也別動 hover 邊框／focus 環/`.label` 綠直條。③ 陰影一律走 **SVG 內描邊**,**不要**用 CSS `filter`／`backdrop-filter`(同 §4 理由)。④ 只長**對角兩處**、保持稀疏。⑤ 花邊全是 CSS 偽元素 + `background-image`,**不改 JS**、不動 `ensureCards()`。

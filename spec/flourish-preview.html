@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花邊預覽 · 織圖圖書館（框角線條 + 白色陰影版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Crimson+Pro:ital,wght@0,400;0,600&family=Noto+Serif+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg1: #0a1614; --bg2: #08120f; --bg3: #0c1a15;
+    --card-solid: #141f1c;
+    --ink: #e7f0ec; --muted: #92a69f; --line: rgba(150,185,172,.14);
+    --accent: #6dbd9f; --accent2: #84b6d6;
+    --shadow: 0 14px 40px rgba(0,0,0,.5); --shadow-lg: 0 26px 64px rgba(0,0,0,.62);
+    --font-head: "Cormorant Garamond","Noto Serif TC",serif;
+    --font-body: "Crimson Pro","Noto Serif TC",serif;
+    --font-disp: "Cinzel","Noto Serif TC",serif;
+    --t-base: 300ms;
+    /* 框角線條：捲軸 + 角寶石 + 內閃星；白線 + 深色描邊陰影（烤進 SVG） */
+    --sprig: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60' fill='none' stroke-linecap='round' stroke-linejoin='round'><g stroke='rgba(8,14,12,.55)' stroke-width='3.4'><path d='M31 10 C 21 9 13 10 11 16 C 10 19 12 21 14.5 20 C 17 19 16.5 16 14 16.5'/><path d='M10 31 C 9 21 10 13 16 11 C 19 10 21 12 20 14.5 C 19 17 16 16.5 16.5 14'/></g><path d='M11 5 C 11.6 9 12 9.4 16 11 C 12 12.6 11.6 13 11 17 C 10.4 13 10 12.6 6 11 C 10 9.4 10.4 9 11 5 Z' fill='white' stroke='rgba(8,14,12,.55)' stroke-width='2.6'/><path d='M33 28 C 33.5 31 34 31.5 37 32 C 34 32.5 33.5 33 33 36 C 32.5 33 32 32.5 29 32 C 32 31.5 32.5 31 33 28 Z' fill='white' stroke='rgba(8,14,12,.55)' stroke-width='2.4'/><g stroke='white' stroke-width='1.5'><path d='M31 10 C 21 9 13 10 11 16 C 10 19 12 21 14.5 20 C 17 19 16.5 16 14 16.5'/><path d='M10 31 C 9 21 10 13 16 11 C 19 10 21 12 20 14.5 C 19 17 16 16.5 16.5 14'/></g><path d='M11 5 C 11.6 9 12 9.4 16 11 C 12 12.6 11.6 13 11 17 C 10.4 13 10 12.6 6 11 C 10 9.4 10.4 9 11 5 Z' fill='white'/><path d='M33 28 C 33.5 31 34 31.5 37 32 C 34 32.5 33.5 33 33 36 C 32.5 33 32 32.5 29 32 C 32 31.5 32.5 31 33 28 Z' fill='white'/></svg>");
+    /* 按鈕捲花：捲軸 + 閃星終端；純白、無描邊 */
+    --swash: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M42 8 C 31 7 24 11 16 9 C 9 7.4 6 4 9.5 3 C 13 2 13 7 8 7.6' stroke='white' stroke-width='1.4'/><path d='M5 3.5 C 5.4 6.2 6 6.6 8.6 7.6 C 6 8.6 5.4 9 5 11.6 C 4.6 9 4 8.6 1.4 7.6 C 4 6.6 4.6 6.2 5 3.5 Z' fill='white'/></svg>");
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font-family: var(--font-body); padding: 48px 6vw 80px;
+    background: radial-gradient(1200px 820px at 50% -10%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 60%), radial-gradient(960px 720px at 6% 2%, color-mix(in srgb, var(--accent2) 20%, transparent), transparent 55%), linear-gradient(165deg, var(--bg1), var(--bg2) 48%, var(--bg3)); background-attachment: fixed; }
+  .section-label { font-family: var(--font-disp); font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  h2 { font-family: var(--font-head); font-weight: 500; font-size: 30px; margin: 0 0 4px; }
+  .hint { color: var(--muted); font-style: italic; font-size: 14px; margin: 0 0 22px; }
+  .block { max-width: 1100px; margin: 0 auto 64px; }
+
+  .grid { --ar: 4/3; display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); }
+  .card { position: relative; border-radius: 4px; cursor: pointer; padding: 7px; background: var(--card-solid); border: 1px solid var(--line); box-shadow: var(--shadow); transition: transform var(--t-base) ease-out, box-shadow var(--t-base) ease-out, border-color var(--t-base) ease-out; }
+  .card:hover, .card.is-hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+  .thumb { aspect-ratio: var(--ar); position: relative; overflow: hidden; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+  /* t1：淺底織圖（測白線在淺背景靠描邊撐出輪廓） */
+  .t1 { background-color:#e8eee4; background-image: repeating-linear-gradient(0deg, rgba(40,70,60,.28) 0 1px, transparent 1px 10px), repeating-linear-gradient(90deg, rgba(40,70,60,.28) 0 1px, transparent 1px 10px); }
+  /* t2：深色人像（測白線在深背景跳出） */
+  .t2 { background: radial-gradient(120% 120% at 35% 25%, #4a5a66, #232f38 50%, #11181d); }
+  /* t3：中綠圖樣 */
+  .t3 { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 7px, transparent 7px 16px), linear-gradient(160deg,#4a7a64,#264d3e 70%,#15302a); }
+  .badge { position: absolute; top: 12px; right: 12px; font-family: var(--font-disp); font-size: 9.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; padding: 4px 9px; border-radius: 3px; color: #fff; background: color-mix(in srgb, var(--accent) 84%, #000 10%); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 2px 6px rgba(0,0,0,.3); z-index: 2; }
+  .badge.image { background: color-mix(in srgb, var(--accent2) 84%, #000 10%); }
+  .expand { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(.85); width: 64px; height: 64px; border-radius: 50%; border: 1px solid rgba(255,255,255,.4); color: #fff; display: flex; align-items: center; justify-content: center; background: rgba(28,40,36,.34); backdrop-filter: blur(3px); opacity: 0; transition: var(--t-base) ease-out; z-index: 2; }
+  .expand svg { width: 30px; height: 30px; }
+  .card:hover .expand, .card.is-hover .expand { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  .label { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; align-items: flex-end; padding: 14px 14px 13px; color: #fff; background: linear-gradient(to top, rgba(16,34,30,.66), rgba(16,34,30,.22) 78%, transparent); }
+  .label .bar { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .label .name { font-family: var(--font-head); font-size: 17px; font-weight: 600; line-height: 1.25; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  .label .size { font-family: var(--font-disp); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; opacity: .82; margin-top: 4px; }
+
+  .thumb::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1; border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  /* ★ 框角線條（白 + 描邊陰影）：左上 + 右下 */
+  .card::before, .card::after { content: ""; position: absolute; width: 32px; height: 32px; z-index: 3; pointer-events: none; background: var(--sprig) center / contain no-repeat; opacity: .82; transition: opacity var(--t-base) ease-out; }
+  .card::before { top: 4px; left: 4px; }
+  .card::after  { bottom: 4px; right: 4px; transform: rotate(180deg); }
+  .card:hover::before, .card:hover::after, .card.is-hover::before, .card.is-hover::after { opacity: 1; }
+  .grid.size-compact .card::before, .grid.size-compact .card::after { width: 26px; height: 26px; }
+  .tag { position: absolute; top: -22px; left: 0; font-family: var(--font-disp); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+
+  .btns { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .btn.primary { position: relative; font-family: var(--font-disp); font-size: 12px; letter-spacing: .15em; text-transform: uppercase; padding: 13px 26px; border-radius: 4px; border: none; color: #fff; cursor: pointer; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000) 100%); text-shadow: 1px 1px 1px rgba(0,0,0,.4), -1px -1px 1px rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.25); }
+  /* ★ 按鈕花押（白線銀飾感） */
+  .btn.primary::before, .btn.primary::after { content: ""; width: 24px; height: 11px; display: inline-block; vertical-align: middle; background: var(--swash) center / contain no-repeat; opacity: .92; }
+  .btn.primary::before { margin-right: 10px; }
+  .btn.primary::after  { margin-left: 10px; transform: scaleX(-1); }
+
+  .viewer-demo { position: relative; border-radius: 6px; padding: 56px 24px; background: color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.92)); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px var(--line); }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .stage .frame { position: relative; background: var(--card-solid); border-radius: 4px; overflow: hidden; border: 1px solid var(--line); padding: 8px; box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,.14); }
+  /* ★ 燈箱四角框角線條（較大、較亮） */
+  .stage .frame::before, .stage .frame::after { content: ""; position: absolute; width: 56px; height: 56px; pointer-events: none; z-index: 3; background: var(--sprig) center / contain no-repeat; opacity: .96; }
+  .stage .frame::before { top: 6px; left: 6px; }
+  .stage .frame::after  { bottom: 6px; right: 6px; transform: rotate(180deg); }
+  .stage .frame .img { width: min(46vw, 420px); aspect-ratio: 4/3; display: block; border-radius: 2px; background: radial-gradient(120% 120% at 35% 25%, #4a5a66, #232f38 50%, #11181d); }
+  .ornate-divider { position: relative; height: 1px; width: 180px; margin: 4px auto 0; background: linear-gradient(90deg, transparent, var(--line) 22%, var(--accent) 50%, var(--line) 78%, transparent); }
+  .ornate-divider::before { content: "\2767"; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); color: var(--accent); font-size: 14px; padding: 0 10px; }
+  .cap { text-align: center; }
+  .cap .t { font-family: var(--font-head); font-size: 22px; font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="block">
+    <p class="section-label">Cards · 三種縮圖測試</p>
+    <h2>卡片框角（白 + 描邊陰影）</h2>
+    <p class="hint">左=淺底織圖、中=深色人像、右=中綠圖樣（強制 hover）。白線在三種背景都讀得到。</p>
+    <div class="grid">
+      <div class="card"><div class="thumb t1"><span class="badge">PDF</span><div class="label"><span class="bar"></span><div><div class="name">蕾絲方巾圖解</div><div class="size">149 KB</div></div></div></div></div>
+      <div class="card"><div class="thumb t2"><span class="badge image">PDF</span><div class="label"><span class="bar"></span><div><div class="name">Pistachio Falls 披肩</div><div class="size">3.1 MB</div></div></div></div></div>
+      <div class="card is-hover"><span class="tag">Hover</span><div class="thumb t3"><span class="badge image">JPG</span><button class="expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button><div class="label"><span class="bar"></span><div><div class="name">費爾島背心</div><div class="size">880 KB</div></div></div></div></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <p class="section-label">Buttons · 按鈕花押</p>
+    <h2>按鈕裝飾</h2>
+    <p class="hint">白線捲花＋閃星，左右鏡像；在黃銅綠按鈕上像銀飾鑲嵌。</p>
+    <div class="btns">
+      <button class="btn primary">選擇資料夾</button>
+      <button class="btn primary">開啟檔案</button>
+    </div>
+  </div>
+
+  <div class="block">
+    <p class="section-label">Lightbox · 燈箱</p>
+    <h2>燈箱花邊</h2>
+    <p class="hint">四角框角線條(56px) + 框內白襯線 + 華麗分隔線。</p>
+    <div class="viewer-demo">
+      <div class="stage">
+        <div class="frame"><div class="img"></div></div>
+        <div class="ornate-divider" aria-hidden="true"></div>
+        <div class="cap"><div class="t">Pistachio Falls 披肩</div></div>
+        <div class="btns" style="margin-top:4px"><button class="btn primary">開啟檔案</button></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
