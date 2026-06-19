@@ -122,9 +122,10 @@
     h1 { flex: 1 1 100%; }
     .grow { display: none; }
     #search { order: 1; flex: 1 1 100%; min-width: 0; }
-    #slideBtn { order: 2; }
-    .menu { order: 3; }
-    #status { order: 4; }
+    #addUrlBtn { order: 2; flex: 1 1 auto; justify-content: center; }
+    #slideBtn { order: 3; }
+    .menu { order: 4; }
+    #status { order: 5; flex: 1 1 100%; }
     /* 手機版也維持靠右、垂直置中（沿用桌機 top:50% / translateY），只縮小一點 */
     .dock { right: 10px; }
     .dock-btn { width: 52px; min-height: 52px; }
@@ -419,6 +420,158 @@
     background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000) 100%);
   }
   body.no-scroll { overflow: hidden; }
+
+  /* ===================================================================
+     ↓↓↓ URL 收藏功能：新增樣式（藍 accent2 區隔 URL；綠仍是互動色） ↓↓↓
+     =================================================================== */
+
+  /* ① 頂欄「新增網址」鈕：primary 綠調 + 圖標 + 文字 + 呼吸光暈 + 金屬掃光（mockup §①）。
+     這顆鈕不長主按鈕白花押（icon+文字已足夠）：::before 關掉、::after 改拿來做掃光。 */
+  #addUrlBtn { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 8px;
+    animation: addGlow 2.8s ease-in-out infinite; }
+  #addUrlBtn::before { content: none; }   /* 移除主按鈕左側白花押 */
+  #addUrlBtn svg { width: 16px; height: 16px; display: block; }
+  /* 呼吸光暈：保留 primary 的鐫刻陰影，外加一圈一明一暗的 accent 光暈（沉穩 ease、不彈跳） */
+  @keyframes addGlow {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2),
+                 0 2px 8px rgba(0,0,0,.25), 0 0 0 0 transparent; }
+    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2),
+                 0 2px 8px rgba(0,0,0,.25), 0 0 18px 3px color-mix(in srgb, var(--accent) 50%, transparent); }
+  }
+  /* 金屬掃光：每隔幾秒一道白光斜掃過去，像館內燈光掃過拋光黃銅。
+     用 ::after 蓋掉 .btn.primary 的右側白花押，改成斜向白光（id 選擇器特異度高，覆寫得掉）。 */
+  #addUrlBtn::after {
+    content: ""; position: absolute; inset: 0; width: auto; height: auto; margin: 0; transform: none;
+    pointer-events: none; opacity: 1;
+    background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.42) 50%, transparent 68%);
+    background-size: 240% 100%; background-position: 200% 0;
+    animation: addSheen 5s ease-in-out infinite;
+  }
+  @keyframes addSheen {
+    0%, 16%   { background-position: 200% 0; }
+    34%, 100% { background-position: -120% 0; }
+  }
+  #addUrlBtn:hover { animation: none; }                       /* hover 回歸一般互動 */
+  #addUrlBtn:hover::after { animation: none; opacity: 0; }    /* hover 時掃光也停 */
+
+  /* ② URL 卡片：藍色系與本機綠做出來源區隔 */
+  .badge.url { background: color-mix(in srgb, var(--accent2) 86%, #000 12%); }
+  .label .bar.url { background: var(--accent2); box-shadow: 0 0 8px color-mix(in srgb, var(--accent2) 60%, transparent); }
+  /* 頁面型 URL 的假網頁佔位縮圖（影片型 / 有縮圖則放 <img>） */
+  .web-page { width: 100%; height: 100%; padding: 14px; display: flex; flex-direction: column; gap: 8px;
+    background: linear-gradient(150deg, #1a2f3a, #0e1f26); }
+  .web-page .wbar { display: flex; gap: 5px; align-items: center; height: 14px; }
+  .web-page .wbar i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.28); }
+  .web-page .wbar span { flex: 1; height: 7px; border-radius: 4px; margin-left: 6px; background: rgba(255,255,255,.14); }
+  .web-page .ln { height: 9px; border-radius: 3px; background: rgba(255,255,255,.12); }
+  .web-page .ln.s { width: 60%; } .web-page .ln.m { width: 85%; }
+  /* 無縮圖 URL 的 fallback：favicon 置中（contain）疊在網頁感漸層上，不被拉伸 */
+  .thumb.is-fallback { background: linear-gradient(150deg, #1a2f3a, #0e1f26); }
+  .thumb.is-fallback img { object-fit: contain; padding: 24%; opacity: .92; }
+
+  /* 只有 URL 卡片有的「編輯／刪除」浮出鈕（本機卡片完全唯讀，不顯示） */
+  .card-actions {
+    position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; z-index: 4;
+    opacity: 0; transform: translateY(-4px); transition: var(--t-base) ease-out;
+  }
+  .card.url:hover .card-actions, .card.url:focus-within .card-actions { opacity: 1; transform: none; }
+  .card-actions button {
+    width: 30px; height: 30px; border-radius: 4px; cursor: pointer; color: #fff;
+    border: 1px solid rgba(255,255,255,.35); background: rgba(10,18,15,.6);
+    display: flex; align-items: center; justify-content: center; transition: var(--t-fast) ease-out;
+  }
+  .card-actions button svg { width: 15px; height: 15px; }
+  .card-actions .edit:hover { background: var(--accent);  border-color: var(--accent); }
+  .card-actions .del:hover  { background: #c0573f;        border-color: #c0573f; }
+
+  /* ③ 新增／編輯對話框（沿用燈箱深綠遮罩 + sprig 四角花飾，不用毛玻璃） */
+  .overlay {
+    position: fixed; inset: 0; z-index: 55; display: none; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.92)); padding: clamp(14px,3vw,40px);
+  }
+  .overlay.show { display: flex; animation: fade .25s ease-out; }
+  .dialog {
+    position: relative; width: min(520px, 100%); max-height: 90vh; overflow: auto;
+    background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: var(--shadow-lg); padding: 30px 30px 26px;
+  }
+  .dialog::before, .dialog::after {
+    content: ""; position: absolute; width: 34px; height: 34px; pointer-events: none;
+    background: var(--sprig) center / contain no-repeat; opacity: .85;
+  }
+  .dialog::before { top: 6px; left: 6px; }
+  .dialog::after  { bottom: 6px; right: 6px; transform: rotate(180deg); }
+  .dialog h3 { font-family: var(--font-head); font-size: 30px; font-weight: 500; margin: 0 0 22px; letter-spacing: .01em; }
+  .field { margin-bottom: 18px; }
+  .field > label { display: block; font-family: var(--font-disp); font-size: 10.5px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  .field input[type=text], .field input[type=url] {
+    width: 100%; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg2) 60%, var(--card-solid));
+    color: var(--ink); font-family: var(--font-body); font-size: 15px; padding: 11px 14px; border-radius: 4px; outline: none;
+  }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  /* 平台偵測小標 */
+  .platform-pill { margin-top: 8px; display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-disp); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent2); border: 1px solid var(--line); border-radius: 3px; padding: 4px 9px; }
+  .platform-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); }
+
+  /* 縮圖上傳區：拖拉 + 點選 + 貼上 三合一 dropzone */
+  .thumb-row { display: flex; gap: 14px; align-items: stretch; }
+  .thumb-preview { flex: none; width: 116px; aspect-ratio: 1/1; border-radius: 4px; overflow: hidden;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 10%, var(--card-solid));
+    display: flex; align-items: center; justify-content: center; }
+  .thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-preview .ph { font-family: var(--font-disp); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 8px; }
+  .dropzone {
+    flex: 1; min-width: 0; border: 1.5px dashed color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 4px;
+    padding: 14px; display: flex; flex-direction: column; justify-content: center; gap: 8px; cursor: pointer;
+    transition: var(--t-fast) ease-out; text-align: center;
+  }
+  .dropzone:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .dropzone.dragover { border-color: var(--accent); border-style: solid; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .dropzone .big { font-family: var(--font-body); font-size: 14px; color: var(--ink); }
+  .dropzone .hint { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--muted); }
+  .dropzone .ways { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+  .dropzone .way { font-family: var(--font-disp); font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--line); border-radius: 3px; padding: 3px 7px; }
+
+  .dialog-foot { display: flex; gap: 10px; align-items: center; margin-top: 26px; flex-wrap: wrap; }
+  .dialog-foot .spacer { flex: 1; }
+  .btn.ghost-danger { color: #d08672; }
+  .btn.ghost-danger:hover { color: #fff; background: #c0573f; border-color: #c0573f; }
+  .btn.lg { padding: 12px 22px; }
+
+  /* 刪除二次確認（小卡） */
+  .confirm { width: min(380px, 100%); text-align: center; }
+  .confirm h3 { font-size: 26px; }
+  .confirm p { color: var(--muted); margin: 0 0 22px; line-height: 1.7; }
+  .confirm .nm { color: var(--ink); font-weight: 600; }
+
+  /* ④ 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11） */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 160%);
+    z-index: 60; max-width: min(440px, calc(100vw - 32px));
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--card-solid); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 4px; box-shadow: var(--shadow-lg); padding: 14px 18px;
+    transition: transform var(--t-slow) ease-out;
+  }
+  .toast.show { transform: translate(-50%, 0); }
+  .toast.warn { border-left-color: #d3a24a; }
+  .toast .t-main { min-width: 0; }
+  .toast .t-body { font-family: var(--font-body); font-size: 14px; line-height: 1.55; }
+  .toast .t-body b { color: var(--accent); font-weight: 600; }
+  .toast.warn .t-body b { color: #e6bd6e; }
+  .toast .t-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .toast .t-actions:empty { display: none; }
+  .toast .t-actions button {
+    font-family: var(--font-disp); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink); background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid var(--line); border-radius: 3px; padding: 6px 11px; cursor: pointer; transition: var(--t-fast) ease-out;
+  }
+  .toast .t-actions button:hover { border-color: var(--accent); color: var(--accent); }
+  .toast .t-close { margin-left: 4px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; }
 </style>
 </head>
 <body>
@@ -427,6 +580,7 @@
   <span id="status"></span>
   <div class="grow"></div>
   <input id="search" type="search" placeholder="搜尋名稱…" autocomplete="off">
+  <button class="btn primary" id="addUrlBtn" title="新增網址：收藏一個網頁／影片連結"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>新增網址</button>
   <button class="btn icon" id="slideBtn" title="幻燈片：從第一張開始瀏覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M10 8.5v3l3-1.5-3-1.5z" fill="currentColor"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></button>
   <div class="menu">
     <button class="btn icon" id="settingsBtn" title="設定" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -443,9 +597,13 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/></svg>
     <span class="dock-lbl" id="sizeLbl">寬大</span>
   </button>
-  <button class="dock-btn" id="sortBtn" title="切換排序：檔名 ／ 時間">
+  <button class="dock-btn" id="sortBtn" title="切換排序：檔名 ／ 修改時間">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>
     <span class="dock-lbl" id="sortLbl">檔名</span>
+  </button>
+  <button class="dock-btn" id="sourceBtn" title="切換來源：全部 ／ 本機檔案 ／ 網址">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+    <span class="dock-lbl" id="sourceLbl">全部</span>
   </button>
 </div>
 
@@ -485,6 +643,68 @@
   <button class="vnav next" id="vNext" title="下一張 (→)">›</button>
 </div>
 
+<!-- 新增／編輯網址對話框 -->
+<div class="overlay" id="urlDialog">
+  <div class="dialog">
+    <h3 id="dlgTitle">新增網址</h3>
+
+    <div class="field">
+      <label>網址</label>
+      <input type="url" id="fUrl" placeholder="https://…" autocomplete="off" spellcheck="false">
+      <div class="platform-pill" id="platform"><span class="dot"></span><span id="platformTxt">貼上後自動偵測平台與縮圖</span></div>
+    </div>
+
+    <div class="field">
+      <label>標題（可選）</label>
+      <input type="text" id="fTitle" placeholder="留空就用網址的網域當標題" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>縮圖（可選）</label>
+      <div class="thumb-row">
+        <div class="thumb-preview" id="thumbPreview"><span class="ph">縮圖<br>預覽</span></div>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="上傳縮圖：點此選檔、拖曳或貼上">
+          <div class="big">點此選擇圖片</div>
+          <div class="hint">或拖曳圖片到這裡、或按 Ctrl + V 貼上</div>
+          <div class="ways"><span class="way">檔案選擇</span><span class="way">拖拉</span><span class="way">貼上</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-foot">
+      <button class="btn ghost-danger lg" id="dlgDelete" style="display:none">刪除</button>
+      <div class="spacer"></div>
+      <button class="btn lg" id="dlgCancel">取消</button>
+      <button class="btn primary lg" id="dlgSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 刪除二次確認 -->
+<div class="overlay" id="confirmDialog">
+  <div class="dialog confirm">
+    <h3>刪除這筆收藏？</h3>
+    <p>將從 <span class="nm">links.md</span> 移除<br><span class="nm" id="confirmName">這筆 URL</span>。本機檔案不受影響。</p>
+    <div class="dialog-foot">
+      <div class="spacer"></div>
+      <button class="btn lg" id="confirmCancel">取消</button>
+      <button class="btn ghost-danger lg" id="confirmOk">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 非阻斷 toast -->
+<div class="toast" id="toast">
+  <div class="t-main">
+    <div class="t-body" id="toastBody"></div>
+    <div class="t-actions" id="toastActions"></div>
+  </div>
+  <button class="t-close" id="toastClose" title="關閉">✕</button>
+</div>
+
+<!-- 隱藏的縮圖檔案選擇器 -->
+<input type="file" id="thumbFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+
 <script src="./lib/pdf.min.js"></script>
 <script>
 const pdfjsLib = globalThis.pdfjsLib;
@@ -519,23 +739,40 @@ const DB = (() => {
   const tx = async (store, mode, fn) => { const db = await open();
     return new Promise((res, rej) => { const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
       t.oncomplete = () => res(req?.result); t.onerror = () => rej(t.error); }); };
-  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)) };
+  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)), del: (s, k) => tx(s, "readwrite", o => o.delete(k)) };
 })();
 
 const $ = id => document.getElementById(id);
 const grid = $("grid"), intro = $("intro"), bar = $("bar"), empty = $("empty"), status = $("status"), dock = $("dock");
-let items = [];
+let items = [];               // 本機檔案（About.md §5，唯讀）
+let urls = [];                // URL 條目（links.md，這次新增；與本機檔案並行、無耦合）
 let dirHandle = null;
 let sortMode = localStorage.getItem("wlib-sort") === "time" ? "time" : "name";   // "name"=檔名, "time"=時間
+let sourceMode = ["all","local","url"].includes(localStorage.getItem("wlib-source")) ? localStorage.getItem("wlib-source") : "all";
 
 const thumbKey = it => `${it.name}|${it.size}|${it.lastModified}|w${THUMB_W}`;
 
+// 本機檔案 + URL 融合在同一畫廊（render / 篩選 / 燈箱共用這份）
+const allItems = () => [...items, ...urls];
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return u; } };
+// 顯示名稱：本機=檔名美化；URL=標題（留空就退回網域）
+const displayName = it => it.kind === "url" ? (it.title || it._host || hostOf(it.url)) : prettyTitle(it.name);
+// 統一排序鍵：檔名用顯示名、時間 URL 把 added 當天 00:00 轉時間戳（與本機 lastModified 共軸，handoff §2）
+const sortKeyName = it => displayName(it);
+const itemTs = it => it.kind === "url" ? addedToTs(it.added) : (it.lastModified || 0);
+function addedToTs(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || "");
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : 0;
+}
+const todayStr = () => { const d = new Date(); const p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+
 $("pickBtn").onclick = () => start(true);
-$("refresh").onclick = () => { closeSettings(); start(false); };
+$("refresh").onclick = () => { closeSettings(); start(false, true); };
 $("rechoose").onclick = () => { closeSettings(); start(true); };
 $("search").oninput = applyFilter;
 $("sizeBtn").onclick = cycleSize;
 $("slideBtn").onclick = () => openViewer(0);
+$("addUrlBtn").onclick = () => openDialog("add");
 $("sortBtn").onclick = () => {
   sortMode = sortMode === "time" ? "name" : "time";
   localStorage.setItem("wlib-sort", sortMode);
@@ -543,11 +780,27 @@ $("sortBtn").onclick = () => {
   render();
 };
 function updateSortBtn() {
-  $("sortLbl").textContent = sortMode === "time" ? "時間" : "檔名";
+  $("sortLbl").textContent = sortMode === "time" ? "修改時間" : "檔名";
   $("sortBtn").classList.toggle("active", sortMode === "time");
-  $("sortBtn").title = sortMode === "time" ? "目前：依時間 ／ 點擊改依檔名" : "目前：依檔名 ／ 點擊改依時間";
+  $("sortBtn").title = sortMode === "time" ? "目前：依修改時間 ／ 點擊改依檔名" : "目前：依檔名 ／ 點擊改依修改時間";
 }
 updateSortBtn();
+
+// 來源篩選：全部 ／ 本機 ／ 網址（與排序正交；只加 .hidden，不重建 DOM）
+const SOURCES = [["全部","all"],["本機","local"],["網址","url"]];
+$("sourceBtn").onclick = () => {
+  const i = (SOURCES.findIndex(s => s[1] === sourceMode) + 1) % SOURCES.length;
+  sourceMode = SOURCES[i][1];
+  localStorage.setItem("wlib-source", sourceMode);
+  updateSourceBtn();
+  applyFilter();
+};
+function updateSourceBtn() {
+  const cur = SOURCES.find(s => s[1] === sourceMode) || SOURCES[0];
+  $("sourceLbl").textContent = cur[0];
+  $("sourceBtn").classList.toggle("active", sourceMode !== "all");
+}
+updateSourceBtn();
 
 // 設定下拉選單
 function closeSettings() {
@@ -601,20 +854,27 @@ async function init() {
     intro.querySelector(".warn").innerHTML = "⚠ 你的瀏覽器不支援讀取本機資料夾，請改用 <b>Chrome</b> 或 <b>Edge</b> 開啟本頁。";
     $("pickBtn").disabled = true; return;
   }
-  let meta = null;
+  let meta = null, cachedUrls = null;
   try { meta = await DB.get("kv", "items"); } catch (e) { console.warn("[lib] 讀取快取清單失敗：", e); }
+  try { cachedUrls = await DB.get("kv", "urls"); } catch (e) { console.warn("[lib] 讀取 URL 快取失敗：", e); }
   try { dirHandle = await DB.get("kv", "dir"); } catch (e) { console.warn("[lib] 讀取資料夾把手失敗：", e); }
-  if (meta && meta.length) { items = meta; showLibrary(); render(); fillThumbsFromCache(); }
+  items = (meta && meta.length) ? meta.map(m => ({ ...m, kind: "local" })) : [];
+  urls = Array.isArray(cachedUrls) ? cachedUrls.map(hydrateUrl) : [];
+  if (items.length || urls.length) { showLibrary(); render(); fillThumbsFromCache(); }
   else showIntro();
 }
+
+// 把快取／parse 後的 URL 純資料補上衍生欄位（kind、網域）
+const hydrateUrl = u => ({ kind: "url", url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", _extra: u._extra || {}, _host: hostOf(u.url) });
 
 function showIntro() { intro.classList.remove("hidden"); bar.classList.add("hidden"); grid.classList.add("hidden"); dock.hidden = true; }
 function showLibrary() {
   intro.classList.add("hidden"); bar.classList.remove("hidden"); dock.hidden = false;
-  $("count").textContent = `（${items.length} 件）`;
-  empty.classList.toggle("hidden", items.length > 0);
-  if (!items.length) empty.textContent = "資料夾裡沒有 PDF 或圖片。";
-  grid.classList.toggle("hidden", items.length === 0);
+  const total = items.length + urls.length;
+  $("count").textContent = `（${total} 件）`;
+  empty.classList.toggle("hidden", total > 0);
+  if (!total) empty.textContent = "資料夾裡沒有 PDF／圖片，也還沒有收藏網址。";
+  grid.classList.toggle("hidden", total === 0);
 }
 
 async function ensureRead(h) {
@@ -628,36 +888,75 @@ async function getHandle(forcePick) {
   return await window.showDirectoryPicker({ id: "weaving-folder", mode: "read" });
 }
 
-async function start(forcePick) {
+async function start(forcePick, feedback) {
   let handle;
   try { handle = await getHandle(forcePick); } catch (e) { return; }
+
+  // 舊狀態快照：供「重新整理」差異統計（spec §11.1.2）
+  const oldLocal = new Set(items.map(it => it.name));
+  const oldUrl = new Set(urls.map(it => it.url));
+
+  status.textContent = "讀取資料夾…";
+
+  // 掃本機檔案。整個資料夾讀不到（外接硬碟拔了／被刪改名）→ 完全不動 md／cache，跳錯誤（spec §6.3、§11.2）
+  let found;
+  try {
+    found = [];
+    for await (const entry of handle.values()) {
+      if (entry.kind !== "file") continue;
+      const dot = entry.name.lastIndexOf("."); if (dot < 0) continue;
+      const ext = entry.name.slice(dot + 1).toLowerCase();
+      if (ext === "pdf") found.push({ entry, ext, type: "pdf" });
+      else if (IMG_EXT.has(ext)) found.push({ entry, ext, type: "image" });
+    }
+  } catch (e) {
+    console.warn("[lib] 無法讀取資料夾：", e);
+    status.textContent = "";
+    folderError();
+    return;
+  }
+
+  // 確定讀得到資料夾，才更新把手與快取
   dirHandle = handle;
   try { await DB.set("kv", "dir", handle); } catch (e) { console.warn("[lib] 無法儲存資料夾把手：", e); }
 
-  status.textContent = "讀取資料夾…";
-  const found = [];
-  for await (const entry of handle.values()) {
-    if (entry.kind !== "file") continue;
-    const dot = entry.name.lastIndexOf("."); if (dot < 0) continue;
-    const ext = entry.name.slice(dot + 1).toLowerCase();
-    if (ext === "pdf") found.push({ entry, ext, type: "pdf" });
-    else if (IMG_EXT.has(ext)) found.push({ entry, ext, type: "image" });
-  }
   found.sort((a, b) => a.entry.name.localeCompare(b.entry.name, "zh-Hant", { numeric: true }));
   // 先抓每個檔案的 size/lastModified（只讀 metadata，不讀內容，很快），
   // 才能在畫封面前就把完整清單寫進快取，且讓 thumbKey 對得上快取。
   items = await Promise.all(found.map(async f => {
     let size, lastModified;
     try { const file = await f.entry.getFile(); size = file.size; lastModified = file.lastModified; } catch (_) {}
-    return { name: f.entry.name, ext: f.ext, type: f.type, size, lastModified, _entry: f.entry };
+    return { kind: "local", name: f.entry.name, ext: f.ext, type: f.type, size, lastModified, _entry: f.entry };
   }));
 
   // 立刻存清單：即使封面還沒畫完就重新整理／關頁，下次也能直接載入，免重選資料夾。
   await persistItems();
 
+  // 讀 links.md → parse → urls（含災難復原，spec §6.3 步驟3、§7）
+  status.textContent = "讀取 links.md…";
+  urls = await loadUrls();
+
   showLibrary(); render();
   await generateThumbs();
+  paintAllUrlThumbs();
   status.textContent = "";
+
+  if (feedback) {
+    const addedL = items.filter(it => !oldLocal.has(it.name)).length;
+    const removedL = [...oldLocal].filter(n => !items.some(it => it.name === n)).length;
+    const addedU = urls.filter(it => !oldUrl.has(it.url)).length;
+    const removedU = [...oldUrl].filter(u => !urls.some(it => it.url === u)).length;
+    const changed = addedL + removedL + addedU + removedU;
+    let msg = `已重新整理：本機檔案 <b>${items.length}</b> 筆、URL <b>${urls.length}</b> 筆`;
+    if (changed) msg += `<br>（新增 ${addedL + addedU}、移除 ${removedL + removedU}）`;
+    toast(msg);
+  }
+}
+
+// 找不到資料夾：非阻斷通知 + 兩個動作；完全不動 md／cache（spec §11.2）
+function folderError() {
+  toast("找不到資料夾，可能已被移除、改名，或所在磁碟未連接。<b>現有顯示與快取已保留。</b>", true,
+    [["再試一次", () => start(false)], ["選擇新資料夾", () => start(true)]], 12000);
 }
 
 async function persistItems() {
@@ -669,28 +968,55 @@ async function persistItems() {
   }
 }
 
+const SVG_EXPAND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+const SVG_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+const SVG_DEL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+
 // 卡片只建立一次（保留已畫好的封面），重排時重新搬移既有節點。
 function ensureCards() {
-  items.forEach((it) => {
+  allItems().forEach((it) => {
     if (it._card) return;
     const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.name = it.name.toLowerCase();
-    card.innerHTML =
-      `<div class="thumb"><div class="spin"></div>` +
-      `<span class="badge ${it.type}">${it.type === "pdf" ? "PDF" : it.ext.toUpperCase()}</span>` +
-      `<button class="expand" title="放大預覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>` +
-      `<div class="label"><span class="bar"></span><div class="txt">` +
-      `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
-      `<div class="size">${it.size ? humanSize(it.size) : ""}</div></div></div></div>`;
-    card.onclick = () => openFile(it);
+    card.className = "card " + (it.kind === "url" ? "url" : "local");   // 篩選 / 樣式靠這個 class
+    card.dataset.name = (it.kind === "url"
+      ? `${it.title} ${it._host || hostOf(it.url)} ${it.url}`
+      : it.name).toLowerCase();
+    card.innerHTML = it.kind === "url" ? urlCardHTML(it) : localCardHTML(it);
     card.querySelector(".expand").onclick = (e) => { e.stopPropagation(); openViewer(visibleIndexOf(it)); };
+    if (it.kind === "url") {
+      card.onclick = () => openItem(it);
+      card.querySelector(".edit").onclick = (e) => { e.stopPropagation(); openDialog("edit", it); };
+      card.querySelector(".del").onclick = (e) => { e.stopPropagation(); openConfirm(it); };
+    } else {
+      card.onclick = () => openItem(it);
+    }
     card.__item = it;
     it._card = card;
   });
 }
 
-const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant", { numeric: true });
+function localCardHTML(it) {
+  return `<div class="thumb"><div class="spin"></div>` +
+    `<span class="badge ${it.type}">${it.type === "pdf" ? "PDF" : it.ext.toUpperCase()}</span>` +
+    `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
+    `<div class="label"><span class="bar"></span><div class="txt">` +
+    `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
+    `<div class="size">${it.size ? humanSize(it.size) : ""}</div></div></div></div>`;
+}
+function urlCardHTML(it) {
+  return `<div class="thumb"><div class="spin"></div>` +
+    `<span class="badge url">連結</span>` +
+    `<div class="card-actions"><button class="edit" title="編輯">${SVG_EDIT}</button><button class="del" title="刪除">${SVG_DEL}</button></div>` +
+    `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
+    `<div class="label"><span class="bar url"></span><div class="txt">` +
+    `<div class="name">${escapeHtml(displayName(it))}</div>` +
+    `<div class="size">${escapeHtml(it._host || hostOf(it.url))}</div></div></div></div>`;
+}
+
+// 點卡片其他地方 → 另開視窗：本機=新分頁開檔；URL=開連結（handoff §4）
+function openItem(it) { openFile(it); }
+
+const byName = (a, b) => sortKeyName(a).localeCompare(sortKeyName(b), "zh-Hant", { numeric: true });
 
 function render() {
   ensureCards();
@@ -702,18 +1028,19 @@ function render() {
 }
 
 function renderFlat() {
-  items.slice().sort(byName).forEach((it, i) => {
+  allItems().slice().sort(byName).forEach((it, i) => {
     it._card.style.animationDelay = Math.min(i * 22, 600) + "ms";
     grid.appendChild(it._card);
   });
 }
 
-// 依時間（lastModified，新→舊）分月；只有有檔案的月份才建立區塊，空月自動跳過。
+// 依時間（新→舊）分月；本機用 lastModified，URL 把 added 當天 00:00 轉時間戳，共用同一條軸（handoff §2）。
 function renderTimeline() {
-  const arr = items.slice().sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+  const arr = allItems().slice().sort((a, b) => itemTs(b) - itemTs(a));
   let curKey = null, curGrid = null, i = 0;
   arr.forEach((it) => {
-    const d = it.lastModified ? new Date(it.lastModified) : null;
+    const ts = itemTs(it);
+    const d = ts ? new Date(ts) : null;
     const key = d ? `${d.getFullYear()}-${d.getMonth()}` : "?";
     if (key !== curKey) {
       curKey = key;
@@ -733,6 +1060,7 @@ async function fillThumbsFromCache() {
     let blob = null; try { blob = await DB.get("thumbs", thumbKey(it)); } catch (_) {}
     if (blob) paint(it, blob); else placeholder(it, "封面待產生");
   }
+  paintAllUrlThumbs();
 }
 
 async function generateThumbs() {
@@ -799,6 +1127,12 @@ async function downscaleImage(file) {
 }
 
 async function openFile(it) {
+  if (it.kind === "url") {
+    // 只另開新分頁。window.open(...,"noopener") 規範上一定回傳 null，
+    // 所以「不要」再用 if(!w) location.href=... 當退路，否則原分頁也會跟著導航。
+    window.open(it.url, "_blank", "noopener");
+    return;
+  }
   try {
     let fh = it._entry;          // 本次有掃描資料夾時直接用
     if (!fh) {                   // 純從快取載入時，用一開始選的資料夾把手重新取得
@@ -816,17 +1150,28 @@ async function openFile(it) {
   }
 }
 
+// 篩選：搜尋字 AND 來源（兩維正交，handoff §2）；只加 .hidden，不重建 DOM。
 function applyFilter() {
   const q = $("search").value.trim().toLowerCase(); let shown = 0;
-  for (const it of items) { const hit = !q || it.name.toLowerCase().includes(q);
-    it._card.classList.toggle("hidden", !hit); if (hit) shown++; }
+  for (const it of allItems()) {
+    const matchSearch = !q || it._card.dataset.name.includes(q);
+    const matchSource = sourceMode === "all"
+      || (sourceMode === "local" && it.kind !== "url")
+      || (sourceMode === "url" && it.kind === "url");
+    const hit = matchSearch && matchSource;
+    it._card.classList.toggle("hidden", !hit); if (hit) shown++;
+  }
   // 時間軸模式：把篩選後沒有任何可見卡片的月份整塊收起，避免留白
   if (sortMode === "time") {
     grid.querySelectorAll(".tl-month").forEach(m => {
       m.classList.toggle("hidden", !m.querySelector(".tl-grid > .card:not(.hidden)"));
     });
   }
-  if (items.length) { empty.classList.toggle("hidden", shown > 0); if (!shown) empty.textContent = "找不到符合的檔案。"; }
+  const total = items.length + urls.length;
+  if (total) {
+    empty.classList.toggle("hidden", shown > 0);
+    if (!shown) empty.textContent = q ? "找不到符合的項目。" : "這個來源目前沒有項目。";
+  }
 }
 
 // ---------- 燈箱 / 幻燈片 ----------
@@ -843,8 +1188,9 @@ function openViewer(idx) {
 function showSlide() {
   const it = vList[vIdx]; if (!it) return;
   $("vImg").src = it._thumbUrl || "";
-  $("vTitle").textContent = prettyTitle(it.name);
+  $("vTitle").textContent = displayName(it);
   $("vCount").textContent = `${vIdx + 1} / ${vList.length}`;
+  $("vOpen").textContent = it.kind === "url" ? "開啟連結" : "開啟檔案";
   $("vOpen").onclick = () => openFile(it);
 }
 function step(d) { vIdx = (vIdx + d + vList.length) % vList.length; showSlide(); }
@@ -862,8 +1208,381 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "ArrowRight") step(1);
 });
 
+/* =====================================================================
+   URL 收藏：Markdown 解析／序列化、平台偵測、檔案 IO、災難復原、CRUD
+   （links.md 是唯一真相；kv.urls 只是 read-side cache + 復原副本。spec §4–§8）
+   ===================================================================== */
+
+const stripUrl = u => ({ url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", _extra: u._extra || {} });
+
+// ---- Markdown（容錯 + 未知欄位原樣保留，spec §4.2） ----
+function parseLinks(text) {
+  const out = []; let cur = null;
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.replace(/\s+$/, "");
+    if (!line.trim()) continue;
+    const link = line.match(/^\s*-\s*\[([^\]]*)\]\(\s*([^)]+?)\s*\)\s*$/);
+    if (link) {
+      const url = link[2].trim();
+      if (!url.includes("://")) { console.warn("[lib] 略過無效 URL 行：", rawLine); cur = null; continue; }
+      cur = { url, title: link[1].trim(), thumb: "", added: "", _extra: {} };
+      out.push(cur); continue;
+    }
+    const field = line.match(/^\s+-\s*([A-Za-z][\w-]*)\s*:\s*(.*)$/);
+    if (field && cur) {
+      const key = field[1].toLowerCase(), val = field[2].trim();
+      if (key === "thumb") cur.thumb = val;
+      else if (key === "added") cur.added = val;
+      else cur._extra[field[1]] = val;      // 未知欄位：保留原 key，再寫回時不丟（未來 tag 系統可平滑擴充）
+      continue;
+    }
+    // 其餘行（# 標題、空白、雜訊）忽略
+  }
+  return out;
+}
+function serializeLinks(entries) {
+  let out = "# Yarn Library URLs\n\n";
+  for (const e of entries) {
+    out += `- [${(e.title || "").trim()}](${e.url})\n`;
+    if (e.thumb) out += `  - thumb: ${e.thumb}\n`;
+    if (e.added) out += `  - added: ${e.added}\n`;
+    const extra = e._extra || {};
+    for (const k of Object.keys(extra)) out += `  - ${k}: ${extra[k]}\n`;
+    out += "\n";
+  }
+  return out;
+}
+
+// ---- 平台偵測（第一版只做 YouTube，spec §5.2） ----
+function parseYouTubeId(url) {
+  try {
+    const u = new URL(url);
+    const h = u.hostname.replace(/^www\./, "");
+    if (h === "youtu.be") return u.pathname.slice(1).split("/")[0] || null;
+    if (h === "youtube.com" || h === "m.youtube.com" || h.endsWith(".youtube.com")) {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      const m = u.pathname.match(/^\/(embed|shorts)\/([^/]+)/);
+      if (m) return m[2];
+    }
+  } catch (_) {}
+  return null;
+}
+const youtubeThumbUrl = id => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+function detectPlatform(url) {
+  const id = parseYouTubeId(url);
+  if (id) return { platform: "youtube", id, label: "YouTube · 自動使用影片縮圖" };
+  if (/^https?:\/\//i.test(url)) return { platform: "web", label: "一般連結 · 可手動上傳縮圖" };
+  return null;
+}
+
+// ---- 縮圖來源優先序（spec §5.1）：thumb 欄位 → YouTube → fallback favicon ----
+function resolveUrlThumb(it) {
+  const t = (it.thumb || "").trim();
+  if (t.startsWith("youtube:")) return { direct: youtubeThumbUrl(t.slice(8)) };
+  if (t.startsWith("thumbs/"))  return { file: t };
+  const id = parseYouTubeId(it.url);
+  if (id) return { direct: youtubeThumbUrl(id) };
+  return { direct: "favicon.png", fallback: true };
+}
+function paintAllUrlThumbs() { for (const it of urls) paintUrlThumb(it); }
+async function paintUrlThumb(it) {
+  if (!it._card) return;
+  const src = resolveUrlThumb(it);
+  if (src.direct) { setCardImage(it, src.direct, src.fallback); return; }
+  // thumbs/xxx.webp：先吃 IndexedDB 顯示快取（cache-first 開 app 不需資料夾授權即可顯示）。
+  const cacheKey = urlThumbCacheKey(src.file);
+  let cached = null; try { cached = await DB.get("thumbs", cacheKey); } catch (_) {}
+  if (cached) { setCardImage(it, URL.createObjectURL(cached), false); return; }
+  // 快取沒有才向 dirHandle 要授權讀磁碟（需使用者手勢，自動載入時可能拿不到 → 退 favicon）；
+  // 讀到就順手補進快取，下次免授權。
+  try {
+    if (!dirHandle || !(await ensureRead(dirHandle))) throw new Error("無授權");
+    const dh = await dirHandle.getDirectoryHandle("thumbs");
+    const fh = await dh.getFileHandle(src.file.replace(/^thumbs\//, ""));
+    const blob = await fh.getFile();
+    try { await DB.set("thumbs", cacheKey, blob); } catch (_) {}
+    setCardImage(it, URL.createObjectURL(blob), false);
+  } catch (e) {
+    setCardImage(it, "favicon.png", true);
+  }
+}
+function setCardImage(it, src, fallback) {
+  it._thumbUrl = src;
+  const t = it._card && it._card.querySelector(".thumb"); if (!t) return;
+  t.classList.toggle("is-fallback", !!fallback);
+  const existing = t.querySelector("img");
+  if (existing) { existing.src = src; t.querySelector(".spin")?.remove(); return; }
+  const img = new Image();
+  img.onload = () => { t.querySelector(".spin")?.remove(); t.querySelector(".ph")?.remove();
+    if (!t.querySelector("img")) t.insertBefore(img, t.querySelector(".badge")); };
+  img.onerror = () => { if (!fallback) setCardImage(it, "favicon.png", true);
+    else { t.querySelector(".spin")?.remove(); placeholder(it, "連結"); } };
+  img.src = src;
+}
+
+// ---- 上傳縮圖處理：最長邊 400px → WEBP q0.8（spec §5.3） ----
+async function processThumbBlob(blob) {
+  const bmp = await createImageBitmap(blob);
+  const scale = Math.min(1, 400 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(bmp, 0, 0, w, h); bmp.close();
+  return await new Promise(r => canvas.toBlob(r, "image/webp", 0.8));
+}
+async function sha1hex(str) {
+  const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+const thumbPathFor = async url => "thumbs/" + (await sha1hex(url)).slice(0, 12) + ".webp";
+const urlThumbCacheKey = path => "urlthumb:" + path;
+// 壓縮上傳縮圖 → 寫進資料夾 thumbs/（持久真相）+ 存進 IndexedDB（顯示快取，
+// 讓 cache-first 開 app 不必資料夾授權就能顯示，否則重整後會退成 favicon）。回傳 thumb 路徑。
+async function saveUploadedThumb(url, blob) {
+  const path = await thumbPathFor(url);
+  const webp = await processThumbBlob(blob);
+  await writeThumbFile(dirHandle, path, webp);
+  try { await DB.set("thumbs", urlThumbCacheKey(path), webp); } catch (e) { console.warn("[lib] 縮圖寫入快取失敗（忽略）：", e); }
+  return path;
+}
+
+// ---- 檔案 IO（原子寫：temp + rename；spec §3） ----
+async function ensureWrite(h) {
+  if (!h) return false;
+  if (await h.queryPermission({ mode: "readwrite" }) === "granted") return true;
+  return await h.requestPermission({ mode: "readwrite" }) === "granted";
+}
+async function readText(dir, name) {
+  const fh = await dir.getFileHandle(name);     // 不存在會丟 NotFoundError
+  return await (await fh.getFile()).text();
+}
+async function writeText(dir, name, text) {
+  if (!await ensureWrite(dir)) throw new Error("沒有資料夾的寫入權限");
+  const tmpName = name + ".tmp";
+  const tmp = await dir.getFileHandle(tmpName, { create: true });
+  const w = await tmp.createWritable(); await w.write(text); await w.close();
+  if (typeof tmp.move === "function") {
+    try { await tmp.move(name); return; } catch (e) { console.warn("[lib] move 失敗，改直接覆寫：", e); }
+  }
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w2 = await fh.createWritable(); await w2.write(text); await w2.close();
+  try { await dir.removeEntry(tmpName); } catch (_) {}
+}
+async function renameInDir(dir, from, to) {
+  const fh = await dir.getFileHandle(from);
+  if (typeof fh.move === "function") { await fh.move(to); return; }
+  const text = await (await fh.getFile()).text();
+  const nf = await dir.getFileHandle(to, { create: true });
+  const w = await nf.createWritable(); await w.write(text); await w.close();
+  await dir.removeEntry(from);
+}
+async function writeThumbFile(dir, path, blob) {
+  if (!await ensureWrite(dir)) throw new Error("沒有資料夾的寫入權限");
+  const dh = await dir.getDirectoryHandle("thumbs", { create: true });
+  const fh = await dh.getFileHandle(path.replace(/^thumbs\//, ""), { create: true });
+  const w = await fh.createWritable(); await w.write(blob); await w.close();
+}
+async function removeThumbFile(dir, path) {
+  try { const dh = await dir.getDirectoryHandle("thumbs"); await dh.removeEntry(path.replace(/^thumbs\//, "")); }
+  catch (e) { console.warn("[lib] 刪除縮圖檔失敗（忽略）：", e); }
+}
+
+// ---- 載入 / 災難復原（spec §6.3 步驟3、§7.2） ----
+async function persistUrls(arr) {
+  try { await DB.set("kv", "urls", arr.map(stripUrl)); }
+  catch (e) { console.warn("[lib] 無法寫入 URL 快取：", e); }
+}
+async function loadUrls() {
+  let raw = null;
+  try { raw = await readText(dirHandle, "links.md"); }
+  catch (e) {
+    if (e && e.name === "NotFoundError") raw = null;     // 不存在 → 視同解析失敗同路徑
+    else { console.warn("[lib] 讀取 links.md 失敗：", e); return await recoverUrls(false); }
+  }
+  if (raw === null) return await recoverUrls(false);
+  let parsed;
+  try { parsed = parseLinks(raw); }
+  catch (e) { console.warn("[lib] 解析 links.md 失敗：", e); return await recoverUrls(true); }
+  const arr = parsed.map(hydrateUrl);
+  await persistUrls(arr);
+  return arr;
+}
+async function recoverUrls(brokenExists) {
+  let cached = [];
+  try { cached = (await DB.get("kv", "urls")) || []; } catch (_) {}
+  cached = cached.map(hydrateUrl);
+  let backupName = null;
+  if (brokenExists) {
+    backupName = "links.md.broken-" + new Date().toISOString().replace(/[:.]/g, "-");
+    try { await renameInDir(dirHandle, "links.md", backupName); }
+    catch (e) { console.warn("[lib] 備份壞檔失敗：", e); backupName = null; }
+  }
+  if (cached.length) {
+    try { await writeText(dirHandle, "links.md", serializeLinks(cached.map(stripUrl))); }
+    catch (e) { console.warn("[lib] 還原寫回 links.md 失敗：", e); }
+  }
+  if (brokenExists || cached.length) {
+    const detail = backupName
+      ? `原檔已備份為 <b>${escapeHtml(backupName)}</b>，如有遺漏可用編輯器打開該檔手動恢復。`
+      : "偵測到 links.md 遺失，已用上次成功讀取的快取重建。";
+    toast(`<b>links.md</b> 無法正常讀取，已從快取自動還原。<br>${detail}`, true, [], 9000);
+  }
+  await persistUrls(cached);
+  return cached;
+}
+
+// 讀磁碟 links.md → re-parse（順便吃進外部對其他條目的修改）。回傳可序列化的 entries。
+async function reparseForWrite() {
+  let raw = "", existed = true;
+  try { raw = await readText(dirHandle, "links.md"); }
+  catch (e) { if (e && e.name === "NotFoundError") { existed = false; raw = ""; } else throw e; }
+  try { return { entries: parseLinks(raw) }; }
+  catch (e) { return { entries: (await recoverUrls(existed)).map(stripUrl), recovered: true }; }
+}
+
+// ---- CRUD（讀-改-寫，spec §6.4 / §6.5 / §6.6） ----
+async function saveNewUrl({ url, title, thumbBlob }) {
+  if (!dirHandle) { toast("請先選擇一個資料夾再收藏網址。", true); return false; }
+  if (!await ensureWrite(dirHandle)) { toast("需要資料夾的寫入權限才能儲存。", true); return false; }
+  let thumbField = "";
+  if (thumbBlob) { thumbField = await saveUploadedThumb(url, thumbBlob); }
+  else { const id = parseYouTubeId(url); if (id) thumbField = "youtube:" + id; }
+  const { entries } = await reparseForWrite();
+  entries.push({ url, title: title || "", thumb: thumbField, added: todayStr(), _extra: {} });
+  await writeText(dirHandle, "links.md", serializeLinks(entries));
+  urls = entries.map(hydrateUrl);
+  await persistUrls(urls);
+  showLibrary(); render(); paintAllUrlThumbs();
+  return true;
+}
+async function saveEditUrl(orig, { url, title, thumbBlob }) {
+  if (!await ensureWrite(dirHandle)) { toast("需要資料夾的寫入權限才能儲存。", true); return false; }
+  let thumbField = orig.thumb || "";
+  if (thumbBlob) { thumbField = await saveUploadedThumb(url, thumbBlob); }
+  else if (url !== orig.url && (!thumbField || thumbField.startsWith("youtube:"))) {
+    const id = parseYouTubeId(url); thumbField = id ? "youtube:" + id : "";    // 改 URL 後重算自動縮圖；上傳檔則保留舊檔不刪（spec §6.5 步驟2）
+  }
+  const { entries } = await reparseForWrite();
+  const idx = entries.findIndex(e => e.url === orig.url);
+  if (idx < 0) {                                  // 被外部改了 URL 字串 / 刪了該條（spec §6.5 步驟4）
+    toast("此條目已被外部修改或刪除，請確認後重做。已為你重新整理顯示。", true);
+    await start(false); return false;
+  }
+  entries[idx] = { url, title: title || "", thumb: thumbField, added: entries[idx].added || orig.added || todayStr(), _extra: entries[idx]._extra || {} };
+  await writeText(dirHandle, "links.md", serializeLinks(entries));
+  urls = entries.map(hydrateUrl);
+  await persistUrls(urls);
+  render(); paintAllUrlThumbs();
+  return true;
+}
+async function doDeleteUrl(orig) {
+  if (!await ensureWrite(dirHandle)) { toast("需要資料夾的寫入權限才能刪除。", true); return; }
+  const { entries } = await reparseForWrite();
+  const idx = entries.findIndex(e => e.url === orig.url);
+  if (idx < 0) {                                  // 已被外部刪除（spec §6.6 步驟2）
+    toast("此條目已被外部刪除，顯示已同步。"); await start(false); return;
+  }
+  const removed = entries.splice(idx, 1)[0];
+  await writeText(dirHandle, "links.md", serializeLinks(entries));
+  if (removed.thumb && removed.thumb.startsWith("thumbs/")) {
+    await removeThumbFile(dirHandle, removed.thumb);
+    try { await DB.del("thumbs", urlThumbCacheKey(removed.thumb)); } catch (_) {}
+  }
+  urls = entries.map(hydrateUrl);
+  await persistUrls(urls);
+  showLibrary(); render(); paintAllUrlThumbs();
+  toast(`已刪除「${escapeHtml(displayName(hydrateUrl(removed)))}」，顯示已同步。`);
+}
+
+// ---- 新增／編輯對話框 ----
+let dlgMode = "add", editTarget = null, stagedThumbBlob = null;
+function openDialog(mode, it) {
+  dlgMode = mode; editTarget = it || null; stagedThumbBlob = null;
+  $("dlgTitle").textContent = mode === "edit" ? "編輯網址" : "新增網址";
+  $("dlgDelete").style.display = mode === "edit" ? "" : "none";
+  $("fUrl").value = it ? it.url : "";
+  $("fTitle").value = it ? (it.title || "") : "";
+  $("thumbPreview").innerHTML = (it && it._thumbUrl) ? `<img src="${it._thumbUrl}" alt="">` : `<span class="ph">縮圖<br>預覽</span>`;
+  updatePlatformPill($("fUrl").value);
+  showOverlay("urlDialog");
+  setTimeout(() => $("fUrl").focus(), 50);
+}
+function updatePlatformPill(url) {
+  const info = detectPlatform((url || "").trim());
+  $("platformTxt").textContent = info ? info.label : "貼上後自動偵測平台與縮圖";
+}
+$("fUrl").addEventListener("input", () => updatePlatformPill($("fUrl").value));
+$("dlgCancel").onclick = () => hideOverlay("urlDialog");
+$("dlgDelete").onclick = () => { if (editTarget) { hideOverlay("urlDialog"); openConfirm(editTarget); } };
+$("dlgSave").onclick = async () => {
+  const url = $("fUrl").value.trim(), title = $("fTitle").value.trim();
+  if (!/^https?:\/\/.+/i.test(url)) { toast("請輸入有效的網址（需以 http(s):// 開頭）。", true); $("fUrl").focus(); return; }
+  const btn = $("dlgSave"); btn.disabled = true; const prev = btn.textContent; btn.textContent = "儲存中…";
+  try {
+    const ok = (dlgMode === "edit" && editTarget)
+      ? await saveEditUrl(editTarget, { url, title, thumbBlob: stagedThumbBlob })
+      : await saveNewUrl({ url, title, thumbBlob: stagedThumbBlob });
+    if (ok) { hideOverlay("urlDialog"); toast(dlgMode === "edit" ? "已更新這筆收藏。" : "已新增收藏。"); }
+  } catch (e) { console.warn("[lib] 儲存 URL 失敗：", e); toast("儲存失敗：" + (e && e.message ? e.message : e), true); }
+  finally { btn.disabled = false; btn.textContent = prev; }
+};
+
+// 三種縮圖上傳：檔案選擇 / 拖拉 / 貼上（spec §5.3）
+const dz = $("dropzone"), fileInput = $("thumbFile");
+dz.addEventListener("click", () => fileInput.click());
+dz.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener("change", () => { const f = fileInput.files[0]; if (f) acceptThumb(f); fileInput.value = ""; });
+dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
+dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+dz.addEventListener("drop", e => {
+  e.preventDefault(); dz.classList.remove("dragover");
+  const f = [...(e.dataTransfer && e.dataTransfer.files || [])].find(x => x.type.startsWith("image/"));
+  if (f) acceptThumb(f); else toast("拖進來的不是圖片檔。", true);
+});
+window.addEventListener("paste", e => {
+  if (!$("urlDialog").classList.contains("show")) return;
+  const item = [...(e.clipboardData && e.clipboardData.items || [])].find(i => i.type.startsWith("image/"));
+  if (item) { const f = item.getAsFile(); if (f) acceptThumb(f); }
+});
+function acceptThumb(file) {
+  if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) { toast("只接受 JPEG／PNG／WEBP／GIF。", true); return; }
+  stagedThumbBlob = file;
+  $("thumbPreview").innerHTML = `<img src="${URL.createObjectURL(file)}" alt="">`;
+  $("platformTxt").textContent = "已套用自訂縮圖（儲存時壓縮）";
+}
+
+// 刪除二次確認
+let pendingDelTarget = null;
+function openConfirm(it) { pendingDelTarget = it; $("confirmName").textContent = displayName(it); showOverlay("confirmDialog"); }
+$("confirmCancel").onclick = () => hideOverlay("confirmDialog");
+$("confirmOk").onclick = async () => {
+  const it = pendingDelTarget; hideOverlay("confirmDialog"); if (!it) return;
+  try { await doDeleteUrl(it); } catch (e) { console.warn("[lib] 刪除失敗：", e); toast("刪除失敗：" + (e && e.message ? e.message : e), true); }
+};
+
+// overlay 開關（與燈箱共用 no-scroll）
+function showOverlay(id) { $(id).classList.add("show"); document.body.classList.add("no-scroll"); }
+function hideOverlay(id) {
+  $(id).classList.remove("show");
+  if (!document.querySelector(".overlay.show") && !viewer.classList.contains("show")) document.body.classList.remove("no-scroll");
+}
+["urlDialog", "confirmDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const o = document.querySelector(".overlay.show"); if (o) hideOverlay(o.id); });
+
+// 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11）
+let toastTimer;
+function toast(html, warn, actions, duration) {
+  $("toastBody").innerHTML = html;
+  const wrap = $("toastActions"); wrap.innerHTML = "";
+  (actions || []).forEach(([label, fn]) => { const b = document.createElement("button"); b.textContent = label; b.onclick = () => { hideToast(); fn(); }; wrap.appendChild(b); });
+  $("toast").classList.toggle("warn", !!warn);
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, duration || 4500);
+}
+function hideToast() { $("toast").classList.remove("show"); }
+$("toastClose").onclick = hideToast;
+
 function prettyTitle(name) { return name.replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
-function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
 function humanSize(n) { return n < 1024 ? n + " B" : n < 1048576 ? (n/1024).toFixed(0) + " KB" : (n/1048576).toFixed(1) + " MB"; }
 </script>
 </body>
