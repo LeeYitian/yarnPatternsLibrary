@@ -197,7 +197,40 @@
   main { padding: clamp(20px,3vw,40px) var(--gutter); position: relative; z-index: 1; }
 
   /* ---------- 首頁說明（重點裝飾區） ---------- */
-  .intro { max-width: 640px; margin: 9vh auto; text-align: center; }
+  .intro { max-width: 640px; margin: 0 auto; text-align: center; }
+
+  /* 進場：第一屏只見 icon + 標題，背景動畫暗示往下捲動 */
+  /* 第一屏整整一個視窗高（扣掉 main 的上方留白，讓說明區絕對落在折線之下）。
+     dvh 處理手機瀏覽器上下工具列收合時的高度變化。 */
+  .intro-hero {
+    min-height: calc(100vh - clamp(20px,3vw,40px));
+    min-height: calc(100dvh - clamp(20px,3vw,40px));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .scroll-cue {
+    appearance: none; background: none; border: 0; cursor: pointer;
+    margin-top: clamp(48px,10vh,96px);
+    display: inline-flex; flex-direction: column; align-items: center; gap: 10px;
+    color: var(--accent); font-family: var(--font-disp); font-size: 11px; letter-spacing: .3em;
+    text-transform: uppercase; opacity: .9; transition: opacity .3s ease;
+    animation: cueBreath 2.8s ease-in-out infinite;
+  }
+  .scroll-cue:hover { opacity: 1; }
+  .scroll-cue .cue-arrow { width: 26px; height: 26px; animation: cueBob 2.2s ease-in-out infinite; }
+  @keyframes cueBreath { 0%,100% { opacity: .45; } 50% { opacity: .95; } }
+  @keyframes cueBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+  /* 捲動後才浮現的說明 + 選資料夾按鈕 */
+  .intro-reveal {
+    opacity: 0; transform: translateY(70px) scale(.97); filter: blur(7px);
+    transition: opacity 1.1s ease, transform 1.1s cubic-bezier(.16,.84,.34,1), filter 1.1s ease;
+    padding-bottom: 9vh;
+  }
+  .intro-reveal.in { opacity: 1; transform: none; filter: blur(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue, .scroll-cue .cue-arrow { animation: none; }
+    .intro-reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  }
+
   .intro .logo { width: 70px; height: 70px; object-fit: contain; border-radius: 6px;
     filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--accent) 42%, transparent)); }
   .intro .overline {
@@ -547,6 +580,22 @@
   .confirm h3 { font-size: 26px; }
   .confirm p { color: var(--muted); margin: 0 0 22px; line-height: 1.7; }
   .confirm .nm { color: var(--ink); font-weight: 600; }
+  .nm { color: var(--ink); font-weight: 600; }
+
+  /* 更換資料夾確認（spec §5）：沿用 .dialog 既有花邊四角；左對齊、條列說明 */
+  .switch-dialog { width: min(560px, 100%); }
+  .switch-pick { margin: 0 0 18px; color: var(--muted); line-height: 1.7; }
+  .switch-folder { display: inline-block; margin-top: 6px; font-family: var(--font-head); font-size: 19px;
+    color: var(--ink); font-weight: 600; word-break: break-all; }
+  .switch-body { font-size: 14.5px; line-height: 1.7; color: var(--ink); }
+  .switch-body p { margin: 0 0 12px; }
+  .switch-body .switch-keep { margin-top: 18px; margin-bottom: 8px; }
+  .switch-body .switch-keep b { color: var(--accent); font-weight: 600; }
+  .switch-body ul { margin: 0 0 12px; padding-left: 22px; color: var(--muted); }
+  .switch-body li { margin: 0 0 5px; }
+  .switch-body .switch-merge { margin-top: 14px; padding: 12px 14px; color: var(--muted);
+    border: 1px solid var(--line); border-left: 3px solid var(--accent2); border-radius: 4px;
+    background: color-mix(in srgb, var(--accent2) 8%, transparent); }
 
   /* ④ 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11） */
   .toast {
@@ -609,18 +658,27 @@
 
 <main>
   <div class="intro hidden" id="intro">
-    <img class="logo" src="favicon.png" alt="">
-    <div class="overline">Bibliotheca Textilis</div>
-    <h2>編織圖圖書館</h2>
-    <div class="ornate-divider" aria-hidden="true"></div>
-    <div class="why">
-      <p>第一次使用，請按下面的按鈕，選取要預覽的資料夾。</p>
-      <p>基於瀏覽器的安全規定，網頁<b>不能自己讀取你電腦裡的檔案</b>，必須由你親自授權一次，網頁才能讀到檔案。</p>
-      <p>授權過後，所有封面會畫好並<b>存進快取</b>。之後再打開這個網頁會<b>自動載入，不必再選資料夾</b>。<br>
-         只有當你<b>新增或刪除檔案</b>時，才需要點右上角的<b>設定</b>齒輪，選「重新整理」再選一次，補上新封面。</p>
+    <div class="intro-hero">
+      <img class="logo" src="favicon.png" alt="">
+      <div class="overline">Bibliotheca Textilis</div>
+      <h2>編織圖圖書館</h2>
+      <div class="ornate-divider" aria-hidden="true"></div>
+      <button class="scroll-cue" id="scrollCue" type="button" aria-label="往下捲動看說明">
+        <span class="cue-text">往&nbsp;下&nbsp;捲&nbsp;動</span>
+        <svg class="cue-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
     </div>
-    <button class="btn primary big" id="pickBtn">選擇資料夾</button>
-    <p class="warn">※ 請使用 Chrome 或 Edge 開啟。所有檔案只在你電腦本機讀取，不會上傳到任何地方。</p>
+    <div class="intro-reveal" id="introReveal">
+      <div class="why">
+        <p>第一次使用，請按下面的按鈕，選取要預覽的資料夾。</p>
+        <p>基於瀏覽器的安全規定，網頁<b>不能自己讀取你電腦裡的檔案</b>，必須由你親自授權一次，網頁才能讀到檔案。</p>
+        <p>授權過後，所有封面會畫好並<b>存進快取</b>。之後再打開這個網頁會<b>自動載入，不必再選資料夾</b>。<br>
+           只有當你<b>新增或刪除檔案</b>時，才需要點右上角的<b>設定</b>齒輪，選「重新整理」再選一次，補上新封面。</p>
+        <p>目前 app <b>只讀資料夾根目錄</b>的 PDF / 圖片，<b>子資料夾裡的東西不會被掃到</b>。如果你的編織圖分裝在多層子資料夾裡，請選那個直接放有檔案的資料夾。</p>
+      </div>
+      <button class="btn primary big" id="pickBtn">選擇資料夾</button>
+      <p class="warn">※ 請使用 Chrome 或 Edge 開啟。所有檔案只在你電腦本機讀取，不會上傳到任何地方。</p>
+    </div>
   </div>
 
   <div class="grid hidden" id="grid"></div>
@@ -693,6 +751,31 @@
   </div>
 </div>
 
+<!-- 更換資料夾確認（spec §5） -->
+<div class="overlay" id="switchDialog">
+  <div class="dialog switch-dialog">
+    <h3>換到這個資料夾？</h3>
+    <p class="switch-pick">你選了：<br><span class="switch-folder">📁 <span id="switchName"></span></span></p>
+    <div class="switch-body">
+      <p>換的只是 app 顯示哪個資料夾的內容，你電腦裡的檔案完全不會被動到。app 之後會從新資料夾重新讀取要顯示什麼。</p>
+      <p class="switch-keep"><b>🛟 舊資料夾裡的東西都還在，沒有跟著消失：</b></p>
+      <ul>
+        <li>PDF／圖片本來就是你的</li>
+        <li>之前在 app 內收藏的網址，都還在舊資料夾根目錄的 <span class="nm">links.md</span></li>
+        <li>網址縮圖在舊資料夾的 <span class="nm">thumbs/</span> 子資料夾</li>
+        <li>這兩個是 app 幫你建的，但它們屬於你</li>
+        <li>想把收藏帶到新資料夾？在檔案總管把 <span class="nm">links.md</span> 和 <span class="nm">thumbs/</span> 搬過去即可</li>
+      </ul>
+      <p class="switch-merge">🔄 如果新資料夾本來就有 <span class="nm">links.md</span> 和 <span class="nm">thumbs/</span>（比如之前也用 app 整理過、或剛剛從別的地方搬過去），app 會直接讀進來，不會覆蓋。</p>
+    </div>
+    <div class="dialog-foot">
+      <div class="spacer"></div>
+      <button class="btn lg" id="switchCancel">取消</button>
+      <button class="btn primary lg" id="switchOk">換過去</button>
+    </div>
+  </div>
+</div>
+
 <!-- 非阻斷 toast -->
 <div class="toast" id="toast">
   <div class="t-main">
@@ -739,7 +822,7 @@ const DB = (() => {
   const tx = async (store, mode, fn) => { const db = await open();
     return new Promise((res, rej) => { const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
       t.oncomplete = () => res(req?.result); t.onerror = () => rej(t.error); }); };
-  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)), del: (s, k) => tx(s, "readwrite", o => o.delete(k)) };
+  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)), del: (s, k) => tx(s, "readwrite", o => o.delete(k)), clear: (s) => tx(s, "readwrite", o => o.clear()) };
 })();
 
 const $ = id => document.getElementById(id);
@@ -768,7 +851,7 @@ const todayStr = () => { const d = new Date(); const p = n => String(n).padStart
 
 $("pickBtn").onclick = () => start(true);
 $("refresh").onclick = () => { closeSettings(); start(false, true); };
-$("rechoose").onclick = () => { closeSettings(); start(true); };
+$("rechoose").onclick = () => { closeSettings(); rechooseFolder(); };
 $("search").oninput = applyFilter;
 $("sizeBtn").onclick = cycleSize;
 $("slideBtn").onclick = () => openViewer(0);
@@ -867,7 +950,21 @@ async function init() {
 // 把快取／parse 後的 URL 純資料補上衍生欄位（kind、網域）
 const hydrateUrl = u => ({ kind: "url", url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", _extra: u._extra || {}, _host: hostOf(u.url) });
 
-function showIntro() { intro.classList.remove("hidden"); bar.classList.add("hidden"); grid.classList.add("hidden"); dock.hidden = true; }
+// 首頁進場：第一屏只見 icon+標題，捲到說明區才讓它浮現
+const introReveal = $("introReveal");
+const introObserver = ("IntersectionObserver" in window)
+  ? new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { introReveal.classList.add("in"); introObserver.unobserve(e.target); } });
+    }, { threshold: 0.16 })
+  : null;
+// 點擊「往下捲動」提示：平滑捲到說明區
+$("scrollCue").onclick = () => introReveal.scrollIntoView({ behavior: "smooth", block: "start" });
+
+function showIntro() {
+  intro.classList.remove("hidden"); bar.classList.add("hidden"); grid.classList.add("hidden"); dock.hidden = true;
+  if (introObserver) introObserver.observe(introReveal);
+  else introReveal.classList.add("in");   // 不支援 IO 時直接顯示，避免說明被永久藏住
+}
 function showLibrary() {
   intro.classList.add("hidden"); bar.classList.remove("hidden"); dock.hidden = false;
   const total = items.length + urls.length;
@@ -958,6 +1055,64 @@ function folderError() {
   toast("找不到資料夾，可能已被移除、改名，或所在磁碟未連接。<b>現有顯示與快取已保留。</b>", true,
     [["再試一次", () => start(false)], ["選擇新資料夾", () => start(true)]], 12000);
 }
+
+// ---------- 更換資料夾（spec：folder-switch-spec.md） ----------
+// 流程：picker → isSameEntry → confirm → 清 IndexedDB → 換 handle → 委派 start() 掃描／載入／重畫。
+// 注意：first pick 不走這裡（走 #pickBtn → start(true)），這條只給頂欄設定選單的「更換資料夾」。
+async function rechooseFolder() {
+  // ① 先開 picker（spec §4.2：讓使用者看到資料夾名稱才確認）
+  let newHandle;
+  try { newHandle = await window.showDirectoryPicker({ id: "weaving-folder", mode: "read" }); }
+  catch (e) { return; }                              // §7.1 取消 → 不動任何狀態、不跳 toast
+
+  // ② isSameEntry：選到同一個資料夾 → 不 confirm、不清快取，走「重新整理」路徑（§7.2）
+  try {
+    if (dirHandle && await dirHandle.isSameEntry(newHandle)) { start(false, true); return; }
+  } catch (e) { console.warn("[lib] isSameEntry 比對失敗，視為不同資料夾：", e); }
+
+  // ③ Confirm（§5）。取消 → 完全不動，舊狀態 intact（§7.3 F6，因為 step 1 還沒跑）
+  if (!await confirmSwitch(newHandle.name)) return;
+
+  // ④⑤⑥ confirm 之後依 §6.1 的順序執行
+  const oldHandle = dirHandle;
+  status.textContent = "切換資料夾…";
+  try {
+    // step 1：清 IndexedDB（thumbs 全清、kv/items、kv/urls；kv/dir 先不動，§6.1 / §6.2）
+    await DB.clear("thumbs");
+    await DB.del("kv", "items");
+    await DB.del("kv", "urls");
+    // step 2：換 dirHandle（記憶體 + kv/dir）
+    dirHandle = newHandle;
+    await DB.set("kv", "dir", newHandle);
+  } catch (e) {
+    console.warn("[lib] 切換資料夾清快取／換把手失敗：", e);
+    dirHandle = oldHandle;                            // §7.3 還原記憶體 handle，下次 init() 以舊 kv/dir 為準
+    status.textContent = "";
+    toast("切換失敗，請重整頁面或重試。", true);
+    return;
+  }
+  // step 3~5：掃新資料夾 + 寫 items + loadUrls + 重畫。委派既有 start(false)（§8：不改 start 內部）。
+  //  - getHandle(false) 會回傳剛換上的 dirHandle（= newHandle）
+  //  - kv/urls cache 已在 step 1 清空，loadUrls→recoverUrls 不會把舊 URL 污染進新資料夾（§6.1 step 4）
+  await start(false);
+}
+
+// Confirm dialog（promise 化；resolve(true)=換過去、resolve(false)=取消／關閉）
+let switchResolve = null;
+function confirmSwitch(folderName) {
+  $("switchName").textContent = folderName || "(未命名資料夾)";
+  showOverlay("switchDialog");
+  return new Promise(resolve => { switchResolve = resolve; });
+}
+function closeSwitch(result) {
+  hideOverlay("switchDialog");
+  const r = switchResolve; switchResolve = null;
+  if (r) r(result);
+}
+$("switchCancel").onclick = () => closeSwitch(false);
+$("switchOk").onclick = () => closeSwitch(true);
+// 點遮罩或按 Esc 關閉 = 取消（resolve(false)）；不綁 Enter 到「換過去」（spec §9 F7）
+$("switchDialog").addEventListener("click", e => { if (e.target.id === "switchDialog") closeSwitch(false); });
 
 async function persistItems() {
   const meta = items.map(({ name, ext, type, size, lastModified }) => ({ name, ext, type, size, lastModified }));
@@ -1566,7 +1721,7 @@ function hideOverlay(id) {
   if (!document.querySelector(".overlay.show") && !viewer.classList.contains("show")) document.body.classList.remove("no-scroll");
 }
 ["urlDialog", "confirmDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
-document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const o = document.querySelector(".overlay.show"); if (o) hideOverlay(o.id); });
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const o = document.querySelector(".overlay.show"); if (!o) return; if (o.id === "switchDialog") closeSwitch(false); else hideOverlay(o.id); });
 
 // 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11）
 let toastTimer;
