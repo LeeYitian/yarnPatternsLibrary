@@ -293,6 +293,13 @@
   /* 緊湊：正方形、多欄 */
   .grid.size-compact { --min: 200px; --ar: 1/1;   --pos: center 32%; }
 
+  /* 手機（≤430px）：緊湊一律固定兩欄（不受螢幕寬度影響都剛好排得下）；
+     「寬大」選項在手機由 JS 隱藏，避免寬版卡片爆框跑版。其它視窗大小不受影響。 */
+  @media (max-width: 430px) {
+    .grid.mode-name.size-compact,
+    .grid.size-compact .tl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
   /* 依時間排序：左側垂直時間軸，依「月」分組 */
   .grid.mode-timeline { display: block; position: relative; padding-left: 40px; }
   .grid.mode-timeline::before {
@@ -794,7 +801,7 @@ const pdfjsLib = globalThis.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = "./lib/pdf.worker.min.js";
 
 const IMG_EXT = new Set(["png","jpg","jpeg","webp","gif","bmp"]);
-const THUMB_W = 600;        // 封面解析度（大圖也清楚）
+const THUMB_W = 520;        // 封面解析度：PDF 與圖片統一用這個寬度，手機／桌機共用一套快取（手機無「寬大」卡，不需更高解析度）
 
 // ---------- 迷你 IndexedDB ----------
 const DB = (() => {
@@ -918,15 +925,27 @@ window.addEventListener("scroll", () => {
 
 // 預覽大小（欄數 + 裁切比例）
 const SIZES = [["寬大","size-wide"],["標準","size-std"],["緊湊","size-compact"]];
-let sizeIdx = +(localStorage.getItem("wlib-size") ?? 0);
-if (!(sizeIdx >= 0 && sizeIdx < SIZES.length)) sizeIdx = 0;
+// 手機（≤430px）不提供「寬大」：寬版卡片會爆框跑版。其它視窗大小維持完整三選項。
+const mqPhone = matchMedia("(max-width: 430px)");
+const sizesFor = () => mqPhone.matches ? SIZES.filter(([, cls]) => cls !== "size-wide") : SIZES;
+// 以 class 名持久化（比索引穩：手機／桌機可選清單不同，索引會錯位）。沿用舊的數字索引設定做一次性遷移。
+let sizeCls = localStorage.getItem("wlib-size-cls")
+  || (SIZES[+(localStorage.getItem("wlib-size") ?? 0)] || SIZES[0])[1];
+// 把儲存的偏好對應到「此視窗實際可用」的選項：手機上若偏好是寬大，顯示退回第一個可用（但不覆寫偏好，回桌機仍是寬大）。
+const resolveSize = () => { const a = sizesFor(); return a.find(([, cls]) => cls === sizeCls) || a[0]; };
 function applySize() {
-  const [name, cls] = SIZES[sizeIdx];
+  const [name, cls] = resolveSize();
   grid.classList.remove("size-wide","size-std","size-compact");
   grid.classList.add(cls);
   $("sizeLbl").textContent = name;
 }
-function cycleSize() { sizeIdx = (sizeIdx + 1) % SIZES.length; localStorage.setItem("wlib-size", sizeIdx); applySize(); }
+function cycleSize() {
+  const a = sizesFor(), cur = resolveSize()[1];
+  sizeCls = a[(a.findIndex(([, cls]) => cls === cur) + 1) % a.length][1];
+  localStorage.setItem("wlib-size-cls", sizeCls);
+  applySize();
+}
+mqPhone.addEventListener("change", applySize);   // 跨越手機斷點（轉螢幕／縮視窗）時自動修正顯示
 applySize();
 
 init();
@@ -1274,7 +1293,7 @@ async function renderPdfCover(file) {
 }
 async function downscaleImage(file) {
   const bmp = await createImageBitmap(file).catch(() => null); if (!bmp) return file;
-  const scale = Math.min(1, (THUMB_W * 1.6) / bmp.width);
+  const scale = Math.min(1, THUMB_W / bmp.width);
   const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
   const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
   canvas.getContext("2d").drawImage(bmp, 0, 0, w, h); bmp.close();
