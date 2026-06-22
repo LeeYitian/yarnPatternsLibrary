@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://yarn-patterns-library.vercel.app/">
 
 <!-- SEO / 社群分享 metadata -->
-<meta name="description" content="純前端、零後端的本機編織圖瀏覽器。選一個資料夾，網頁就把裡面每個 PDF 與圖片做成封面，排成可瀏覽的畫廊；檔案不上傳，全部在你自己的瀏覽器處理。">
+<meta name="description" content="零後端的編織圖瀏覽器。選一個資料夾，網頁就把裡面每個 PDF 與圖片做成封面，排成可瀏覽的畫廊；檔案不上傳，全部在你自己的瀏覽器處理。">
 <meta name="keywords" content="編織圖, 織圖, 編織, 鉤針, 棒針, yarn, knitting, crochet, pattern, library, PDF 瀏覽器, 畫廊">
 <meta name="author" content="LeeYitian">
 <meta name="theme-color" content="#4f9a80">
@@ -18,7 +18,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="織圖圖書館">
 <meta property="og:title" content="織圖圖書館 Yarn Patterns Library">
-<meta property="og:description" content="純前端、零後端的本機編織圖瀏覽器。選一個資料夾，網頁就把每個 PDF 與圖片做成封面，排成可瀏覽的畫廊；檔案不上傳。">
+<meta property="og:description" content="零後端的編織圖瀏覽器。選一個資料夾，網頁就把每個 PDF 與圖片做成封面，排成可瀏覽的畫廊；檔案不上傳。">
 <meta property="og:locale" content="zh_TW">
 <meta property="og:url" content="https://yarn-patterns-library.vercel.app/">
 <!-- 主要：1.91:1 橫圖（FB / Twitter 大圖卡） -->
@@ -26,7 +26,7 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="織圖圖書館 Yarn Patterns Library — 本機編織圖庫的時間軸介面預覽">
+<meta property="og:image:alt" content="織圖圖書館 Yarn Patterns Library 介面預覽">
 <!-- 次要：1:1 方圖（LINE / WhatsApp 等偏好方形的平台） -->
 <meta property="og:image" content="https://yarn-patterns-library.vercel.app/og-image-1200x1200.png">
 <meta property="og:image:type" content="image/png">
@@ -37,7 +37,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="織圖圖書館 Yarn Patterns Library">
-<meta name="twitter:description" content="純前端、零後端的本機編織圖瀏覽器，把資料夾裡的 PDF 與圖片做成封面畫廊；檔案不上傳。">
+<meta name="twitter:description" content="零後端的編織圖瀏覽器，把資料夾裡的 PDF 與圖片做成封面畫廊；檔案不上傳。">
 <meta name="twitter:image" content="https://yarn-patterns-library.vercel.app/og-image-1200x630.png">
 <meta name="twitter:image:alt" content="織圖圖書館 Yarn Patterns Library 介面預覽">
 
@@ -55,6 +55,8 @@
     --ink: #e7f0ec; --muted: #92a69f; --line: rgba(150,185,172,.14);
     --accent: #6dbd9f; --accent2: #84b6d6;
     --shadow: 0 14px 40px rgba(0,0,0,.5); --shadow-lg: 0 26px 64px rgba(0,0,0,.62);
+    /* onboarding 遮罩色：沿用燈箱／對話框的深墨綠（design-style §7.3／§7.4） */
+    --ob-mask: color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.92));
     /* Academia 排版字體：拉丁顯示襯線 + 中文襯線 */
     --font-head: "Cormorant Garamond","Noto Serif TC","Microsoft JhengHei",serif;
     --font-body: "Crimson Pro","Noto Serif TC","Microsoft JhengHei",serif;
@@ -631,6 +633,107 @@
   }
   .toast .t-actions button:hover { border-color: var(--accent); color: var(--accent); }
   .toast .t-close { margin-left: 4px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; }
+
+  /* ===================================================================
+     ↓↓↓ Onboarding 教學圖層（design-style §7.4／§7.11） ↓↓↓
+     鏤空＝大遮罩 + 反向 box-shadow，不用 clip-path / filter。
+     z：遮罩 60 / spotlight 視覺 61 / 置中卡片 61 / 點擊代理・高亮環 62 / 氣泡 63
+     =================================================================== */
+  /* 教學進行中鎖捲動（頂欄 sticky 不收合、dock fixed 恆在；spotlight 量得到座標） */
+  body.ob-active { overflow: hidden; }
+
+  /* 全螢幕遮罩：A 模式深色＋擋點擊；spotlight 透明（只擋點擊，壓暗交給 #obSpot 的 box-shadow） */
+  #obMask { position: fixed; inset: 0; z-index: 60; display: none; }
+  #obMask.show { display: block; }
+  #obMask.dark { background: var(--ob-mask); }
+  #obMask.clear { background: transparent; }
+
+  /* spotlight 鏤空高亮：透明方框靠超大 box-shadow 當遮罩、外加呼吸光暈環（pe:none，純視覺） */
+  #obSpot { position: fixed; z-index: 61; border-radius: 6px; pointer-events: none; display: none;
+    box-shadow: 0 0 0 9999px var(--ob-mask), 0 0 0 3px color-mix(in srgb, var(--accent) 60%, transparent);
+    animation: obPulse 2.4s ease-in-out infinite; }
+  #obSpot.show { display: block; }
+  @keyframes obPulse {
+    0%, 100% { box-shadow: 0 0 0 9999px var(--ob-mask), 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 9999px var(--ob-mask), 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 22px 6px color-mix(in srgb, var(--accent) 34%, transparent); }
+  }
+
+  /* 互動步驟的透明點擊代理：疊在遮罩之上，轉發點擊給真實目標（頂欄自成 stacking context，目標無法單靠 z-index 穿出） */
+  #obHole { position: fixed; z-index: 62; display: none; cursor: pointer; background: transparent; }
+  #obHole.show { display: block; }
+
+  /* 對話框內子元件的高亮環（對話框完整可見，只把目標圈起來；pe:none） */
+  #obRing { position: fixed; z-index: 62; border-radius: 6px; pointer-events: none; display: none;
+    animation: obRing 2.4s ease-in-out infinite; }
+  #obRing.show { display: block; }
+  @keyframes obRing {
+    0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 38%, transparent), 0 0 22px 5px color-mix(in srgb, var(--accent) 32%, transparent); }
+  }
+
+  /* 氣泡（design-style §7.11）：~320px、4px 圓角、同對話框底色、8px 三角箭頭 */
+  #obBubble { position: fixed; z-index: 63; width: 320px; max-width: calc(100vw - 28px);
+    background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: var(--shadow-lg); padding: 18px 18px 16px; display: none;
+    animation: obIn var(--t-base) ease-out; }
+  #obBubble.show { display: block; }
+  @keyframes obIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  #obBubble::after { content: ""; position: absolute; width: 14px; height: 14px;
+    background: var(--card-solid); border: 1px solid var(--line); transform: rotate(45deg); }
+  #obBubble.arr-up::after    { top: -8px; left: var(--arr, 28px); border-right: none; border-bottom: none; }
+  #obBubble.arr-down::after  { bottom: -8px; left: var(--arr, 28px); border-left: none; border-top: none; }
+  #obBubble.arr-left::after  { left: -8px; top: var(--arr, 24px); border-right: none; border-top: none; }
+  #obBubble.arr-right::after { right: -8px; top: var(--arr, 24px); border-left: none; border-bottom: none; }
+
+  /* A 模式置中卡片 */
+  #obPanel { position: fixed; z-index: 61; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; }
+  #obPanel.show { display: flex; }
+  #obPanel .panel-inner { position: relative; width: min(460px, 100%); max-height: 88vh; overflow: auto;
+    background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: var(--shadow-lg); padding: 30px 30px 44px; }   /* 下緣多留白：右下角花飾框住上一步／下一步而非壓在按鈕上 */
+  #obPanel .panel-inner::before, #obPanel .panel-inner::after { content: ""; position: absolute; width: 34px; height: 34px;
+    pointer-events: none; background: var(--sprig) center / contain no-repeat; opacity: .85; }
+  #obPanel .panel-inner::before { top: 6px; left: 6px; }
+  #obPanel .panel-inner::after  { bottom: 6px; right: 6px; transform: rotate(180deg); }
+
+  /* 共用：徽章／標題／內文／步驟控制 */
+  .ob-badge { display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-disp); font-size: 12px; letter-spacing: .15em;
+    color: var(--ink); background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; margin-bottom: 12px; }
+  .ob-title { font-family: var(--font-head); font-size: 24px; font-weight: 600; margin: 0 0 10px; line-height: 1.25; }
+  .ob-text { font-family: var(--font-body); font-size: 1rem; line-height: 1.62; color: var(--ink); margin: 0; white-space: pre-line; }
+  #obPanel .ob-text { font-size: 1rem; line-height: 1.7; }
+  .ob-text .url-eg { display: inline-block; margin-top: 6px; font-family: var(--font-disp); font-size: 12px;
+    letter-spacing: .04em; color: var(--accent2); border: 1px solid var(--line); border-radius: 3px;
+    padding: 4px 8px; background: color-mix(in srgb, var(--accent2) 8%, transparent); word-break: break-all; }
+  .ob-foot { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .ob-dots { display: flex; gap: 6px; flex: 1; }
+  .ob-dots i { width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 22%, transparent); transition: var(--t-fast) ease-out; }
+  .ob-dots i.on { background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .ob-btn { font-family: var(--font-disp); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 8px 14px; border-radius: 4px; cursor: pointer; transition: var(--t-fast) ease-out; white-space: nowrap; }
+  .ob-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ob-btn.primary { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff), var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000));
+    color: #fff; border: none; text-shadow: 1px 1px 1px rgba(0,0,0,.4); }
+  .ob-btn:disabled { opacity: .4; cursor: default; }
+  .ob-skip { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 4px;
+    border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; transition: var(--t-fast) ease-out; }
+  .ob-skip:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* 升版「有更新！」toast：頂部中央下滑、可點（design-style §7.5；全形驚嘆號） */
+  #obUpgrade { position: fixed; top: 0; left: 50%; transform: translate(-50%, -130%); z-index: 64;
+    display: flex; align-items: center; gap: 12px; margin-top: 16px;
+    background: var(--card-solid); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 4px; box-shadow: var(--shadow-lg); padding: 12px 14px 12px 16px;
+    transition: transform var(--t-slow) ease-out; }
+  #obUpgrade.show { transform: translate(-50%, 0); }
+  #obUpgrade .up-btn { font-family: var(--font-disp); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    border: none; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff), var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000));
+    color: #fff; text-shadow: 1px 1px 1px rgba(0,0,0,.4); padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+  #obUpgrade .up-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; }
 </style>
 </head>
 <body>
@@ -646,6 +749,7 @@
     <div class="menu-list" id="settingsList" hidden>
       <button class="menu-item" id="refresh" title="新增或刪除檔案後，按這裡重新掃描並補上新封面">重新整理</button>
       <button class="menu-item" id="rechoose" title="改選其他資料夾">更換資料夾</button>
+      <button class="menu-item" id="replayOnboarding" title="從頭重看一次使用教學">重看使用教學</button>
     </div>
   </div>
 </header>
@@ -714,7 +818,7 @@
   <div class="dialog">
     <h3 id="dlgTitle">新增網址</h3>
 
-    <div class="field">
+    <div class="field" id="fieldUrl">
       <label>網址</label>
       <input type="url" id="fUrl" placeholder="https://…" autocomplete="off" spellcheck="false">
       <div class="platform-pill" id="platform"><span class="dot"></span><span id="platformTxt">貼上後自動偵測平台與縮圖</span></div>
@@ -725,7 +829,7 @@
       <input type="text" id="fTitle" placeholder="留空就用網址的網域當標題" autocomplete="off">
     </div>
 
-    <div class="field">
+    <div class="field" id="fieldThumb">
       <label>縮圖（可選）</label>
       <div class="thumb-row">
         <div class="thumb-preview" id="thumbPreview"><span class="ph">縮圖<br>預覽</span></div>
@@ -750,7 +854,7 @@
 <div class="overlay" id="confirmDialog">
   <div class="dialog confirm">
     <h3>刪除這筆收藏？</h3>
-    <p>將從 <span class="nm">links.md</span> 移除<br><span class="nm" id="confirmName">這筆 URL</span>。本機檔案不受影響。</p>
+    <p>將從 <span class="nm">links.md</span> 移除<br><span class="nm" id="confirmName">這筆 URL</span>。</p>
     <div class="dialog-foot">
       <div class="spacer"></div>
       <button class="btn lg" id="confirmCancel">取消</button>
@@ -791,6 +895,43 @@
     <div class="t-actions" id="toastActions"></div>
   </div>
   <button class="t-close" id="toastClose" title="關閉">✕</button>
+</div>
+
+<!-- ============ Onboarding 教學圖層 ============ -->
+<div id="obMask"></div>
+<div id="obSpot"></div>
+<div id="obHole"></div>
+<div id="obRing"></div>
+
+<div id="obPanel">
+  <div class="panel-inner">
+    <button class="ob-skip" id="obSkipPanel" title="跳過教學">✕</button>
+    <div class="ob-badge" id="obPanelBadge"></div>
+    <h2 class="ob-title" id="obPanelTitle"></h2>
+    <p class="ob-text" id="obPanelText"></p>
+    <div class="ob-foot">
+      <div class="ob-dots" id="obPanelDots"></div>
+      <button class="ob-btn" id="obPanelPrev">上一步</button>
+      <button class="ob-btn primary" id="obPanelNext">下一步</button>
+    </div>
+  </div>
+</div>
+
+<div id="obBubble">
+  <button class="ob-skip" id="obSkipBubble" title="跳過教學">✕</button>
+  <div class="ob-badge" id="obBubbleBadge"></div>
+  <p class="ob-text" id="obBubbleText"></p>
+  <div class="ob-foot">
+    <div class="ob-dots" id="obBubbleDots"></div>
+    <button class="ob-btn" id="obBubblePrev">上一步</button>
+    <button class="ob-btn primary" id="obBubbleNext">下一步</button>
+  </div>
+</div>
+
+<!-- 升版「有更新！」toast（全形驚嘆號） -->
+<div id="obUpgrade">
+  <button class="up-btn" id="obUpgradeBtn">教學有更新！</button>
+  <button class="up-close" id="obUpgradeClose" title="關閉">✕</button>
 </div>
 
 <!-- 隱藏的縮圖檔案選擇器 -->
@@ -912,6 +1053,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSetti
 // 捲動時：往下滑收起 Header，往上滑一點或回到最頂端時再顯示
 let lastScrollY = 0;
 window.addEventListener("scroll", () => {
+  if (document.body.classList.contains("ob-active")) return;   // 教學進行中鎖捲動：頂欄不收合
   const y = window.scrollY;
   if (y <= 4) {
     bar.classList.remove("nav-hidden");          // 最頂端一律顯示
@@ -965,6 +1107,7 @@ async function init() {
   urls = Array.isArray(cachedUrls) ? cachedUrls.map(hydrateUrl) : [];
   if (items.length || urls.length) { showLibrary(); render(); fillThumbsFromCache(); }
   else showIntro();
+  obMaybeUpgradeToast();   // 後續開 app（cache 直出）：教學大升版才跳可點 toast
 }
 
 // 把快取／parse 後的 URL 純資料補上衍生欄位（kind、網域）
@@ -1054,6 +1197,8 @@ async function start(forcePick, feedback) {
   urls = await loadUrls();
 
   showLibrary(); render();
+  // O1：首次成功選資料夾、渲染一開始就同步進教學（不等封面跑完；只有 forcePick=首次親自選才觸發）
+  if (forcePick) maybeAutoOnboarding();
   await generateThumbs();
   paintAllUrlThumbs();
   status.textContent = "";
@@ -1680,6 +1825,7 @@ function openDialog(mode, it) {
   updatePlatformPill($("fUrl").value);
   showOverlay("urlDialog");
   setTimeout(() => $("fUrl").focus(), 50);
+  document.dispatchEvent(new Event("wlib:dialogopen"));   // onboarding Step 4-1 推進掛鉤
 }
 function updatePlatformPill(url) {
   const info = detectPlatform((url || "").trim());
@@ -1691,12 +1837,16 @@ $("dlgDelete").onclick = () => { if (editTarget) { hideOverlay("urlDialog"); ope
 $("dlgSave").onclick = async () => {
   const url = $("fUrl").value.trim(), title = $("fTitle").value.trim();
   if (!/^https?:\/\/.+/i.test(url)) { toast("請輸入有效的網址（需以 http(s):// 開頭）。", true); $("fUrl").focus(); return; }
+  document.dispatchEvent(new Event("wlib:urlsaveattempt"));   // onboarding Step 4-4：有效網址、確實嘗試寫入 → 露出「下一步」
   const btn = $("dlgSave"); btn.disabled = true; const prev = btn.textContent; btn.textContent = "儲存中…";
   try {
     const ok = (dlgMode === "edit" && editTarget)
       ? await saveEditUrl(editTarget, { url, title, thumbBlob: stagedThumbBlob })
       : await saveNewUrl({ url, title, thumbBlob: stagedThumbBlob });
-    if (ok) { hideOverlay("urlDialog"); toast(dlgMode === "edit" ? "已更新這筆收藏。" : "已新增收藏。"); }
+    if (ok) {
+      if (dlgMode !== "edit") document.dispatchEvent(new Event("wlib:urladded"));   // onboarding Step 4-4：寫入成功自動推進
+      hideOverlay("urlDialog"); toast(dlgMode === "edit" ? "已更新這筆收藏。" : "已新增收藏。");
+    }
   } catch (e) { console.warn("[lib] 儲存 URL 失敗：", e); toast("儲存失敗：" + (e && e.message ? e.message : e), true); }
   finally { btn.disabled = false; btn.textContent = prev; }
 };
@@ -1755,6 +1905,287 @@ function toast(html, warn, actions, duration) {
 }
 function hideToast() { $("toast").classList.remove("show"); }
 $("toastClose").onclick = hideToast;
+
+/* =====================================================================
+   Onboarding 教學（獨立 controller，疊在 cache-first app 之上，無資料耦合）
+   spec：onboarding-spec.md / onboarding-handoff.md / design-style.md §7.11
+   ===================================================================== */
+const OB_SEEN_KEY = "wlib-onboarding-seen";
+const OB_VERSION = "v1";       // 內容大改版才升（v2…）；小修不動
+const OB_MAJOR = 1;            // 升版 toast 比對用的主版號
+const obMajorOf = v => { const m = /^v?(\d+)/.exec(v || ""); return m ? +m[1] : 0; };
+
+const OB_SEE = "👀 看過就好", OB_DO = "🖱 換你試試";
+// 13 個「畫面」對應 7 大步（macro）；多子步的大步（4／5）以 sub 計位。文案逐字照 onboarding-spec.md §4。
+const OB_SCREENS = [
+  // 開場（封面）：無 macro → 不顯示步驟點、不顯示徽章
+  { kind: "dialog", title: "歡迎來到編織圖圖書館！", body:
+`第一次進來，先看看這個網站的功能和注意事項吧。` },
+  { macro: 1, kind: "dialog", badge: OB_SEE, title: "檔案和網址兩種收藏", body:
+`PDF ／ 圖片檔案：
+→ 以資料夾裡實際有的檔案為準
+→ 只讀一層資料夾，不會讀子資料夾裡的檔案
+→ 動了資料夾中的檔案（新增／改名／刪掉），要按「重新整理」才會跟著更新` },
+  { macro: 1, kind: "dialog", badge: OB_SEE, title: "🔗 網址收藏", body:
+`🔗 網址：
+→ 網頁會自動在你資料夾裡建一個 links.md 和 thumbs/ 資料夾，
+  用來存放網址清單和預覽圖（檔名會是一串英數字）
+→ 平時用網頁裡的按鈕新增／編輯／刪除網址資料即可
+→ 想的話也可以用記事本等文字編輯軟體直接打開 links.md 來改（要注意內容格式）` },
+  { macro: 2, kind: "dialog", badge: OB_SEE, title: "萬一 links.md 不小心壞掉", body:
+`如果 links.md 因為任何原因壞掉
+（例如手動編輯時格式不小心打錯），
+網頁會自動從上次留下的副本救回網址收藏，
+壞掉的原檔會改名成 links.md.broken-{當下時間}，
+完整保留在資料夾裡。
+
+你什麼都不用做。
+如果發現有網址不見了，
+可以打開 .broken 那個檔，把不見的撿回來。` },
+  { macro: 3, kind: "dialog", badge: OB_SEE, title: "右上角的「重新整理」", body:
+`這個按鈕會一口氣做兩件事：
+1. 重新看一次資料夾裡有哪些 PDF ／ 圖片
+2. 重新讀一次 links.md，把你改過的網址收藏內容讀進來
+
+✅ 什麼時候要按：
+- 動了資料夾中的檔案（新增／改名／刪掉）
+- 改了 links.md 的內容
+- 打開網頁後，懷疑畫面跟資料夾裡實際的東西不一樣
+
+🛟 不會因為重新整理弄丟你的收藏。重新整理只讀取不寫入。` },
+  // ── Step 4：試試新增網址（唯一互動步驟）──
+  { macro: 4, kind: "dialog", badge: OB_DO, title: "試試把一個網址收進來", body:
+`網頁右上角的「新增網址」鈕可以
+把網頁／影片連結收進你的資料夾。
+
+來試試吧！` },
+  { macro: 4, kind: "spot", badge: OB_DO, target: "#addUrlBtn", side: "bottom",
+    interactive: true, advance: "dialogopen", text: "按這顆，跳出新增視窗。" },
+  { macro: 4, kind: "ring", badge: OB_DO, target: "#fieldUrl", side: "right", dialog: true, advance: "urlinput",
+    text: "貼上任一網址試試。\n不知道貼什麼？可以複製這個 YouTube 首頁：", eg: "https://www.youtube.com/" },
+  { macro: 4, kind: "ring", badge: OB_DO, target: "#fieldThumb", side: "right", dialog: true, next: true,
+    text: "YouTube 連結會自動產生縮圖。\n其他網站可以用檔案／拖拉／貼上自訂縮圖。\n這次不用真的上傳，看一下就好。" },
+  { macro: 4, kind: "ring", badge: OB_DO, target: "#dlgSave", side: "left", dialog: true, advance: "save",
+    text: "按下儲存，這筆網址就會真的寫進 links.md。" },
+  // ── Step 5：其他常用按鈕（逐一 spotlight，純說明）──
+  { macro: 5, kind: "spot", badge: OB_SEE, target: "#slideBtn", side: "bottom", next: true,
+    text: "從第一張開始，全螢幕逐張看" },
+  { macro: 5, kind: "spot", badge: OB_SEE, target: "#settingsBtn", side: "bottom", next: true,
+    text: "設定選單裡有「重新整理」和「更換資料夾」。" },
+  { macro: 5, kind: "spot", badge: OB_SEE, target: "#sizeBtn", side: "left", next: true,
+    text: "卡片預覽可以切寬大 ／ 標準 ／ 緊湊" },
+  { macro: 5, kind: "spot", badge: OB_SEE, target: "#sortBtn", side: "left", next: true,
+    text: "依檔名 ↔ 依修改時間切換；切到時間排序會用月份分組成時間軸" },
+  { macro: 5, kind: "spot", badge: OB_SEE, target: "#sourceBtn", side: "left", next: true,
+    text: "全部 ／ 檔案 ／ 網址篩選檢視" },
+  // ── Step 6／7 ──
+  { macro: 6, kind: "dialog", badge: OB_SEE, title: "換資料夾 = 重新開始", body:
+`這個網頁一次只能呈現一個資料夾的內容。
+
+選了新的資料夾，網頁會：
+✓ 把之前的封面「預覽圖」全清掉
+✓ 從新資料夾重新讀取 PDF ／ 圖片的「預覽圖」和網址收藏
+
+🛟 舊資料夾的內容不會跟著消失：
+- 你的 PDF ／ 圖片本來就在那裡，不會被動
+- 之前在網頁裡收藏的網址，都還在舊資料夾最外層的 links.md，縮圖存在舊資料夾的 thumbs/ 子資料夾
+- 這兩個是網頁幫你建的，但它們屬於你
+- 想把網址收藏帶到新資料夾？
+  在檔案總管把這兩個搬過去就行` },
+  { macro: 7, kind: "dialog", badge: OB_SEE, title: "準備好了！", last: true, body:
+`教學結束。
+之後想再看一次，點右上角的設定齒輪 →「重看使用教學」就行。
+
+開始整理你的編織資料夾吧！` },
+];
+const OB_TOTAL = 7;   // 大步總數（步驟指示器用）
+
+let obOn = false, obIdx = 0, obAttempted = false;
+
+// 把浮層方框貼到目標元件位置（含 padding）；resize 時整個 obRender() 重算
+function obBoxTo(el, rect, pad) {
+  el.style.top = (rect.top - pad) + "px";
+  el.style.left = (rect.left - pad) + "px";
+  el.style.width = (rect.width + pad * 2) + "px";
+  el.style.height = (rect.height + pad * 2) + "px";
+}
+// 依目標與偏好方向擺氣泡，超界退而求其次、箭頭對準目標中心
+function obPlaceBubble(rect, side) {
+  const b = $("obBubble"), W = b.offsetWidth, H = b.offsetHeight, gap = 16, m = 10;
+  let top, left, arr;
+  const tryRight = () => rect.right + gap + W <= window.innerWidth - m;
+  const tryLeft  = () => rect.left - gap - W >= m;
+  const tryBottom = () => rect.bottom + gap + H <= window.innerHeight - m;
+  if (side === "right" && tryRight())       { left = rect.right + gap; top = rect.top; arr = "left"; }
+  else if (side === "left" && tryLeft())    { left = rect.left - gap - W; top = rect.top; arr = "right"; }
+  else if (side === "bottom" && tryBottom()){ left = rect.left; top = rect.bottom + gap; arr = "up"; }
+  else if (tryBottom())                     { left = rect.left; top = rect.bottom + gap; arr = "up"; }
+  else if (tryLeft())                       { left = rect.left - gap - W; top = rect.top; arr = "right"; }
+  else                                      { left = rect.left; top = rect.top - gap - H; arr = "down"; }
+  left = Math.max(m, Math.min(left, window.innerWidth - W - m));
+  top  = Math.max(m, Math.min(top,  window.innerHeight - H - m));
+  b.style.left = left + "px"; b.style.top = top + "px";
+  b.className = "show arr-" + arr;
+  if (arr === "up" || arr === "down") {
+    const cx = rect.left + rect.width / 2 - left;
+    b.style.setProperty("--arr", Math.max(14, Math.min(cx - 7, W - 28)) + "px");
+  } else {
+    const cy = rect.top + rect.height / 2 - top;
+    b.style.setProperty("--arr", Math.max(14, Math.min(cy - 7, H - 28)) + "px");
+  }
+}
+
+function obDotsHTML(sc) {
+  if (!sc.macro) return "";   // 開場（封面）不顯示步驟點
+  return Array.from({ length: OB_TOTAL }, (_, k) => `<i class="${k === sc.macro - 1 ? "on" : ""}"></i>`).join("");
+}
+// 設定步驟控制：上一步禁用狀態、下一步顯示與文字（依該步推進方式）
+function obSetFoot(prevBtn, nextBtn, sc) {
+  prevBtn.disabled = (obIdx === 0);
+  if (sc.last) { nextBtn.textContent = "我知道了"; nextBtn.style.display = ""; }
+  else if (sc.kind === "dialog" || sc.next) { nextBtn.textContent = "下一步"; nextBtn.style.display = ""; }
+  else if (sc.advance === "save") { nextBtn.textContent = "下一步"; nextBtn.style.display = obAttempted ? "" : "none"; }
+  else { nextBtn.style.display = "none"; }   // 純動作推進步驟（4-1 按鈕、4-2 貼網址）：不給下一步
+}
+
+// 維持新增網址對話框狀態與當前畫面一致
+function obSyncDialog(sc) {
+  const open = $("urlDialog").classList.contains("show");
+  if (sc.dialog && !open) openDialog("add");
+  else if (!sc.dialog && open) hideOverlay("urlDialog");
+}
+
+function obHideLayers() {
+  ["obMask", "obSpot", "obHole", "obRing", "obBubble", "obPanel"].forEach(id => $(id).classList.remove("show"));
+}
+
+function obRender() {
+  const sc = OB_SCREENS[obIdx];
+  obHideLayers();
+  obSyncDialog(sc);
+
+  if (sc.kind === "dialog") {
+    $("obPanelBadge").textContent = sc.badge;
+    $("obPanelBadge").style.display = sc.badge === OB_DO ? "" : "none";   // 看過就好步驟不顯示徽章
+    $("obPanelTitle").textContent = sc.title;
+    $("obPanelText").textContent = sc.body;
+    $("obPanelDots").innerHTML = obDotsHTML(sc);
+    obSetFoot($("obPanelPrev"), $("obPanelNext"), sc);
+    $("obMask").className = "show dark";
+    $("obPanel").classList.add("show");
+    $("obPanel").querySelector(".panel-inner").scrollTop = 0;   // 每步從頂端（徽章／標題）開始看
+    return;
+  }
+
+  // spot / ring：填氣泡
+  $("obBubbleBadge").textContent = sc.badge;
+  $("obBubbleBadge").style.display = sc.badge === OB_DO ? "" : "none";   // 看過就好步驟不顯示徽章
+  $("obBubbleText").textContent = sc.text;
+  if (sc.eg) {
+    const eg = document.createElement("span");
+    eg.className = "url-eg"; eg.textContent = sc.eg;
+    $("obBubbleText").appendChild(document.createTextNode("\n"));
+    $("obBubbleText").appendChild(eg);
+  }
+  $("obBubbleDots").innerHTML = obDotsHTML(sc);
+  obSetFoot($("obBubblePrev"), $("obBubbleNext"), sc);
+
+  // 等對話框／版面排好再量座標
+  requestAnimationFrame(() => {
+    if (!obOn || OB_SCREENS[obIdx] !== sc) return;
+    const el = document.querySelector(sc.target);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (sc.kind === "spot") {
+      $("obMask").className = "show clear";          // 透明：只擋點擊，壓暗交給 #obSpot
+      obBoxTo($("obSpot"), rect, 8); $("obSpot").classList.add("show");
+      if (sc.interactive) {                          // 互動步驟：透明點擊代理轉發給真實目標
+        obBoxTo($("obHole"), rect, 0);
+        $("obHole").onclick = () => { const t = document.querySelector(sc.target); if (t) t.click(); };
+        $("obHole").classList.add("show");
+      }
+    } else {                                         // ring：對話框自帶遮罩壓暗＋擋背景，只圈高亮環
+      obBoxTo($("obRing"), rect, 8); $("obRing").classList.add("show");
+    }
+    $("obBubble").classList.add("show");             // 先顯示再量尺寸，否則 offsetWidth=0 會算錯擺位／溢出
+    obPlaceBubble(rect, sc.side);
+  });
+}
+
+function obGo(d) {
+  const n = obIdx + d;
+  if (n < 0) return;
+  if (n >= OB_SCREENS.length) { obFinish(); return; }
+  obIdx = n; obAttempted = false; obRender();
+}
+
+function startOnboarding() {
+  obOn = true; obIdx = 0; obAttempted = false;
+  document.body.classList.add("ob-active");
+  bar.classList.remove("nav-hidden");                // 頂欄一定可見
+  closeSettings();
+  window.scrollTo(0, 0);
+  obRender();
+}
+function obFinish() {
+  obOn = false;
+  try { localStorage.setItem(OB_SEEN_KEY, OB_VERSION); } catch (_) {}
+  obHideLayers();
+  if ($("urlDialog").classList.contains("show")) hideOverlay("urlDialog");
+  document.body.classList.remove("ob-active");
+}
+function maybeAutoOnboarding() {
+  if (localStorage.getItem(OB_SEEN_KEY)) return;     // 已看過（任何版本）→ 首次不再自動跳
+  startOnboarding();
+}
+
+// 步驟控制按鈕
+$("obPanelPrev").onclick  = () => obGo(-1);
+$("obPanelNext").onclick  = () => { OB_SCREENS[obIdx].last ? obFinish() : obGo(1); };
+$("obBubblePrev").onclick = () => obGo(-1);
+$("obBubbleNext").onclick = () => obGo(1);
+$("obSkipPanel").onclick  = obFinish;
+$("obSkipBubble").onclick = obFinish;
+
+// 推進掛鉤（皆由 obOn + 當前步推進方式守門；非教學期間／其他步一律忽略）
+document.addEventListener("wlib:dialogopen", () => { const sc = OB_SCREENS[obIdx]; if (obOn && sc && sc.advance === "dialogopen") obGo(1); });
+$("fUrl").addEventListener("input", () => {
+  const sc = OB_SCREENS[obIdx];
+  if (obOn && sc && sc.advance === "urlinput") { const v = $("fUrl").value.trim(); if (v.includes("://") && detectPlatform(v)) obGo(1); }
+});
+document.addEventListener("wlib:urlsaveattempt", () => {     // 4-4：嘗試寫入（無論成敗）→ 露出「下一步」
+  const sc = OB_SCREENS[obIdx];
+  if (obOn && sc && sc.advance === "save") { obAttempted = true; $("obBubbleNext").style.display = ""; }
+});
+document.addEventListener("wlib:urladded", () => { const sc = OB_SCREENS[obIdx]; if (obOn && sc && sc.advance === "save") obGo(1); });
+
+// 教學進行中：鎖死新增網址對話框（取消鈕／點遮罩不可關閉，spec 點 2）＋ Esc＝跳過教學（capture，不動原 handler）
+document.addEventListener("click", (e) => {
+  if (!obOn) return;
+  const sc = OB_SCREENS[obIdx];
+  if (sc && sc.dialog && (e.target.id === "urlDialog" || (e.target.closest && e.target.closest("#dlgCancel")))) {
+    e.stopImmediatePropagation(); e.preventDefault();
+  }
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (!obOn || e.key !== "Escape") return;
+  e.stopImmediatePropagation(); e.preventDefault(); obFinish();
+}, true);
+
+// resize：重算座標（spec §3.1）
+window.addEventListener("resize", () => { if (obOn) obRender(); });
+
+// 重看教學（設定選單）：一律從 Step 1，不重置 localStorage（spec §2.2／O11）
+$("replayOnboarding").onclick = () => { startOnboarding(); };
+
+// 升版「有更新！」toast：cache 直出時，已看版本主版號 < 當前 → 跳可點 toast，點下去從 Step 1 重播（spec O10）
+function obMaybeUpgradeToast() {
+  const seen = localStorage.getItem(OB_SEEN_KEY);
+  if (!seen || obMajorOf(seen) >= OB_MAJOR) return;
+  $("obUpgrade").classList.add("show");
+}
+$("obUpgradeBtn").onclick = () => { $("obUpgrade").classList.remove("show"); startOnboarding(); };
+$("obUpgradeClose").onclick = () => { $("obUpgrade").classList.remove("show"); };
 
 function prettyTitle(name) { return name.replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
