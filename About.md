@@ -132,26 +132,7 @@ yarn-patterns-library/
 
 ## 7. 設計風格
 
-整體採 **Academia／古典學院風**(圖書館／古籍手稿氛圍),但**色調沿用原本的綠／藍**——綠色 `--accent` 扮演學院風裡「黃銅」的角色(全站互動色語言)。**只保留深色模式**。
-
-- **配色(深色 only)**:`:root` 直接寫深色值並加 `color-scheme: dark`,**已移除淺色模式與 `prefers-color-scheme`**。主色 `--accent` `#6dbd9f`(綠)、`--accent2` `#84b6d6`(藍);底色為夜色墨綠 `--bg1/2/3`。背景為多層 radial「館內燈光」光暈 + 線性漸層,`background-attachment: fixed`(捲動時背景固定)。
-- **字體(三套襯線,皆用 CSS 變數)**:`--font-head` 標題 = Cormorant Garamond、`--font-body` 內文 = Crimson Pro、`--font-disp` 標籤／顯示 = Cinzel(大寫、寬字距);三者都把 **Noto Serif TC** 排在後面接手中文(拉丁字才用前者)。**不要改回 sans-serif**。
-- **氛圍覆蓋層**:`body::before` 紙張紋理(SVG noise,opacity .035,`mix-blend: overlay`)、`body::after` 暈影(中央透明、邊緣壓暗);兩者 `position: fixed`、`pointer-events: none`、`z-index: 40`——**在燈箱(z 50)之下**,所以燈箱不受紋理/暈影影響。
-- **圓角一律 4px(不用膠囊／大圓角)**;主要按鈕走綠調「拋光金屬」線性漸層 + 鐫刻字陰影(一明一暗 `text-shadow`)。動效統一 `ease-out`、沉穩時長(`--t-fast/base/slow/drama` = 150/300/500/700ms,**不彈跳**),並附 `prefers-reduced-motion` 關閉動畫;鍵盤 focus 用綠色雙層 `box-shadow` 環。
-- **頁面左右留白用 `--gutter`**(`clamp(20px,7vw,112px)`,手機 16px),同時套在 `header` 與 `main` 的左右內距,內容往內縮、兩側空出來放浮動按鈕列 `.dock`。
-- **首頁說明(重點裝飾區)**:Cinzel overline「Bibliotheca Textilis」、華麗分隔線(中央 ❧ 字符)、`.why` 卡片四角花飾(`::before/::after` 畫角框)、首段首字下沉(`.why p:first-of-type::first-letter`,綠色大寫)。
-- **畫廊卡片**:`.card` 是「襯紙裱框」——4px 圓角、`padding: 7px` 把封面框住。封面 `.thumb` 為**方形(2px 圓角)、全彩**(早期試過的拱頂圓弧 `--arch` 與 sepia 濾鏡**已依需求移除**),hover 只做輕微放大。底部 `.label` 用**線性漸層**(不再毛玻璃)+ 主題色直條;類型標籤(PDF／JPG)在右上角,Cinzel 鐫刻小標。
-- **側邊浮動按鈕 `.dock`**:`position: fixed` 靠右**垂直置中**(手機版同樣置中,只縮小按鈕),4px 方塊「icon + Cinzel 小標籤」;目前放「檢視大小」「排序」「來源篩選」三顆。
-- **頂欄 `header`**:`position: sticky`,捲動方向控制 `.nav-hidden`(`translateY(-100%)`)收合;標題 `h1` 用 Cormorant 襯線。手機版 `flex-wrap` 成兩行(搜尋自己一行、幻燈片+設定一行)。
-- **時間軸版面**:`.grid.mode-timeline` 左側 `::before` 畫垂直線,每個 `.tl-month` 用 `::before` 在線上點一個主題色圓點(外圈帶光暈),月份標題 `.tl-label` 用 Cormorant 襯線,卡片放 `.tl-grid`(沿用 `--min`/`--ar`/`--pos` 變數)。
-- **燈箱**:遮罩用深墨綠 `color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.92))`,**不用毛玻璃**(避免閃動);`.frame` 加四角花飾外框,標題 `.cap .t` 用 Cormorant 襯線。
-- **URL 收藏視覺**:URL 一律用**藍 `--accent2`**(badge「連結」、`.label` 直條)與本機綠 `--accent` 做來源區隔(沿用既有 image badge 的藍);綠仍是全站互動色。頂欄「新增網址」鈕是**唯一視覺主張**——primary 綠 + icon + 文字 + 呼吸光暈(`addGlow`,hover 停),刻意移除主按鈕白花押避免與 icon 打架。對話框/確認框沿用燈箱深綠遮罩 + `--sprig` 四角花飾(**不用毛玻璃**);`.card-actions`(編輯／刪除)hover 浮出;`.toast` 非阻斷、底部滑入,警示用琥珀左框。**對話框、卡片、toast 一律不用 `backdrop-filter`**(同 §4)。
-
-### 封面裁切比例(`--ar`)
-
-- 寬大 = `16/9`(寬版裁切,`object-fit: cover` 不變形只顯示局部)。
-- 標準／緊湊 = `1/1`(正方形裁切)。
-- `--pos` 控制裁切焦點(預設 `center 32%`,偏上以對到封面主照片)。
+整段已搬到 [`spec/design-style.md`](spec/design-style.md)（含配色、字體、氛圍覆蓋層、動效、元件規範、花飾系統、封面裁切比例 `--ar` 等）。改視覺前先讀那份。
 
 ---
 
@@ -204,5 +185,4 @@ yarn-patterns-library/
 - 時間軸的月份分組靠**先排序、再線性掃描**(相同月份連續才分到同一塊),所以 `renderTimeline()` 一定要先 sort 再分組。
 - File System Access API **只有 `lastModified`**(沒有建立時間),時間排序／時間軸都以它為準。
 - **URL 收藏:`links.md` 是唯一真相,`kv.urls` 只是 cache**。CRUD 一律走「讀磁碟 → re-parse → 改記憶體單一條目 → 原子寫回 → 更新 cache」(`reparseForWrite()`),**不要**改成「先寫 cache 稍後寫檔」或用 cache 整份重生 markdown,否則會覆寫掉 VS Code 對其他條目的外部修改。本機檔案與 URL **無耦合**,別把兩者綁在一起。
-- 設計風格是 **Academia／古典學院風 + 綠色調 + 只深色**(見 §7)。**不要**重新加回淺色模式、封面拱頂圓弧(`--arch`)或 sepia 濾鏡,也**不要**把襯線字體換成 sans-serif——這些都是刻意移除／指定的。
-- **花邊裝飾(卡片對角／燈箱四角／主按鈕)有獨立規格:見 `spec/FLOURISH.md`(改花邊前務必先讀)。** 重點守則:① 裝飾性花邊用**白色 SVG**(卡片／燈箱會壓在使用者照片上,靠「烤進 SVG 的深色描邊」維持可讀;按鈕背景可控,用**純白無描邊**)。② 綠 `--accent` 仍是**互動色**——別把花邊改成金 brass,也別動 hover 邊框／focus 環/`.label` 綠直條。③ 陰影一律走 **SVG 內描邊**,**不要**用 CSS `filter`／`backdrop-filter`(同 §4 理由)。④ 只長**對角兩處**、保持稀疏。⑤ 花邊全是 CSS 偽元素 + `background-image`,**不改 JS**、不動 `ensureCards()`。
+- **視覺／設計風格改動先讀 [`spec/design-style.md`](spec/design-style.md)**(尤其 §1 硬限制與 §10 禁忌一覽)。**不要**重新加回刻意移除的東西(淺色模式、拱頂圓弧 `--arch`、sepia、毛玻璃 `.label`、sans-serif),**不要**在任何元素加 `backdrop-filter` ／ CSS `filter`(同 §4 理由)。
