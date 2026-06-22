@@ -748,6 +748,64 @@
     border: none; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff), var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000));
     color: #fff; text-shadow: 1px 1px 1px rgba(0,0,0,.4); padding: 8px 14px; border-radius: 4px; cursor: pointer; }
   #obUpgrade .up-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; }
+
+  /* ===================================================================
+     ↓↓↓ 觸控裝置互動（touch-interaction-spec.md） ↓↓↓
+     =================================================================== */
+
+  /* 1.1 觸控裝置：隱藏 hover 才出現的按鈕 */
+  @media (hover: none), (pointer: coarse) {
+    .expand       { display: none !important; }
+    .card-actions { display: none !important; }
+  }
+
+  /* 1.4 全螢幕透明攔截層：蓋住卡片網格，工具列 z-index 更高 */
+  #touchIntercept {
+    position: fixed; inset: 0; background: transparent; z-index: 45; display: none;
+  }
+  #touchIntercept.show { display: block; }
+
+  /* 1.3 長按工具列：fixed full-width 底部列 */
+  #touchToolbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 46;
+    background: var(--card-solid);
+    border-top: 1px solid var(--line);
+    border-radius: 4px 4px 0 0;
+    box-shadow: var(--shadow-lg);
+    padding: 12px var(--gutter);
+    display: flex; align-items: center; gap: 8px;
+    transform: translateY(100%);
+    transition: transform var(--t-base) ease-out;
+  }
+  #touchToolbar.show { transform: translateY(0); }
+  .tb-left  { display: flex; gap: 7px; }
+  .tb-right { margin-left: auto; }
+
+  /* 工具列按鈕基礎：沿用 .card-actions button 規格 */
+  #touchToolbar button {
+    width: 34px; height: 34px; border-radius: 4px; cursor: pointer; color: #fff;
+    border: 1px solid rgba(255,255,255,.35); background: rgba(10,18,15,.6);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: var(--t-fast) ease-out;
+  }
+  #touchToolbar button svg { width: 15px; height: 15px; display: block; }
+  #touchToolbar .tb-edit:active { background: var(--accent);  border-color: var(--accent); }
+  #touchToolbar .tb-del:active  { background: #c0573f;        border-color: #c0573f; }
+
+  /* 「開啟」按鈕：accent 強調、含圖示與文字，靠右固定 */
+  #touchToolbar .tb-open {
+    width: auto; padding: 0 14px; gap: 7px;
+    background: var(--accent); border-color: var(--accent);
+    font-family: var(--font-disp); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  }
+  #touchToolbar .tb-open svg { width: 14px; height: 14px; }
+  #touchToolbar .tb-open:active { filter: brightness(.88); }
+
+  /* 被長按選中的卡片：accent 外框標示 */
+  .card.tb-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent), var(--shadow-lg);
+  }
 </style>
 </head>
 <body>
@@ -966,6 +1024,13 @@
 <!-- 隱藏的縮圖檔案選擇器 -->
 <input type="file" id="thumbFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
 
+<!-- 觸控長按工具列（1.3／1.4） -->
+<div id="touchIntercept"></div>
+<div id="touchToolbar">
+  <div class="tb-left"></div>
+  <div class="tb-right"></div>
+</div>
+
 <script src="./lib/pdf.min.js"></script>
 <script>
 const pdfjsLib = globalThis.pdfjsLib;
@@ -1010,6 +1075,7 @@ let urls = [];                // URL 條目（links.md，這次新增；與本�
 let dirHandle = null;
 let sortMode = localStorage.getItem("wlib-sort") === "time" ? "time" : "name";   // "name"=檔名, "time"=時間
 let sourceMode = ["all","local","url"].includes(localStorage.getItem("wlib-source")) ? localStorage.getItem("wlib-source") : "all";
+const mqTouch = window.matchMedia("(hover: none), (pointer: coarse)");
 
 const thumbKey = it => `${it.name}|${it.size}|${it.lastModified}|w${THUMB_W}`;
 
@@ -1333,12 +1399,13 @@ function ensureCards() {
     card.innerHTML = it.kind === "url" ? urlCardHTML(it) : localCardHTML(it);
     card.querySelector(".expand").onclick = (e) => { e.stopPropagation(); openViewer(visibleIndexOf(it)); };
     if (it.kind === "url") {
-      card.onclick = () => openItem(it);
+      card.onclick = () => { if (!mqTouch.matches) openItem(it); };
       card.querySelector(".edit").onclick = (e) => { e.stopPropagation(); openDialog("edit", it); };
       card.querySelector(".del").onclick = (e) => { e.stopPropagation(); openConfirm(it); };
     } else {
-      card.onclick = () => openItem(it);
+      card.onclick = () => { if (!mqTouch.matches) openItem(it); };
     }
+    attachLongPress(card, it);
     card.__item = it;
     it._card = card;
   });
@@ -2230,6 +2297,67 @@ $("obUpgradeClose").onclick = () => { $("obUpgrade").classList.remove("show"); }
 function prettyTitle(name) { return name.replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
 function humanSize(n) { return n < 1024 ? n + " B" : n < 1048576 ? (n/1024).toFixed(0) + " KB" : (n/1048576).toFixed(1) + " MB"; }
+
+/* =========================================================
+   觸控裝置互動（touch-interaction-spec.md）
+   ========================================================= */
+const SVG_TB_FILE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+const SVG_TB_EXT  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+
+let tbSelectedCard = null;
+
+function tbHide() {
+  if (tbSelectedCard) { tbSelectedCard.classList.remove("tb-selected"); tbSelectedCard = null; }
+  $("touchToolbar").classList.remove("show");
+  $("touchIntercept").classList.remove("show");
+}
+
+function tbShow(it) {
+  if (tbSelectedCard) tbSelectedCard.classList.remove("tb-selected");
+  tbSelectedCard = it._card;
+  tbSelectedCard.classList.add("tb-selected");
+  const isUrl = it.kind === "url";
+  const leftEl  = $("touchToolbar").querySelector(".tb-left");
+  const rightEl = $("touchToolbar").querySelector(".tb-right");
+  if (isUrl) {
+    leftEl.innerHTML =
+      `<button class="tb-edit" title="編輯">${SVG_EDIT}</button>` +
+      `<button class="tb-del"  title="刪除">${SVG_DEL}</button>`;
+    leftEl.querySelector(".tb-edit").onclick = (e) => { e.stopPropagation(); tbHide(); openDialog("edit", it); };
+    leftEl.querySelector(".tb-del").onclick  = (e) => { e.stopPropagation(); tbHide(); openConfirm(it); };
+  } else {
+    leftEl.innerHTML = "";
+  }
+  rightEl.innerHTML = `<button class="tb-open">${isUrl ? SVG_TB_EXT : SVG_TB_FILE}開啟</button>`;
+  rightEl.querySelector(".tb-open").onclick = (e) => { e.stopPropagation(); tbHide(); openFile(it); };
+  $("touchToolbar").classList.add("show");
+  $("touchIntercept").classList.add("show");
+}
+
+$("touchIntercept").onclick = () => tbHide();
+
+function attachLongPress(card, it) {
+  let timer = null, startX = 0, startY = 0, suppressClick = false;
+  card.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    timer = setTimeout(() => { timer = null; suppressClick = true; tbShow(it); }, 500);
+  }, { passive: true });
+  card.addEventListener("touchmove", (e) => {
+    if (!timer) return;
+    if (Math.abs(e.touches[0].clientX - startX) > 8 || Math.abs(e.touches[0].clientY - startY) > 8) {
+      clearTimeout(timer); timer = null;
+    }
+  }, { passive: true });
+  const done = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  card.addEventListener("touchend",    done);
+  card.addEventListener("touchcancel", done);
+  card.addEventListener("contextmenu", (e) => { if (mqTouch.matches) e.preventDefault(); });
+  card.addEventListener("click", () => {
+    if (suppressClick) { suppressClick = false; return; }
+    if (!mqTouch.matches) return;
+    openViewer(visibleIndexOf(it));
+  });
+}
 </script>
 </body>
 </html>
