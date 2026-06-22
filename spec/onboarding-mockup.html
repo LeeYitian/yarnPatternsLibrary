@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onboarding Mockup — Step 4「試試新增網址」</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ===================================================================
+     設計 token：逐字沿用 index.html（design-style.md 為準），不另創一套。
+     =================================================================== */
+  :root {
+    color-scheme: dark;
+    --bg1: #0a1614; --bg2: #08120f; --bg3: #0c1a15;
+    --card: rgba(26,38,35,.52); --card-solid: #141f1c;
+    --ink: #e7f0ec; --muted: #92a69f; --line: rgba(150,185,172,.14);
+    --accent: #6dbd9f; --accent2: #84b6d6;
+    --shadow: 0 14px 40px rgba(0,0,0,.5); --shadow-lg: 0 26px 64px rgba(0,0,0,.62);
+    --font-head: "Cormorant Garamond","Noto Serif TC","Microsoft JhengHei",serif;
+    --font-body: "Crimson Pro","Noto Serif TC","Microsoft JhengHei",serif;
+    --font-disp: "Cinzel","Noto Serif TC","Microsoft JhengHei",serif;
+    --t-fast: 150ms; --t-base: 300ms; --t-slow: 500ms; --t-drama: 700ms;
+    --gutter: clamp(20px, 7vw, 112px);
+    /* onboarding 遮罩色：沿用燈箱／對話框的深墨綠（design-style §7.3／§7.4） */
+    --ob-mask: color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.92));
+    --sprig: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60' fill='none' stroke-linecap='round' stroke-linejoin='round'><filter id='g' x='-50%' y='-50%' width='200%' height='200%'><feDropShadow dx='0' dy='0' stdDeviation='1.7' flood-color='rgba(6,12,10,.7)'/></filter><g filter='url(%23g)'><g stroke='rgba(150,206,180,.95)' stroke-width='1.8'><path d='M31 10 C 21 9 13 10 11 16 C 10 19 12 21 14.5 20 C 17 19 16.5 16 14 16.5'/><path d='M10 31 C 9 21 10 13 16 11 C 19 10 21 12 20 14.5 C 19 17 16 16.5 16.5 14'/></g><path d='M11 5 C 11.6 9 12 9.4 16 11 C 12 12.6 11.6 13 11 17 C 10.4 13 10 12.6 6 11 C 10 9.4 10.4 9 11 5 Z' fill='rgba(150,206,180,.95)'/><path d='M33 28 C 33.5 31 34 31.5 37 32 C 34 32.5 33.5 33 33 36 C 32.5 33 32 32.5 29 32 C 32 31.5 32.5 31 33 28 Z' fill='rgba(150,206,180,.95)'/></g></svg>");
+    --swash: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M42 8 C 31 7 24 11 16 9 C 9 7.4 6 4 9.5 3 C 13 2 13 7 8 7.6' stroke='white' stroke-width='1.4'/><path d='M5 3.5 C 5.4 6.2 6 6.6 8.6 7.6 C 6 8.6 5.4 9 5 11.6 C 4.6 9 4 8.6 1.4 7.6 C 4 6.6 4.6 6.2 5 3.5 Z' fill='white'/></svg>");
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--font-body);
+    font-size: 16px; line-height: 1.625; -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(1200px 820px at 50% -10%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 60%),
+      radial-gradient(960px 720px at 6% 2%, color-mix(in srgb, var(--accent2) 20%, transparent), transparent 55%),
+      radial-gradient(1040px 760px at 100% 6%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 56%),
+      radial-gradient(1180px 860px at 50% 122%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 62%),
+      linear-gradient(165deg, var(--bg1), var(--bg2) 48%, var(--bg3));
+    background-repeat: no-repeat; background-attachment: fixed;
+  }
+  body::before, body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+  body::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .035; mix-blend-mode: overlay;
+  }
+  body::after {
+    background: radial-gradient(ellipse at center, transparent 0%, transparent 52%, rgba(12,20,16,.5) 122%);
+    opacity: .55;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+  :where(button, a, input, [tabindex]):focus-visible {
+    outline: none; box-shadow: 0 0 0 2px var(--bg1), 0 0 0 4px var(--accent);
+  }
+
+  /* ---------- 頂欄（臨摹 index.html） ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg1) 78%, transparent);
+    backdrop-filter: blur(14px) saturate(1.15);
+    border-bottom: 1px solid var(--line);
+    padding: 14px var(--gutter); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  h1 { font-family: var(--font-head); font-size: 27px; margin: 0; font-weight: 600;
+    letter-spacing: .02em; display: flex; align-items: center; gap: 11px; line-height: 1.1; }
+  h1 .logo-ico { width: 30px; height: 30px; object-fit: contain; border-radius: 4px; padding: 1px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    display: inline-flex; align-items: center; justify-content: center; color: var(--accent); }
+  h1 .sub { color: var(--muted); font-family: var(--font-disp); font-weight: 500; font-size: 11px;
+    letter-spacing: .22em; text-transform: uppercase; }
+  .grow { flex: 1; }
+  .btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    font-family: var(--font-disp); font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+    padding: 11px 17px; border-radius: 4px; cursor: pointer;
+    transition: var(--t-base) ease-out; white-space: nowrap; backdrop-filter: blur(6px);
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 50%,
+      color-mix(in srgb, var(--accent) 82%, #000) 100%);
+    color: #fff; border: none;
+    text-shadow: 1px 1px 1px rgba(0,0,0,.4), -1px -1px 1px rgba(255,255,255,.12);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.25);
+  }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.icon { padding: 0; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn.icon svg { width: 19px; height: 19px; display: block; }
+  .btn.lg { padding: 12px 22px; }
+  .btn.ghost-danger { color: #d08672; }
+
+  /* 頂欄「新增網址」鈕：primary 綠 + 圖標 + 文字 + 呼吸光暈 + 金屬掃光 */
+  #addUrlBtn { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 8px;
+    animation: addGlow 2.8s ease-in-out infinite; }
+  #addUrlBtn svg { width: 16px; height: 16px; display: block; }
+  @keyframes addGlow {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2),
+                 0 2px 8px rgba(0,0,0,.25), 0 0 0 0 transparent; }
+    50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2),
+                 0 2px 8px rgba(0,0,0,.25), 0 0 18px 3px color-mix(in srgb, var(--accent) 50%, transparent); }
+  }
+  #addUrlBtn::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 1;
+    background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.42) 50%, transparent 68%);
+    background-size: 240% 100%; background-position: 200% 0;
+    animation: addSheen 5s ease-in-out infinite;
+  }
+  @keyframes addSheen { 0%, 16% { background-position: 200% 0; } 34%, 100% { background-position: -120% 0; } }
+
+  #search {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink); backdrop-filter: blur(6px);
+    font-family: var(--font-body); font-size: 15px; padding: 10px 14px; border-radius: 4px; min-width: 160px; outline: none;
+  }
+  #search::placeholder { font-style: italic; color: var(--muted); }
+
+  .menu { position: relative; }
+  .menu-list {
+    position: absolute; top: calc(100% + 8px); right: 0; min-width: 168px;
+    background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: var(--shadow-lg); padding: 6px; z-index: 30;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .menu-list[hidden] { display: none; }
+  .menu-item {
+    border: none; background: none; color: var(--ink); text-align: left;
+    font-family: var(--font-body); font-size: 14.5px;
+    padding: 10px 14px; border-radius: 3px; cursor: pointer; white-space: nowrap; transition: var(--t-fast) ease-out;
+  }
+  .menu-item:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+  /* 待接手實作項：「重看使用教學」（spec §2.2，index.html 尚未加） */
+  .menu-item.todo { color: var(--accent2); }
+  .menu-item.todo::after { content: " ·待接手"; font-family: var(--font-disp); font-size: 9px; letter-spacing: .1em; opacity: .7; }
+
+  @media (max-width: 600px) {
+    :root { --gutter: 16px; }
+    h1 { flex: 1 1 100%; }
+    .grow { display: none; }
+    #search { order: 1; flex: 1 1 100%; min-width: 0; }
+    #addUrlBtn { order: 2; flex: 1 1 auto; justify-content: center; }
+    #slideBtn { order: 3; } .menu { order: 4; }
+  }
+
+  /* ---------- 側邊浮動按鈕（三顆） ---------- */
+  .dock { position: fixed; z-index: 25; right: clamp(8px,1.6vw,22px); top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 10px; }
+  .dock-btn {
+    width: 60px; min-height: 60px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+    color: var(--ink); box-shadow: var(--shadow); backdrop-filter: blur(8px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  }
+  .dock-btn svg { width: 20px; height: 20px; }
+  .dock-lbl { font-family: var(--font-disp); font-size: 9px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+  @media (max-width: 600px) { .dock { right: 10px; } .dock-btn { width: 52px; min-height: 52px; } }
+
+  /* ---------- 畫廊（背景內容） ---------- */
+  main { padding: clamp(20px,3vw,40px) var(--gutter); position: relative; z-index: 1; }
+  .grid { --min: 300px; --ar: 1/1; max-width: 1800px; margin: 0 auto;
+    display: grid; gap: clamp(12px,1.4vw,20px); grid-template-columns: repeat(auto-fill, minmax(var(--min), 1fr)); }
+  .card { position: relative; border-radius: 4px; padding: 7px;
+    background: var(--card-solid); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .card::before, .card::after {
+    content: ""; position: absolute; width: 30px; height: 30px; z-index: 3; pointer-events: none;
+    background: var(--sprig) center / contain no-repeat; opacity: .82;
+  }
+  .card::before { top: 4px; left: 4px; }
+  .card::after  { bottom: 4px; right: 4px; transform: rotate(180deg); }
+  .thumb { aspect-ratio: var(--ar); position: relative; overflow: hidden; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-solid)); }
+  .thumb::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1; border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  .thumb .pdfdoc { width: 100%; height: 100%; background: linear-gradient(160deg, #f3efe6, #d9d2c4);
+    display: flex; align-items: center; justify-content: center; }
+  .thumb .pdfdoc span { font-family: var(--font-disp); font-size: 13px; letter-spacing: .2em; color: #5a6b54; }
+  .thumb .photo { width: 100%; height: 100%; }
+  .thumb .photo.a { background: linear-gradient(150deg, #6a8b74, #2f4a40); }
+  .thumb .photo.b { background: linear-gradient(150deg, #7d6f55, #3a3022); }
+  .web-page { width: 100%; height: 100%; padding: 14px; display: flex; flex-direction: column; gap: 8px;
+    background: linear-gradient(150deg, #1a2f3a, #0e1f26); }
+  .web-page .wbar { display: flex; gap: 5px; align-items: center; height: 14px; }
+  .web-page .wbar i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.28); }
+  .web-page .wbar span { flex: 1; height: 7px; border-radius: 4px; margin-left: 6px; background: rgba(255,255,255,.14); }
+  .web-page .ln { height: 9px; border-radius: 3px; background: rgba(255,255,255,.12); }
+  .web-page .ln.s { width: 60%; } .web-page .ln.m { width: 85%; }
+  .yt { width: 100%; height: 100%; background: linear-gradient(150deg, #3a2230, #1a0e14);
+    display: flex; align-items: center; justify-content: center; }
+  .yt .play { width: 54px; height: 38px; border-radius: 8px; background: #d32f2f;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+  .yt .play::after { content: ""; border-left: 16px solid #fff; border-top: 10px solid transparent; border-bottom: 10px solid transparent; margin-left: 4px; }
+  .badge { position: absolute; top: 12px; right: 12px;
+    font-family: var(--font-disp); font-size: 9.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 3px; color: #fff;
+    background: color-mix(in srgb, var(--accent) 84%, #000 10%); text-shadow: 0 1px 1px rgba(0,0,0,.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 2px 6px rgba(0,0,0,.3); z-index: 2; }
+  .badge.image { background: color-mix(in srgb, var(--accent2) 84%, #000 10%); }
+  .badge.url { background: color-mix(in srgb, var(--accent2) 86%, #000 12%); }
+  .label { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; align-items: flex-end;
+    padding: 14px 14px 13px; color: #fff;
+    background: linear-gradient(to top, rgba(16,34,30,.66), rgba(16,34,30,.22) 78%, transparent); }
+  .label .bar { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px;
+    background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .label .bar.url { background: var(--accent2); box-shadow: 0 0 8px color-mix(in srgb, var(--accent2) 60%, transparent); }
+  .label .name { font-family: var(--font-head); font-size: 17px; font-weight: 600; line-height: 1.25; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  .label .size { font-family: var(--font-disp); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; opacity: .82; margin-top: 4px; }
+
+  /* ===================================================================
+     新增網址對話框（沿用 index.html .overlay/.dialog 規範）
+     —— 在 onboarding 子流程 3~5 中，對話框浮在遮罩之上、完整可讀（focus trap 範圍）。
+     =================================================================== */
+  .overlay { position: fixed; inset: 0; z-index: 61; display: none; align-items: center; justify-content: center;
+    padding: clamp(14px,3vw,40px); }
+  .overlay.show { display: flex; }
+  .dialog { position: relative; width: min(520px, 100%); max-height: 90vh; overflow: auto;
+    background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: var(--shadow-lg); padding: 30px 30px 26px; }
+  .dialog::before, .dialog::after { content: ""; position: absolute; width: 34px; height: 34px; pointer-events: none;
+    background: var(--sprig) center / contain no-repeat; opacity: .85; }
+  .dialog::before { top: 6px; left: 6px; }
+  .dialog::after  { bottom: 6px; right: 6px; transform: rotate(180deg); }
+  .dialog h3 { font-family: var(--font-head); font-size: 30px; font-weight: 500; margin: 0 0 22px; letter-spacing: .01em; }
+  .field { margin-bottom: 18px; }
+  .field > label { display: block; font-family: var(--font-disp); font-size: 10.5px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  .field input[type=text], .field input[type=url] {
+    width: 100%; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg2) 60%, var(--card-solid));
+    color: var(--ink); font-family: var(--font-body); font-size: 15px; padding: 11px 14px; border-radius: 4px; outline: none; }
+  .platform-pill { margin-top: 8px; display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-disp); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent2); border: 1px solid var(--line); border-radius: 3px; padding: 4px 9px; }
+  .platform-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); }
+  .thumb-row { display: flex; gap: 14px; align-items: stretch; }
+  .thumb-preview { flex: none; width: 116px; aspect-ratio: 1/1; border-radius: 4px; overflow: hidden;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 10%, var(--card-solid));
+    display: flex; align-items: center; justify-content: center; }
+  .thumb-preview .ph { font-family: var(--font-disp); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 8px; }
+  .thumb-preview .yt { border-radius: 0; }
+  .dropzone { flex: 1; min-width: 0; border: 1.5px dashed color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 4px;
+    padding: 14px; display: flex; flex-direction: column; justify-content: center; gap: 8px; cursor: pointer; text-align: center; }
+  .dropzone .big { font-family: var(--font-body); font-size: 14px; color: var(--ink); }
+  .dropzone .hint { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--muted); }
+  .dropzone .ways { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+  .dropzone .way { font-family: var(--font-disp); font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--line); border-radius: 3px; padding: 3px 7px; }
+  .dialog-foot { display: flex; gap: 10px; align-items: center; margin-top: 26px; flex-wrap: wrap; }
+  .dialog-foot .spacer { flex: 1; }
+
+  /* ===================================================================
+     ★ Onboarding 圖層（design-style §7.11；z：遮罩 60 / 對話框 61 / 高亮環 62 / 氣泡 63）
+     鏤空＝「大遮罩 + 反向 box-shadow」，不使用 clip-path / filter。
+     =================================================================== */
+  /* 平面遮罩：S1 開場、以及對話框開啟時的底（對話框 z61 蓋在它上面） */
+  #obVeil { position: fixed; inset: 0; z-index: 60; background: var(--ob-mask); display: none; }
+  #obVeil.show { display: block; }
+
+  /* 鏤空高亮：一個透明方框，靠超大 box-shadow 當遮罩、外加呼吸光暈環 */
+  #obSpot { position: fixed; z-index: 60; border-radius: 6px; pointer-events: none; display: none;
+    box-shadow: 0 0 0 9999px var(--ob-mask), 0 0 0 3px color-mix(in srgb, var(--accent) 60%, transparent);
+    animation: obPulse 2.4s ease-in-out infinite; }
+  #obSpot.show { display: block; }
+  @keyframes obPulse {
+    0%, 100% { box-shadow: 0 0 0 9999px var(--ob-mask), 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 9999px var(--ob-mask), 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 22px 6px color-mix(in srgb, var(--accent) 34%, transparent); }
+  }
+
+  /* 對話框內子元件的高亮環（對話框完整可見，只把目標圈起來） */
+  #obRing { position: fixed; z-index: 62; border-radius: 6px; pointer-events: none; display: none;
+    animation: obRing 2.4s ease-in-out infinite; }
+  #obRing.show { display: block; }
+  @keyframes obRing {
+    0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 38%, transparent), 0 0 22px 5px color-mix(in srgb, var(--accent) 32%, transparent); }
+  }
+
+  /* 氣泡（design-style §7.11）：~320px、4px 圓角、同對話框底色、8px 三角箭頭 */
+  #obBubble { position: fixed; z-index: 63; width: 320px; max-width: calc(100vw - 28px);
+    background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: var(--shadow-lg); padding: 18px 18px 16px; display: none;
+    animation: obIn var(--t-base) ease-out; }
+  #obBubble.show { display: block; }
+  @keyframes obIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  #obBubble::after { content: ""; position: absolute; width: 14px; height: 14px;
+    background: var(--card-solid); border: 1px solid var(--line); transform: rotate(45deg); }
+  /* 箭頭指向：依氣泡相對目標的位置，JS 加對應 class */
+  #obBubble.arr-up::after    { top: -8px; left: var(--arr, 28px); border-right: none; border-bottom: none; }
+  #obBubble.arr-down::after  { bottom: -8px; left: var(--arr, 28px); border-left: none; border-top: none; }
+  #obBubble.arr-left::after  { left: -8px; top: var(--arr, 24px); border-right: none; border-top: none; }
+  #obBubble.arr-right::after { right: -8px; top: var(--arr, 24px); border-left: none; border-bottom: none; }
+
+  .ob-badge { display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-disp); font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--ink); background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; margin-bottom: 12px; }
+  .ob-title { font-family: var(--font-head); font-size: 21px; font-weight: 600; margin: 0 0 8px; line-height: 1.25; }
+  .ob-text { font-family: var(--font-body); font-size: 15px; line-height: 1.6; color: var(--ink); margin: 0; white-space: pre-line; }
+  .ob-text .url-eg { display: inline-block; margin-top: 6px; font-family: var(--font-disp); font-size: 12px;
+    letter-spacing: .04em; color: var(--accent2); border: 1px solid var(--line); border-radius: 3px;
+    padding: 4px 8px; background: color-mix(in srgb, var(--accent2) 8%, transparent); word-break: break-all; }
+
+  .ob-foot { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+  .ob-dots { display: flex; gap: 6px; flex: 1; }
+  .ob-dots i { width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 22%, transparent); transition: var(--t-fast) ease-out; }
+  .ob-dots i.on { background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .ob-btn { font-family: var(--font-disp); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 8px 14px; border-radius: 4px; cursor: pointer; transition: var(--t-fast) ease-out; }
+  .ob-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ob-btn.primary { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff), var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000));
+    color: #fff; border: none; text-shadow: 1px 1px 1px rgba(0,0,0,.4); }
+  .ob-btn:disabled { opacity: .4; cursor: default; }
+  .ob-skip { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 4px;
+    border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; transition: var(--t-fast) ease-out; }
+  .ob-skip:hover { color: var(--accent); border-color: var(--accent); }
+  .ob-ctx { font-family: var(--font-disp); font-size: 9px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px; }
+
+  /* S1 開場：置中卡片（無 spotlight 目標） */
+  #obIntro { position: fixed; z-index: 61; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; }
+  #obIntro.show { display: flex; }
+  #obIntro .panel { position: relative; width: min(440px, 100%); background: var(--card-solid);
+    border: 1px solid var(--line); border-radius: 4px; box-shadow: var(--shadow-lg); padding: 30px 30px 24px; }
+  #obIntro .panel::before, #obIntro .panel::after { content: ""; position: absolute; width: 34px; height: 34px;
+    pointer-events: none; background: var(--sprig) center / contain no-repeat; opacity: .85; }
+  #obIntro .panel::before { top: 6px; left: 6px; }
+  #obIntro .panel::after  { bottom: 6px; right: 6px; transform: rotate(180deg); }
+
+  /* mockup 鷹架說明條（非產品 UI，僅標示這是參考稿） */
+  #scaffold { position: fixed; left: 12px; bottom: 12px; z-index: 80; max-width: 320px;
+    font-family: var(--font-body); font-size: 12px; line-height: 1.5; color: var(--muted);
+    background: color-mix(in srgb, var(--bg1) 86%, transparent); border: 1px dashed var(--line);
+    border-radius: 4px; padding: 10px 12px; }
+  #scaffold b { color: var(--accent); font-weight: 600; }
+  #scaffold button { font-family: var(--font-disp); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+    border: 1px solid var(--line); background: none; color: var(--ink); padding: 4px 9px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
+  #scaffold button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ============ 背景 app（臨摹 index.html，僅供 onboarding 疊在上面） ============ -->
+<header>
+  <h1><span class="logo-ico">❧</span>織圖圖書館 <span class="sub">Bibliotheca Textilis</span></h1>
+  <div class="grow"></div>
+  <input id="search" type="search" placeholder="搜尋名稱…" autocomplete="off">
+  <button class="btn primary" id="addUrlBtn" title="新增網址"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>新增網址</button>
+  <button class="btn icon" id="slideBtn" title="幻燈片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M10 8.5v3l3-1.5-3-1.5z" fill="currentColor"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></button>
+  <div class="menu">
+    <button class="btn icon" id="settingsBtn" title="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <div class="menu-list" id="settingsList" hidden>
+      <button class="menu-item">重新整理</button>
+      <button class="menu-item">更換資料夾</button>
+      <button class="menu-item todo">重看使用教學</button>
+    </div>
+  </div>
+</header>
+
+<div class="dock">
+  <button class="dock-btn" title="檢視大小"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/></svg><span class="dock-lbl">標準</span></button>
+  <button class="dock-btn" title="排序"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg><span class="dock-lbl">檔名</span></button>
+  <button class="dock-btn" title="來源篩選"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg><span class="dock-lbl">全部</span></button>
+</div>
+
+<main>
+  <div class="grid">
+    <div class="card"><div class="thumb"><div class="pdfdoc"><span>PDF</span></div><div class="badge">PDF</div><div class="label"><span class="bar"></span><div><div class="name">蕾絲披肩 圖解</div><div class="size">PDF · 2.4 MB</div></div></div></div></div>
+    <div class="card"><div class="thumb"><div class="photo a"></div><div class="badge image">JPG</div><div class="label"><span class="bar"></span><div><div class="name">麻花毛衣 成品照</div><div class="size">JPG · 880 KB</div></div></div></div></div>
+    <div class="card"><div class="thumb"><div class="yt"><div class="play"></div></div><div class="badge url">連結</div><div class="label"><span class="bar url"></span><div><div class="name">Lace Knitting Basics</div><div class="size">youtube.com</div></div></div></div></div>
+    <div class="card"><div class="thumb"><div class="web-page"><div class="wbar"><i></i><i></i><i></i><span></span></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div></div><div class="badge url">連結</div><div class="label"><span class="bar url"></span><div><div class="name">Spring Cardigan 教學</div><div class="size">someblog.com</div></div></div></div></div>
+    <div class="card"><div class="thumb"><div class="pdfdoc"><span>PDF</span></div><div class="badge">PDF</div><div class="label"><span class="bar"></span><div><div class="name">襪子後跟 walkthrough</div><div class="size">PDF · 1.1 MB</div></div></div></div></div>
+    <div class="card"><div class="thumb"><div class="photo b"></div><div class="badge image">PNG</div><div class="label"><span class="bar"></span><div><div class="name">配色試織 樣本</div><div class="size">PNG · 1.6 MB</div></div></div></div></div>
+  </div>
+</main>
+
+<!-- ============ 新增網址對話框（子流程 3~5 時顯示；prefill YouTube 範例） ============ -->
+<div class="overlay" id="urlDialog">
+  <div class="dialog">
+    <h3>新增網址</h3>
+    <div class="field" id="fieldUrl">
+      <label>網址</label>
+      <input type="url" value="https://www.youtube.com/" autocomplete="off" spellcheck="false">
+      <div class="platform-pill"><span class="dot"></span><span>YouTube · 自動產生縮圖</span></div>
+    </div>
+    <div class="field">
+      <label>標題（可選）</label>
+      <input type="text" placeholder="留空就用網址的網域當標題" autocomplete="off">
+    </div>
+    <div class="field" id="fieldThumb">
+      <label>縮圖（可選）</label>
+      <div class="thumb-row">
+        <div class="thumb-preview"><div class="yt"><div class="play"></div></div></div>
+        <div class="dropzone">
+          <div class="big">點此選擇圖片</div>
+          <div class="hint">或拖曳圖片到這裡、或按 Ctrl + V 貼上</div>
+          <div class="ways"><span class="way">檔案選擇</span><span class="way">拖拉</span><span class="way">貼上</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-foot">
+      <div class="spacer"></div>
+      <button class="btn lg">取消</button>
+      <button class="btn primary lg" id="dlgSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Onboarding 圖層 ============ -->
+<div id="obVeil"></div>
+<div id="obSpot"></div>
+<div id="obRing"></div>
+
+<div id="obIntro">
+  <div class="panel">
+    <button class="ob-skip" data-skip title="跳過教學">✕</button>
+    <div class="ob-ctx">教學步驟 4 / 7</div>
+    <div class="ob-badge">🖱 換你試試</div>
+    <h2 class="ob-title">試試把一個網址收進來</h2>
+    <p class="ob-text">網頁右上角的「新增網址」鈕可以把網頁／影片連結收進你的資料夾。
+
+來試試——下面那顆會圈起來，按下去就會跳出真正的新增視窗。</p>
+    <div class="ob-foot">
+      <div class="ob-dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+      <button class="ob-btn" data-prev disabled>上一步</button>
+      <button class="ob-btn primary" data-next>下一步</button>
+    </div>
+  </div>
+</div>
+
+<div id="obBubble">
+  <button class="ob-skip" data-skip title="跳過教學">✕</button>
+  <div class="ob-badge">🖱 換你試試</div>
+  <p class="ob-text" id="obBubbleText"></p>
+  <div class="ob-foot">
+    <div class="ob-dots" id="obDots"></div>
+    <button class="ob-btn" data-prev>上一步</button>
+    <button class="ob-btn primary" data-next>下一步</button>
+  </div>
+</div>
+
+<!-- mockup 鷹架（非產品 UI） -->
+<div id="scaffold">
+  <b>Onboarding mockup</b> — Step 4「試試新增網址」5 段子流程。<br>
+  用氣泡上的「上一步／下一步」切換看各狀態（純視覺，不寫入 links.md）。
+  <br><button id="replay">↻ 從第 1 段重看</button>
+</div>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const veil = $("#obVeil"), spot = $("#obSpot"), ring = $("#obRing");
+  const bubble = $("#obBubble"), bubbleText = $("#obBubbleText"), dots = $("#obDots");
+  const intro = $("#obIntro"), dialog = $("#urlDialog");
+
+  // Step 4 的 5 段子流程（對齊新版 onboarding-spec §4 Step 4）
+  const SUB = [
+    { kind: "intro" },                                              // ① 開場對話框
+    { kind: "spot", target: "#addUrlBtn", dialog: false, side: "bottom",
+      text: "按這顆，跳出新增視窗。" },                              // ② spotlight 新增網址鈕
+    { kind: "ring", target: "#fieldUrl", dialog: true, side: "right",
+      text: "貼上任一網址試試。\n不知道貼什麼？可以複製這個 YouTube 首頁：",
+      eg: "https://www.youtube.com/" },                            // ③ spotlight 網址欄位
+    { kind: "ring", target: "#fieldThumb", dialog: true, side: "right",
+      text: "YouTube 連結會自動產生縮圖。\n其他網站可以用檔案／拖拉／貼上自訂縮圖。\n這次不用真的上傳，看一下就好。" }, // ④ spotlight 縮圖區
+    { kind: "ring", target: "#dlgSave", dialog: true, side: "left",
+      text: "按下儲存，這筆網址就會真的寫進 links.md。" },           // ⑤ spotlight 儲存鈕
+  ];
+
+  let i = 0;
+
+  function hideAllLayers() {
+    veil.classList.remove("show"); spot.classList.remove("show");
+    ring.classList.remove("show"); bubble.classList.remove("show"); intro.classList.remove("show");
+  }
+
+  function renderDots() {
+    dots.innerHTML = SUB.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("");
+  }
+
+  // 把一個浮層方框貼到目標元件的位置（含 padding），design-style §3.1：resize 要重算
+  function boxTo(el, rect, pad) {
+    el.style.top = (rect.top - pad) + "px";
+    el.style.left = (rect.left - pad) + "px";
+    el.style.width = (rect.width + pad * 2) + "px";
+    el.style.height = (rect.height + pad * 2) + "px";
+  }
+
+  // 依目標與偏好方向擺氣泡，超出視窗就退而求其次
+  function placeBubble(rect, side) {
+    const W = bubble.offsetWidth, H = bubble.offsetHeight, gap = 16, m = 10;
+    let top, left, arr;
+    const tryRight = () => rect.right + gap + W <= window.innerWidth - m;
+    const tryLeft  = () => rect.left - gap - W >= m;
+    const tryBottom = () => rect.bottom + gap + H <= window.innerHeight - m;
+
+    if (side === "right" && tryRight())      { left = rect.right + gap; top = rect.top; arr = "left"; }
+    else if (side === "left" && tryLeft())   { left = rect.left - gap - W; top = rect.top; arr = "right"; }
+    else if (side === "bottom" && tryBottom()){ left = rect.left; top = rect.bottom + gap; arr = "up"; }
+    else if (tryBottom())                    { left = rect.left; top = rect.bottom + gap; arr = "up"; }
+    else                                     { left = rect.left; top = rect.top - gap - H; arr = "down"; }
+
+    left = Math.max(m, Math.min(left, window.innerWidth - W - m));
+    top  = Math.max(m, Math.min(top,  window.innerHeight - H - m));
+    bubble.style.left = left + "px";
+    bubble.style.top = top + "px";
+    bubble.className = "show arr-" + arr;
+    // 箭頭對準目標中心
+    if (arr === "up" || arr === "down") {
+      const cx = rect.left + rect.width / 2 - left;
+      bubble.style.setProperty("--arr", Math.max(14, Math.min(cx - 7, W - 28)) + "px");
+    } else {
+      const cy = rect.top + rect.height / 2 - top;
+      bubble.style.setProperty("--arr", Math.max(14, Math.min(cy - 7, H - 28)) + "px");
+    }
+  }
+
+  function render() {
+    const step = SUB[i];
+    hideAllLayers();
+    dialog.classList.toggle("show", !!step.dialog);
+
+    if (step.kind === "intro") { veil.classList.add("show"); intro.classList.add("show"); return; }
+
+    // 氣泡內容
+    bubbleText.textContent = step.text;
+    if (step.eg) {
+      const eg = document.createElement("span");
+      eg.className = "url-eg"; eg.textContent = step.eg;
+      bubbleText.appendChild(document.createTextNode("\n"));
+      bubbleText.appendChild(eg);
+    }
+    renderDots();
+
+    // 等對話框排版好再量座標
+    requestAnimationFrame(() => {
+      const el = $(step.target);
+      const rect = el.getBoundingClientRect();
+      if (step.kind === "spot") {            // 鏤空高亮真實 app 元件（遮罩靠 box-shadow）
+        boxTo(spot, rect, 8); spot.classList.add("show");
+      } else {                               // 對話框內子元件：對話框可見，只圈高亮環
+        veil.classList.add("show");          // app 背景仍壓暗
+        boxTo(ring, rect, 8); ring.classList.add("show");
+      }
+      bubble.classList.add("show");
+      placeBubble(rect, step.side);
+    });
+  }
+
+  function go(d) {
+    const n = i + d;
+    if (n < 0) return;
+    if (n >= SUB.length) { hideAllLayers(); dialog.classList.remove("show"); return; } // 走完 → 接 Step 5（範圍外）
+    i = n; render();
+    // intro 與氣泡的「上一步」禁用狀態
+    document.querySelectorAll("[data-prev]").forEach(b => b.disabled = (i === 0));
+  }
+
+  document.querySelectorAll("[data-next]").forEach(b => b.onclick = () => go(1));
+  document.querySelectorAll("[data-prev]").forEach(b => b.onclick = () => go(-1));
+  document.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => { hideAllLayers(); dialog.classList.remove("show"); });
+  $("#replay").onclick = () => { i = 0; render(); document.querySelectorAll("[data-prev]").forEach(b => b.disabled = true); };
+
+  // resize 重算座標（design-style §3.1 ⚠️）
+  window.addEventListener("resize", () => { if (bubble.classList.contains("show") || spot.classList.contains("show")) render(); });
+
+  // 設定選單只是擺著示意（點開看「重看使用教學」待辦項）
+  $("#settingsBtn").onclick = e => { e.stopPropagation(); const l = $("#settingsList"); l.hidden = !l.hidden; };
+  document.addEventListener("click", e => { if (!e.target.closest(".menu")) $("#settingsList").hidden = true; });
+
+  // 依你描述，預設停在「對話框已開 + spotlight 網址欄」這段（子流程 ③）
+  i = 2; render();
+  document.querySelectorAll("[data-prev]").forEach(b => b.disabled = false);
+</script>
+</body>
+</html>
