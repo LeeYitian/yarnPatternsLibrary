@@ -764,6 +764,7 @@
       <button class="menu-item" id="refresh" title="新增或刪除檔案後，按這裡重新掃描並補上新封面">重新整理</button>
       <button class="menu-item" id="rechoose" title="改選其他資料夾">更換資料夾</button>
       <button class="menu-item" id="replayOnboarding" title="從頭重看一次使用教學">重看使用教學</button>
+      <button class="menu-item" id="clearDataBtn" style="color:#d08672" title="清除瀏覽器快取的預覽圖資料">清除所有資料</button>
     </div>
   </div>
 </header>
@@ -898,6 +899,20 @@
       <div class="spacer"></div>
       <button class="btn lg" id="switchCancel">取消</button>
       <button class="btn primary lg" id="switchOk">換過去</button>
+    </div>
+  </div>
+</div>
+
+<!-- 清除所有資料確認 -->
+<div class="overlay" id="clearDataDialog">
+  <div class="dialog confirm">
+    <h3>清除所有資料？</h3>
+    <p>刪除瀏覽器儲存的所有預覽圖資料，回到網站預設狀態。</p>
+    <p>網址收藏不受影響，仍存放在資料夾的 <span class="nm">links.md</span> 中，不會被刪除。</p>
+    <div class="dialog-foot">
+      <div class="spacer"></div>
+      <button class="btn lg" id="clearDataCancel">取消</button>
+      <button class="btn ghost-danger lg" id="clearDataOk">確認清除</button>
     </div>
   </div>
 </div>
@@ -1904,7 +1919,18 @@ function hideOverlay(id) {
   $(id).classList.remove("show");
   if (!document.querySelector(".overlay.show") && !viewer.classList.contains("show")) document.body.classList.remove("no-scroll");
 }
-["urlDialog", "confirmDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
+// 清除所有資料
+$("clearDataBtn").onclick = () => { closeSettings(); showOverlay("clearDataDialog"); };
+$("clearDataCancel").onclick = () => hideOverlay("clearDataDialog");
+$("clearDataOk").onclick = () => {
+  hideOverlay("clearDataDialog");
+  const req = indexedDB.deleteDatabase("weaving-lib");
+  req.onsuccess = () => location.reload();
+  req.onerror = () => toast("清除失敗，請重新整理後再試。", true);
+  req.onblocked = () => { toast("請關閉其他開著本頁的分頁後再試。", true); };
+};
+
+["urlDialog", "confirmDialog", "clearDataDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
 document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const o = document.querySelector(".overlay.show"); if (!o) return; if (o.id === "switchDialog") closeSwitch(false); else hideOverlay(o.id); });
 
 // 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11）
