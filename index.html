@@ -467,6 +467,19 @@
   }
   body.no-scroll { overflow: hidden; }
 
+  /* 手機燈箱：左右 padding 拉到 58px，讓 stage 擠進 nav 按鈕內側，避免重疊跑版 */
+  @media (max-width: 600px) {
+    #viewer { padding: clamp(14px,3vw,40px) 58px; }
+    .stage { width: 100%; }
+    .stage .frame { max-width: 100%; }
+    .stage img { max-width: 100%; max-height: min(72svh, calc(100svh - 220px)); }
+    .vnav { width: 44px; height: 44px; font-size: 20px; }
+    .vnav.prev { left: 6px; } .vnav.next { right: 6px; }
+    .vcount { left: 14px; top: 14px; font-size: 10px; padding: 5px 10px; }
+    .vclose { right: 14px; top: 12px; }
+    .stage .frame::before, .stage .frame::after { width: 40px; }
+  }
+
   /* ===================================================================
      ↓↓↓ URL 收藏功能：新增樣式（藍 accent2 區隔 URL；綠仍是互動色） ↓↓↓
      =================================================================== */
