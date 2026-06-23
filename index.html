@@ -222,6 +222,17 @@
   .scroll-cue .cue-arrow { width: 26px; height: 26px; animation: cueBob 2.2s ease-in-out infinite; }
   @keyframes cueBreath { 0%,100% { opacity: .45; } 50% { opacity: .95; } }
   @keyframes cueBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+  /* 不支援 File System API 時，取代 scroll-cue 顯示在第一屏的警語卡 */
+  .hero-warn {
+    margin-top: clamp(40px,8vh,80px); max-width: 440px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    background: color-mix(in srgb, var(--card-solid) 92%, transparent);
+    border: 1px solid var(--line); border-left: 3px solid #d3a24a; border-radius: 4px;
+    padding: 24px 28px; box-shadow: var(--shadow); color: var(--ink);
+  }
+  .hero-warn svg { width: 36px; height: 36px; color: #d3a24a; flex: none; }
+  .hero-warn p { margin: 0; line-height: 1.8; font-size: 15.5px; }
+  .hero-warn b { color: var(--accent); font-weight: 600; }
   /* 捲動後才浮現的說明 + 選資料夾按鈕 */
   .intro-reveal {
     /* 自成一整屏並置中：捲到頂時，不論內容多寡或裝置大小，說明區都剛好落在畫面正中央。
@@ -861,6 +872,11 @@
         <span class="cue-text">往&nbsp;下&nbsp;捲&nbsp;動</span>
         <svg class="cue-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
+      <!-- 不支援 File System API 的裝置（iOS 全部、較舊 Android Chrome）：取代「往下捲動」，第一屏直接顯示警語 -->
+      <div class="hero-warn hidden" id="heroWarn" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>這個裝置不支援 <b>File System API</b>，無法讀取資料夾。<br>請改用<b>桌機版 Chrome 或 Edge</b> 開啟本頁。</p>
+      </div>
     </div>
     <div class="intro-reveal" id="introReveal">
       <div class="why">
@@ -1193,13 +1209,15 @@ function cycleSize() {
 mqPhone.addEventListener("change", applySize);   // 跨越手機斷點（轉螢幕／縮視窗）時自動修正顯示
 applySize();
 
-init();
-
 async function init() {
   if (!window.indexedDB || !window.showDirectoryPicker) {
+    // 不支援 File System API（iOS 全部、較舊 Android Chrome）：
+    // 第一屏直接以警語取代「往下捲動」，不顯示說明／選資料夾流程（反正用不了）。
     showIntro();
-    intro.querySelector(".warn").innerHTML = "⚠ 你的瀏覽器不支援讀取本機資料夾，請改用 <b>Chrome</b> 或 <b>Edge</b> 開啟本頁。";
-    $("pickBtn").disabled = true; return;
+    $("scrollCue").classList.add("hidden");
+    introReveal.classList.add("hidden");
+    $("heroWarn").classList.remove("hidden");
+    return;
   }
   let meta = null, cachedUrls = null;
   try { meta = await DB.get("kv", "items"); } catch (e) { console.warn("[lib] 讀取快取清單失敗：", e); }
@@ -1261,6 +1279,11 @@ function showLibrary() {
   if (!total) empty.textContent = "資料夾裡沒有 PDF／圖片，也還沒有收藏網址。";
   grid.classList.toggle("hidden", total === 0);
 }
+
+// 啟動：必須放在 introReveal／introObserver／showIntro 等定義「之後」再呼叫。
+// 否則不支援 File System API 的瀏覽器（iOS Safari／Chrome、Android Chrome）會在 init()
+// 同步走進 showIntro()，此時 introObserver 仍在 TDZ → ReferenceError，導致 .why 不顯示。
+init();
 
 async function ensureRead(h) {
   if (!h) return false;
