@@ -235,10 +235,10 @@
      讓 .intro-reveal 保持預設可見狀態，不需 .in class 也能看到內容。 */
   @media (prefers-reduced-motion: no-preference) {
     .intro-reveal {
-      opacity: 0; transform: translateY(70px) scale(.97); filter: blur(7px);
-      transition: opacity 1.1s ease, transform 1.1s cubic-bezier(.16,.84,.34,1), filter 1.1s ease;
+      opacity: 0; transform: translateY(50px);
+      transition: opacity 1.1s ease, transform 1.1s cubic-bezier(.16,.84,.34,1);
     }
-    .intro-reveal.in { opacity: 1; transform: none; filter: blur(0); }
+    .intro-reveal.in { opacity: 1; transform: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .scroll-cue, .scroll-cue .cue-arrow { animation: none; }
@@ -1223,11 +1223,11 @@ const introObserver = ("IntersectionObserver" in window)
         if (e.isIntersecting) {
           introReveal.classList.add("in");
           introObserver.unobserve(e.target);
-          // 安全網：transition 完成後（>1.1s）若 opacity 仍為 0，代表動畫被裝置阻擋，強制顯示
+          // 安全網：transition 完成後若 opacity 仍為 0，代表動畫被裝置阻擋，強制顯示
           setTimeout(() => {
             if (parseFloat(getComputedStyle(introReveal).opacity) < 0.5)
-              Object.assign(introReveal.style, { opacity:'1', transform:'none', filter:'none', transition:'none' });
-          }, 1500);
+              Object.assign(introReveal.style, { opacity:'1', transform:'none', transition:'none' });
+          }, 1300);
         }
       });
     }, { threshold: 0.16 })
@@ -1237,8 +1237,21 @@ $("scrollCue").onclick = () => introReveal.scrollIntoView({ behavior: "smooth", 
 
 function showIntro() {
   intro.classList.remove("hidden"); bar.classList.add("hidden"); grid.classList.add("hidden"); dock.hidden = true;
-  if (introObserver) introObserver.observe(introReveal);
-  else introReveal.classList.add("in");   // 不支援 IO 時直接顯示，避免說明被永久藏住
+  if (introObserver) {
+    introObserver.observe(introReveal);
+    // Safari fallback：部分裝置的 IntersectionObserver 在 dynamic viewport（網址列收合）時不可靠，
+    // 補一個獨立 scroll 事件，確保捲到時一定能觸發顯示
+    const revealCheck = () => {
+      if (introReveal.classList.contains("in")) { window.removeEventListener('scroll', revealCheck); return; }
+      if (introReveal.getBoundingClientRect().top < window.innerHeight * 0.92) {
+        introReveal.classList.add("in");
+        window.removeEventListener('scroll', revealCheck);
+      }
+    };
+    window.addEventListener('scroll', revealCheck, { passive: true });
+  } else {
+    introReveal.classList.add("in");   // 不支援 IO 時直接顯示，避免說明被永久藏住
+  }
 }
 function showLibrary() {
   intro.classList.add("hidden"); bar.classList.remove("hidden"); dock.hidden = false;
