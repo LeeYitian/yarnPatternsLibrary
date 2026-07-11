@@ -1,0 +1,136 @@
+/* =====================================================================
+   gallery.js — 畫廊卡片與篩選
+   卡片建立（本機＋URL 融合）、一般網格／時間軸 render、
+   搜尋×來源篩選、開啟檔案／連結。
+   ===================================================================== */
+// 卡片只建立一次（保留已畫好的封面），重排時重新搬移既有節點。
+function ensureCards() {
+  allItems().forEach((it) => {
+    if (it._card) return;
+    const card = document.createElement("div");
+    card.className = "card " + (it.kind === "url" ? "url" : "local");   // 篩選 / 樣式靠這個 class
+    card.dataset.name = (it.kind === "url"
+      ? `${it.title} ${it._host || hostOf(it.url)} ${it.url}`
+      : it.name).toLowerCase();
+    card.innerHTML = it.kind === "url" ? urlCardHTML(it) : localCardHTML(it);
+    card.querySelector(".expand").onclick = (e) => { e.stopPropagation(); openViewer(visibleIndexOf(it)); };
+    if (it.kind === "url") {
+      card.onclick = () => { if (!mqTouch.matches) openItem(it); };
+      card.querySelector(".edit").onclick = (e) => { e.stopPropagation(); openDialog("edit", it); };
+      card.querySelector(".del").onclick = (e) => { e.stopPropagation(); openConfirm(it); };
+    } else {
+      card.onclick = () => { if (!mqTouch.matches) openItem(it); };
+    }
+    attachLongPress(card, it);
+    card.__item = it;
+    it._card = card;
+  });
+}
+
+function localCardHTML(it) {
+  return `<div class="thumb"><div class="spin"></div>` +
+    `<span class="badge ${it.type}">${it.type === "pdf" ? "PDF" : it.ext.toUpperCase()}</span>` +
+    `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
+    `<div class="label"><span class="bar"></span><div class="txt">` +
+    `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
+    `<div class="size">${it.size ? humanSize(it.size) : ""}</div></div></div></div>`;
+}
+function urlCardHTML(it) {
+  return `<div class="thumb"><div class="spin"></div>` +
+    `<span class="badge url">連結</span>` +
+    `<div class="card-actions"><button class="edit" title="編輯">${SVG_EDIT}</button><button class="del" title="刪除">${SVG_DEL}</button></div>` +
+    `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
+    `<div class="label"><span class="bar url"></span><div class="txt">` +
+    `<div class="name">${escapeHtml(displayName(it))}</div>` +
+    `<div class="size">${escapeHtml(it._host || hostOf(it.url))}</div></div></div></div>`;
+}
+
+// 點卡片其他地方 → 另開視窗：本機=新分頁開檔；URL=開連結（handoff §4）
+function openItem(it) { openFile(it); }
+
+const byName = (a, b) => sortKeyName(a).localeCompare(sortKeyName(b), "zh-Hant", { numeric: true });
+
+function render() {
+  ensureCards();
+  grid.innerHTML = "";
+  grid.classList.toggle("mode-timeline", sortMode === "time");
+  grid.classList.toggle("mode-name", sortMode !== "time");
+  if (sortMode === "time") renderTimeline(); else renderFlat();
+  applyFilter();
+}
+
+function renderFlat() {
+  allItems().slice().sort(byName).forEach((it, i) => {
+    it._card.style.animationDelay = Math.min(i * 22, 600) + "ms";
+    grid.appendChild(it._card);
+  });
+}
+
+// 依時間（新→舊）分月；本機用 lastModified，URL 把 added 當天 00:00 轉時間戳，共用同一條軸（handoff §2）。
+function renderTimeline() {
+  const arr = allItems().slice().sort((a, b) => itemTs(b) - itemTs(a));
+  let curKey = null, curGrid = null, i = 0;
+  arr.forEach((it) => {
+    const ts = itemTs(it);
+    const d = ts ? new Date(ts) : null;
+    const key = d ? `${d.getFullYear()}-${d.getMonth()}` : "?";
+    if (key !== curKey) {
+      curKey = key;
+      const month = document.createElement("div"); month.className = "tl-month";
+      const head = document.createElement("div"); head.className = "tl-head";
+      head.innerHTML = `<span class="tl-label">${d ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月` : "無日期"}</span>`;
+      curGrid = document.createElement("div"); curGrid.className = "tl-grid";
+      month.appendChild(head); month.appendChild(curGrid); grid.appendChild(month);
+    }
+    it._card.style.animationDelay = Math.min(i * 12, 480) + "ms";
+    curGrid.appendChild(it._card); i++;
+  });
+}
+
+async function openFile(it) {
+  if (it.kind === "url") {
+    // 只另開新分頁。window.open(...,"noopener") 規範上一定回傳 null，
+    // 所以「不要」再用 if(!w) location.href=... 當退路，否則原分頁也會跟著導航。
+    window.open(it.url, "_blank", "noopener");
+    return;
+  }
+  try {
+    let fh = it._entry;          // 本次有掃描資料夾時直接用
+    if (!fh) {                   // 純從快取載入時，用一開始選的資料夾把手重新取得
+      if (!await ensureRead(dirHandle)) { alert("請先選擇放編織圖的資料夾。"); return; }
+      fh = await dirHandle.getFileHandle(it.name);
+      it._entry = fh;
+    }
+    const file = await fh.getFile();
+    const url = URL.createObjectURL(file);
+    const win = window.open(url, "_blank");
+    if (!win) location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    alert("無法開啟檔案：" + (e && e.message ? e.message : e));
+  }
+}
+
+// 篩選：搜尋字 AND 來源（兩維正交，handoff §2）；只加 .hidden，不重建 DOM。
+function applyFilter() {
+  const q = $("search").value.trim().toLowerCase(); let shown = 0;
+  for (const it of allItems()) {
+    const matchSearch = !q || it._card.dataset.name.includes(q);
+    const matchSource = sourceMode === "all"
+      || (sourceMode === "local" && it.kind !== "url")
+      || (sourceMode === "url" && it.kind === "url");
+    const hit = matchSearch && matchSource;
+    it._card.classList.toggle("hidden", !hit); if (hit) shown++;
+  }
+  // 時間軸模式：把篩選後沒有任何可見卡片的月份整塊收起，避免留白
+  if (sortMode === "time") {
+    grid.querySelectorAll(".tl-month").forEach(m => {
+      m.classList.toggle("hidden", !m.querySelector(".tl-grid > .card:not(.hidden)"));
+    });
+  }
+  const total = items.length + urls.length;
+  if (total) {
+    empty.classList.toggle("hidden", shown > 0);
+    if (!shown) empty.textContent = q ? "找不到符合的項目。" : "這個來源目前沒有項目。";
+  }
+}

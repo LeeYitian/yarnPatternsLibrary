@@ -17,8 +17,26 @@
 
 ```
 yarn-patterns-library/
-├─ index.html          ← 整個 App(HTML + CSS + JS 全部在這一個檔)
+├─ index.html          ← 頁面骨架(HTML)與 CSS／JS 的載入清單
+├─ css/
+│  └─ style.css        ← 全部樣式
+├─ js/                 ← 依功能拆分的傳統 script(載入順序=依賴順序,見 §11)
+│  ├─ constants.js     ← 常數集中管理(設定值、UI 標籤、SVG 圖示、onboarding 教學文案)
+│  ├─ db.js            ← 迷你 IndexedDB 包裝
+│  ├─ utils.js         ← 純函式小工具
+│  ├─ state.js         ← 共用狀態與衍生 helpers
+│  ├─ controls.js      ← 頂欄與側邊 dock 控制
+│  ├─ gallery.js       ← 卡片建立／render／篩選／開啟檔案
+│  ├─ thumbs.js        ← 封面產生與快取
+│  ├─ viewer.js        ← 燈箱／幻燈片
+│  ├─ urls.js          ← URL 收藏(links.md IO、CRUD、對話框、toast)
+│  ├─ folder.js        ← 資料夾選擇／掃描／更換
+│  ├─ onboarding.js    ← 教學 controller(文案在 constants.js)
+│  ├─ touch.js         ← 觸控長按工具列
+│  └─ main.js          ← 啟動入口 init()(必須最後載入)
 ├─ favicon.png         ← 網站圖示 & 首頁／標題 logo
+├─ manifest.json       ← PWA manifest
+├─ og-image-*.png      ← 社群分享預覽圖(1200x630、1200x1200)
 ├─ lib/
 │  ├─ pdf.min.js        ← PDF.js 主程式（pdfjs-dist 3.11.174，UMD 版）
 │  └─ pdf.worker.min.js ← PDF.js worker
@@ -26,8 +44,8 @@ yarn-patterns-library/
 └─ About.md
 ```
 
-- **沒有** build step、沒有 `node_modules`、沒有後端、沒有 manifest 檔。
-- `index.html` 是單一檔案,直接雙擊或部署即可。
+- **沒有** build step、沒有 `node_modules`、沒有後端。
+- 全部是靜態檔案:直接雙擊 `index.html` 或部署即可。JS 全走一般 `<script src>` + `./` 相對路徑,`file://` 也載得到。
 - 早期掃描用的 `collection/` 子資料夾**已不再寫死**——程式讀使用者選的任何資料夾(見 §6)。
 
 ---
@@ -126,7 +144,7 @@ yarn-patterns-library/
 - **找不到資料夾**:「重新整理」時若資料夾讀不到(外接硬碟拔了／被刪改名),跳 toast(「再試一次」「選擇新資料夾」兩個動作),**完全不動 `links.md` 與 cache**。
 - 解析器**保留不認識的欄位原樣**,未來 tag 系統可在 `links.md` 加 `- tags:` 而不破壞舊資料。
 - **本機檔案仍完全唯讀**:卡片不出現編輯／刪除鈕(只有 URL 卡片有);要改本機檔案請去檔案總管再按重新整理。
-- 完整需求與決策見 `spec/url-spec.md`、版面對應見 `spec/url-ui-handoff.md`。**onboarding wizard(`spec/onboarding-spec.md`)尚未做**,故設定選單暫不放「使用教學」入口。
+- 完整需求與決策見 `spec/url-spec.md`、版面對應見 `spec/url-ui-handoff.md`。**onboarding wizard(`spec/onboarding-spec.md`)已實作**(獨立 controller,疊在 cache-first app 之上,無資料耦合);設定齒輪選單已放回「重看使用教學」入口(`#replayOnboarding`)。
 
 ---
 
@@ -163,13 +181,15 @@ yarn-patterns-library/
 - 時間軸排序目前只用 `lastModified`(File System Access API **拿不到建立時間**,只有修改時間)。
 - Masonry(瀑布流)版面。
 - 把已產生的封面一鍵匯出成檔案。
-- 子資料夾遞迴掃描／分類。
+- 子資料夾遞迴掃描／分類。**規格方向已定**(攤平全遞迴、資料夾路徑轉自動 tag)、尚未實作,見 `spec/subfolder-spec.md`。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
 - **標籤(tag)系統**:URL 條目跟本機檔案(PDF／圖片)都能下 hashtag,可按 tag 篩選。
   - `links.md` 解析器(見 `spec/url-spec.md` §4)**已實作**「不認識的欄位保留原樣」,所以未來加 `- tags: #a #b` 欄位不會破壞現有資料——後端解析這層已就緒。
   - UI 還沒做:需要新增／編輯對話框的 tag 輸入框、列表頁的 tag 篩選列。
   - 本機檔案目前完全靠掃資料夾,沒進 markdown;要做 tag 的話這個架構要先擴。
-- **URL onboarding 教學精靈**:`spec/onboarding-spec.md` 已寫好規格但**尚未實作**;做了之後再把設定選單的「使用教學」入口補回(目前刻意不放空殼按鈕)。
+  - **規格方向已定**、尚未實作,見 `spec/tag-spec.md`:自動 tag(資料夾路徑,live 衍生不落地)本回合先做;手動 tag(存 `files.md` sidecar)與本機卡片編輯入口延後。
+
+> **已完成(不再列後續工作)**:URL onboarding 教學精靈——`spec/onboarding-spec.md` 規格已落地(controller 在 `js/onboarding.js`、教學文案在 `js/constants.js`;完整 7 步、混合對話框 + spotlight),設定選單「重看使用教學」入口已補回。
 
 ---
 
@@ -180,7 +200,8 @@ yarn-patterns-library/
 - **不要**在卡片本體或大量元素上加 `backdrop-filter`。
 - **不要**重新寫死任何資料夾名稱(例如 `collection`);讀使用者選的 handle。
 - 改封面解析度就改 `THUMB_W`(快取會自動失效重畫)。
-- 全部邏輯都在 `index.html` 的 `<script>` 裡,沒有其他 JS 檔。
+- 邏輯已依功能拆到 `js/` 底下的多個檔案(見 §2),全部是**傳統 script(非 ES module)**,依 `index.html` 的載入順序共享同一個全域 scope。**不要**改成 `type="module"`(會破壞 `file://` 雙擊),**不要**亂調載入順序:`constants.js` 最先、`main.js`(呼叫 `init()`)最後。
+- 各檔案的**頂層程式碼**若要引用「較晚載入的檔案」定義的函式,必須包在 callback 裡延後取值(例:`$("search").oninput = () => applyFilter()`),**不能**直接把函式名當值賦值——載入當下就會 ReferenceError(函式 hoisting 只在同一個 script 檔內有效)。
 - **卡片只在 `ensureCards()` 建一次**;切換排序／大小請走 `render()` 搬節點,**不要**整批重建 DOM(會弄丟已畫好的封面與 blob URL)。
 - 時間軸的月份分組靠**先排序、再線性掃描**(相同月份連續才分到同一塊),所以 `renderTimeline()` 一定要先 sort 再分組。
 - File System Access API **只有 `lastModified`**(沒有建立時間),時間排序／時間軸都以它為準。
