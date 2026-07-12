@@ -35,7 +35,7 @@ const OB_SCREENS = [
   { macro: 1, kind: "dialog", badge: OB_SEE, title: "檔案和網址兩種收藏", body:
 `PDF ／ 圖片檔案：
 → 以資料夾裡實際有的檔案為準
-→ 只讀一層資料夾，不會讀子資料夾裡的檔案
+→ 連同子資料夾裡的檔案都會讀，全部檔案的預覽圖都會一起顯示
 → 動了資料夾中的檔案（新增／改名／刪掉），要按「重新整理」才會跟著更新` },
   { macro: 1, kind: "dialog", badge: OB_SEE, title: "檔案和網址兩種收藏", body:
 `🔗 網址：

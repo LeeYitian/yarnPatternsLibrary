@@ -96,9 +96,12 @@ async function openFile(it) {
   }
   try {
     let fh = it._entry;          // 本次有掃描資料夾時直接用
-    if (!fh) {                   // 純從快取載入時，用一開始選的資料夾把手重新取得
+    if (!fh) {                   // 純從快取載入時，沿相對路徑逐層重新取得（舊快取無 path → fallback 檔名＝頂層）
       if (!await ensureRead(dirHandle)) { alert("請先選擇放編織圖的資料夾。"); return; }
-      fh = await dirHandle.getFileHandle(it.name);
+      const segs = (it.path || it.name).split("/");
+      let dir = dirHandle;
+      for (let i = 0; i < segs.length - 1; i++) dir = await dir.getDirectoryHandle(segs[i]);
+      fh = await dir.getFileHandle(segs[segs.length - 1]);
       it._entry = fh;
     }
     const file = await fh.getFile();

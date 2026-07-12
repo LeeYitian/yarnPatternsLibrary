@@ -11,7 +11,9 @@ let sortMode = localStorage.getItem("wlib-sort") === "time" ? "time" : "name";  
 let sourceMode = ["all","local","url"].includes(localStorage.getItem("wlib-source")) ? localStorage.getItem("wlib-source") : "all";
 const mqTouch = window.matchMedia("(hover: none), (pointer: coarse)");
 
-const thumbKey = it => `${it.name}|${it.size}|${it.lastModified}|w${THUMB_W}`;
+// 封面快取 key 用相對路徑（子資料夾後不同資料夾可能有同名檔）；舊快取無 path → fallback 檔名，
+// 頂層 path＝檔名，故既有使用者的舊封面快取 key 不變、不重畫（subfolder-spec §5）。
+const thumbKey = it => `${it.path || it.name}|${it.size}|${it.lastModified}|w${THUMB_W}`;
 
 // 本機檔案 + URL 融合在同一畫廊（render / 篩選 / 燈箱共用這份）
 const allItems = () => [...items, ...urls];

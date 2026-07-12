@@ -18,23 +18,20 @@ async function start(forcePick, feedback) {
   let handle;
   try { handle = await getHandle(forcePick); } catch (e) { return; }
 
-  // 舊狀態快照：供「重新整理」差異統計（spec §11.1.2）
-  const oldLocal = new Set(items.map(it => it.name));
+  // 舊狀態快照：供「重新整理」差異統計（spec §11.1.2）。
+  // key 用 path（無 path 的舊快取 fallback 檔名）：子資料夾後不同資料夾可能有同名檔（subfolder-spec §2.2）。
+  const oldLocal = new Set(items.map(it => it.path || it.name));
   const oldUrl = new Set(urls.map(it => it.url));
 
   status.textContent = "讀取資料夾…";
 
-  // 掃本機檔案。整個資料夾讀不到（外接硬碟拔了／被刪改名）→ 完全不動 md／cache，跳錯誤（spec §6.3、§11.2）
+  // 掃本機檔案：遞迴所有子孫資料夾、攤平（subfolder-spec §4）。
+  // 「根」資料夾讀不到（外接硬碟拔了／被刪改名）→ 完全不動 md／cache，跳錯誤（spec §6.3、§11.2）；
+  // 單一「子」資料夾讀不到 → scanDir 內各自 try/catch 略過該分支，繼續掃其他分支（subfolder-spec §4.6）。
   let found;
   try {
     found = [];
-    for await (const entry of handle.values()) {
-      if (entry.kind !== "file") continue;
-      const dot = entry.name.lastIndexOf("."); if (dot < 0) continue;
-      const ext = entry.name.slice(dot + 1).toLowerCase();
-      if (ext === "pdf") found.push({ entry, ext, type: "pdf" });
-      else if (IMG_EXT.has(ext)) found.push({ entry, ext, type: "image" });
-    }
+    await scanDir(handle, "", found, true);
   } catch (e) {
     console.warn("[lib] 無法讀取資料夾：", e);
     status.textContent = "";
@@ -46,13 +43,13 @@ async function start(forcePick, feedback) {
   dirHandle = handle;
   try { await DB.set("kv", "dir", handle); } catch (e) { console.warn("[lib] 無法儲存資料夾把手：", e); }
 
-  found.sort((a, b) => a.entry.name.localeCompare(b.entry.name, "zh-Hant", { numeric: true }));
+  found.sort((a, b) => a.path.localeCompare(b.path, "zh-Hant", { numeric: true }));
   // 先抓每個檔案的 size/lastModified（只讀 metadata，不讀內容，很快），
   // 才能在畫封面前就把完整清單寫進快取，且讓 thumbKey 對得上快取。
   items = await Promise.all(found.map(async f => {
     let size, lastModified;
     try { const file = await f.entry.getFile(); size = file.size; lastModified = file.lastModified; } catch (_) {}
-    return { kind: "local", name: f.entry.name, ext: f.ext, type: f.type, size, lastModified, _entry: f.entry };
+    return { kind: "local", name: f.entry.name, path: f.path, ext: f.ext, type: f.type, size, lastModified, _entry: f.entry };
   }));
 
   // 立刻存清單：即使封面還沒畫完就重新整理／關頁，下次也能直接載入，免重選資料夾。
@@ -70,14 +67,38 @@ async function start(forcePick, feedback) {
   status.textContent = "";
 
   if (feedback) {
-    const addedL = items.filter(it => !oldLocal.has(it.name)).length;
-    const removedL = [...oldLocal].filter(n => !items.some(it => it.name === n)).length;
+    const addedL = items.filter(it => !oldLocal.has(it.path || it.name)).length;
+    const removedL = [...oldLocal].filter(p => !items.some(it => (it.path || it.name) === p)).length;
     const addedU = urls.filter(it => !oldUrl.has(it.url)).length;
     const removedU = [...oldUrl].filter(u => !urls.some(it => it.url === u)).length;
     const changed = addedL + removedL + addedU + removedU;
     let msg = `已重新整理：本機檔案 <b>${items.length}</b> 筆、URL <b>${urls.length}</b> 筆`;
     if (changed) msg += `<br>（新增 ${addedL + addedU}、移除 ${removedL + removedU}）`;
     toast(msg);
+  }
+}
+
+// 遞迴走訪（subfolder-spec §4／§8）：
+// - path＝從所選根到該檔的相對路徑（頂層檔案剛好等於檔名，讓舊封面快取 key 命中、不重畫）。
+// - 排除：根層的 thumbs/、links.md、links.md.broken-*、files.md（app 自己管理，只排根層）；
+//   「.」開頭的隱藏／系統資料夾（.git 等）任何深度都跳過。
+// - 容錯：每個子資料夾獨立 try/catch，讀不到就略過該分支；只有根讀不到才由呼叫端 folderError()。
+// - 終點：天然 base case（無子資料夾即停），不設人工深度／數量上限。
+async function scanDir(dir, prefix, found, isRoot) {
+  for await (const entry of dir.values()) {
+    if (entry.kind === "directory") {
+      if (entry.name.startsWith(".")) continue;
+      if (isRoot && entry.name === "thumbs") continue;
+      try { await scanDir(entry, prefix + entry.name + "/", found, false); }
+      catch (e) { console.warn(`[lib] 無法讀取子資料夾「${prefix + entry.name}」，略過該分支：`, e); }
+      continue;
+    }
+    if (entry.kind !== "file") continue;
+    if (isRoot && (entry.name === "links.md" || entry.name === "files.md" || entry.name.startsWith("links.md.broken-"))) continue;
+    const dot = entry.name.lastIndexOf("."); if (dot < 0) continue;
+    const ext = entry.name.slice(dot + 1).toLowerCase();
+    if (ext === "pdf") found.push({ entry, ext, type: "pdf", path: prefix + entry.name });
+    else if (IMG_EXT.has(ext)) found.push({ entry, ext, type: "image", path: prefix + entry.name });
   }
 }
 
@@ -146,7 +167,7 @@ $("switchOk").onclick = () => closeSwitch(true);
 $("switchDialog").addEventListener("click", e => { if (e.target.id === "switchDialog") closeSwitch(false); });
 
 async function persistItems() {
-  const meta = items.map(({ name, ext, type, size, lastModified }) => ({ name, ext, type, size, lastModified }));
+  const meta = items.map(({ name, path, ext, type, size, lastModified }) => ({ name, path, ext, type, size, lastModified }));
   try { await DB.set("kv", "items", meta); }
   catch (e) {
     console.warn("[lib] 無法寫入清單到 IndexedDB：", e);

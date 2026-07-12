@@ -83,10 +83,10 @@ yarn-patterns-library/
 - **不指定版本開啟**(沿用瀏覽器現有版本),若缺 `thumbs`／`kv` store 才升一版補建。
   - 為什麼:早期寫死 `open("weaving-lib", 2)`,若使用者瀏覽器裡的資料庫版本已較新,`open` 會直接失敗 → 所有讀寫被吞掉 → **每次重新整理都要重選資料夾**。改成不指定版本即可避免這個雷。
 - store `thumbs`:預覽圖快取(store 無 keyPath,key 由程式明碼帶入)。裝兩種:
-  - **本機封面**:key = `thumbKey(it)` = `` `${it.name}|${it.size}|${it.lastModified}|w${THUMB_W}` ``(見 `js/state.js`),value = JPEG `Blob`。key 帶 `w${THUMB_W}`,所以**改 `THUMB_W` 會自動讓舊封面失效重畫**。
+  - **本機封面**:key = `thumbKey(it)` = `` `${it.path || it.name}|${it.size}|${it.lastModified}|w${THUMB_W}` ``(見 `js/state.js`),value = JPEG `Blob`。key 帶 `w${THUMB_W}`,所以**改 `THUMB_W` 會自動讓舊封面失效重畫**。頂層檔案 `path` = 檔名,故舊快取(無 `path` 時代)的封面 key 不變、既有使用者封面不重畫。
   - **URL 縮圖顯示快取**:key = `urlThumbCacheKey(path)`(形如 `urlthumb:<thumbs/…>`,見 `js/urls.js`),value = WEBP `Blob`。用途見 §6.1(cache-first 開 app 無授權也能顯示)。
 - store `kv`:
-  - `"items"`:清單 meta 陣列 `{name, ext, type, size, lastModified}`(不含 handle,因為要可序列化)。
+  - `"items"`:清單 meta 陣列 `{name, path, ext, type, size, lastModified}`(不含 handle,因為要可序列化)。`path` = 從所選根到該檔的相對路徑(如 `圍巾/蕾絲/scarf.pdf`;頂層檔案 `path` = 檔名)。載入舊快取(無 `path`)時各使用處以 `it.path || it.name` fallback,視為頂層。
     - **掃描完就先 `persistItems()` 寫入一次**(在畫封面之前),`size`／`lastModified` 在掃描時用 `getFile()` 取得。這樣即使封面還沒畫完就重新整理,下次也能直接載入、免重選資料夾。
   - `"dir"`:使用者選的 `FileSystemDirectoryHandle`(可被 structured-clone 存起來)。
   - `"urls"`:**URL 收藏條目陣列**的 read-side cache + 災難復原副本。真相在資料夾根目錄的 `links.md`(見下方「URL 收藏」)。本機檔案與 URL 兩條線並行、無耦合。
@@ -101,12 +101,9 @@ yarn-patterns-library/
 
 ### 規劃中的結構變更(未實作)
 
-> 以下是子資料夾遞迴 ／ 標籤功能一起帶進來的結構調整,**目前尚未實作**;真相見 `spec/subfolder-spec.md`、`spec/tag-spec.md`。實作後把對應項併回上面。
+> 以下是標籤功能帶進來的結構調整,**目前尚未實作**;真相見 `spec/tag-spec.md`。實作後把對應項併回上面。(子資料夾遞迴的 `path` 欄位與 `thumbKey` 遷移**已實作**,見上方 IndexedDB 段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。)
 
-- **`kv.items` 每筆新增 `path`**(相對路徑,如 `圍巾/蕾絲/scarf.pdf`;頂層檔案 `path` = 檔名)。載入舊快取(無 `path`)時 fallback `path = name`。
-- **`thumbKey` 改用 `path`**:key 變 `` `${it.path || it.name}|${it.size}|${it.lastModified}|w${THUMB_W}` ``。頂層 `path` = 檔名,故舊封面快取 key 不變、**既有使用者封面不重畫**。
-- **不需 IndexedDB 升版**:`thumbs` ／ `kv` store 結構未變,只是 value 物件多一欄位(schemaless)。
-- **新增 localStorage `wlib-foldertag`**(暫名):資料夾名轉標籤的開關(持久偏好);另一個一次性旗標記錄上線告知 toast 是否已顯示。
+- **新增 localStorage `wlib-foldertag`**:資料夾名轉標籤的開關(持久偏好,`"on"`／`"off"`／未設=未詢問);另一個一次性旗標 `wlib-subfolder-toast` 記錄上線告知 toast 是否已顯示。
 - **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):手動 tag 的持久真相檔,沿用 `links.md` 模式;延後啟用。
 
 ### 開啟流程(`init()`)
@@ -126,11 +123,11 @@ yarn-patterns-library/
 
 | 功能         | 說明                                                                                                                                                                                                                        | 相關程式                                                   |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 選資料夾     | 首次用 `showDirectoryPicker` 選**裝著 PDF／圖片的那層資料夾**(不再自動鑽 `collection`)                                                                                                                                      | `getHandle()`、`start(true)`                               |
+| 選資料夾     | 首次用 `showDirectoryPicker` 選**裝著 PDF／圖片的那層資料夾**(不再自動鑽 `collection`)。掃描**遞迴所有子孫資料夾攤平**成單一畫廊,每個檔案帶相對路徑 `path`;排除與容錯見 §9                                                   | `getHandle()`、`start(true)`、`scanDir()`                  |
 | 重新整理     | 沿用上次資料夾把手重新掃描,只補畫新／變動的封面。**在頂欄右側「設定」齒輪下拉選單內**                                                                                                                                       | `start(false)`、`#settingsBtn`                             |
 | 更換資料夾   | 強制跳出選擇視窗改選別的資料夾。**同在「設定」下拉選單內**                                                                                                                                                                  | `start(true)`、`#settingsBtn`                              |
 | 產生封面     | PDF 用 PDF.js 畫第 1 頁;圖片縮圖。並發 3,寫入 `thumbs` 快取                                                                                                                                                                 | `generateThumbs()`、`renderPdfCover()`、`downscaleImage()` |
-| 開啟檔案     | 點封面 → 用 file handle 取出該檔 → blob URL 開新分頁。快取載入時用 `dirHandle.getFileHandle(name)` 重新取得(會跳一次授權)                                                                                                   | `openFile()`                                               |
+| 開啟檔案     | 點封面 → 用 file handle 取出該檔 → blob URL 開新分頁。快取載入時沿 `path` 逐段 `getDirectoryHandle` → `getFileHandle` 重新取得(會跳一次授權;無 `path` 的舊快取 fallback 檔名)                                                | `openFile()`                                               |
 | 放大預覽     | 卡片中央 hover 出現的放大鏡(Iconify lucide:search 內嵌 SVG)→ 開燈箱                                                                                                                                                         | `.expand`、`openViewer()`                                  |
 | 燈箱／幻燈片 | 大圖瀏覽(`max 94vw／80vh`),**純手動**(◀ ▶ ／ ← → ／ Esc),**無自動播放**。只顯示標題;單擊圖片=開啟原始檔。開啟時鎖背景捲動。**無縮放／拖曳**(曾做過滾輪縮放+拖曳,實測不實用已移除)。`vList` 依畫面實際排列(含時間軸順序)取得 | `openViewer／showSlide／step／closeViewer`                 |
 | 搜尋         | 即時依檔名過濾。時間軸模式下,**整月都被濾掉的月份區塊會收起**不留白                                                                                                                                                         | `applyFilter()`                                            |
@@ -183,7 +180,7 @@ yarn-patterns-library/
 - IndexedDB 是 **per-origin**:把 `index.html` 搬到不同路徑／網域,快取會重來(需重選資料夾)。
 - 純快取載入後第一次「開啟檔案」會跳一次資料夾讀取授權(因為要重新拿 handle)。
 - `.label` **已改用線性漸層(不再毛玻璃)**,正是為了避免大量卡片捲動時在弱 GPU 上閃動。**不要**為了視覺再把毛玻璃加回 `.label`。
-- 只掃描所選資料夾的**頂層**檔案,不遞迴子資料夾。
+- 遞迴掃描會**跳過**:根層 app 管理的 `thumbs/`、`links.md`、`links.md.broken-*`、`files.md`;任何深度的 `.` 開頭資料夾(`.git` 等)。單一子資料夾讀取失敗只略過該分支(console 警告),不中止整場掃描;只有根資料夾讀不到才報錯。見 `spec/subfolder-spec.md` §8／§4.6。
 - 支援副檔名:PDF + `png/jpg/jpeg/webp/gif/bmp`(見 `IMG_EXT`)。
 
 ---
@@ -194,7 +191,7 @@ yarn-patterns-library/
 - 時間軸排序目前只用 `lastModified`(File System Access API **拿不到建立時間**,只有修改時間)。
 - Masonry(瀑布流)版面。
 - 把已產生的封面一鍵匯出成檔案。
-- 子資料夾遞迴掃描／分類。**規格方向已定**(攤平全遞迴、資料夾路徑轉自動 tag)、尚未實作,見 `spec/subfolder-spec.md`。
+- 子資料夾遞迴掃描**已實作**(攤平全遞迴、item 帶相對路徑 `path`,見 `spec/subfolder-spec.md`);「資料夾路徑轉自動 tag」與 tag 篩選尚未實作,見下方標籤系統項。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
 - **標籤(tag)系統**:URL 條目跟本機檔案(PDF／圖片)都能下 hashtag,可按 tag 篩選。
   - `links.md` 解析器(見 `spec/url-spec.md` §4)**已實作**「不認識的欄位保留原樣」,所以未來加 `- tags: #a #b` 欄位不會破壞現有資料——後端解析這層已就緒。
