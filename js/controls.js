@@ -37,6 +37,18 @@ function updateSourceBtn() {
 }
 updateSourceBtn();
 
+// folder→tag 開關（tag-spec §4a／§11.2）：列狀態依「有無子資料夾檔案」與偏好即時反映
+function updateFoldertagUI() {
+  const has = hasSubfolderFiles(), on = foldertagOn();
+  const sw = $("foldertagSwitch");
+  $("foldertagRow").classList.toggle("disabled", !has);
+  sw.disabled = !has;
+  sw.classList.toggle("on", on);
+  sw.setAttribute("aria-checked", String(on));
+  $("foldertagSub").textContent = has ? "子資料夾名自動變成可篩選的標籤" : "目前資料夾沒有子資料夾";
+}
+$("foldertagSwitch").onclick = () => setFoldertag(!foldertagOn());
+
 // 設定下拉選單
 function closeSettings() {
   $("settingsList").hidden = true;

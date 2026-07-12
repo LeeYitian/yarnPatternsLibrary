@@ -98,12 +98,13 @@ yarn-patterns-library/
 - `"wlib-sort"`:排序模式,`"name"`(依檔名)或 `"time"`(依修改時間,時間軸版面)。
 - `"wlib-source"`:來源篩選,`"all"`／`"local"`／`"url"`(全部／本機／網址);與排序正交。
 - `"wlib-onboarding-seen"`:onboarding 教學已看過的**版本字串**(`OB_SEEN_KEY`,見 `js/onboarding.js`、`spec/onboarding-spec.md` §3.2)。有值→首次不自動跳;值 < 當前版本→升版 toast。
+- `"wlib-foldertag"`:資料夾名稱轉標籤的開關(`"on"`／`"off"`;**未設=尚未詢問**,行為同 off)。設定選單 toggle 切換,即時生效(`js/tags.js`、`spec/tag-spec.md` §4a)。
 
 ### 規劃中的結構變更(未實作)
 
 > 以下是標籤功能帶進來的結構調整,**目前尚未實作**;真相見 `spec/tag-spec.md`。實作後把對應項併回上面。(子資料夾遞迴的 `path` 欄位與 `thumbKey` 遷移**已實作**,見上方 IndexedDB 段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。)
 
-- **新增 localStorage `wlib-foldertag`**:資料夾名轉標籤的開關(持久偏好,`"on"`／`"off"`／未設=未詢問);另一個一次性旗標 `wlib-subfolder-toast` 記錄上線告知 toast 是否已顯示。
+- **一次性旗標 `wlib-subfolder-toast`**:記錄上線告知 toast 是否已顯示(`wlib-foldertag` 開關**已實作**,見上方 localStorage 段落)。
 - **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):手動 tag 的持久真相檔,沿用 `links.md` 模式;延後啟用。
 
 ### 開啟流程(`init()`)

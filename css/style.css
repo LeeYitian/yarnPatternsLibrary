@@ -141,6 +141,18 @@
   }
   .menu-item:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
   .menu-item:disabled { opacity: .5; cursor: default; }
+  /* 設定選單兩段化（tag-spec §11.2）：上為偏好開關區、下為動作項目 */
+  #settingsList { min-width: 264px; }
+  .menu-group-label { padding: 8px 12px 6px; font-family: var(--font-disp); font-size: 9px;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+  .menu-toggle { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 8px 12px 12px; }   /* 非按鈕列：hover 不變底色，點擊落在 switch */
+  .menu-toggle .mt-txt { min-width: 0; }
+  .menu-toggle .mt-title { font-family: var(--font-body); font-size: 13.5px; color: var(--ink); }
+  .menu-toggle .mt-sub { font-family: var(--font-body); font-size: 11.5px; color: var(--muted);
+    margin-top: 3px; line-height: 1.45; }
+  .menu-toggle.disabled { opacity: .5; }   /* 平資料夾：整列半透明 + switch 不可點（disabled） */
+  .menu-sep { height: 1px; background: var(--line); margin: 2px 6px 6px; }
   #search {
     border: 1px solid var(--line); background: var(--card); color: var(--ink); backdrop-filter: blur(6px);
     font-family: var(--font-body); font-size: 15px; padding: 10px 14px; border-radius: 4px; min-width: 160px; outline: none;
@@ -743,6 +755,41 @@
   #obUpgrade .up-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; }
 
   /* ===================================================================
+     ↓↓↓ 標籤系統（tag-spec.md §11） ↓↓↓
+     =================================================================== */
+
+  /* Toggle Switch（§11.1）：方形化開關，honor「4px 圓角、不用膠囊」。
+     軌道 46×26／圓角 5px，把手 18×18／圓角 4px；開＝綠拋光金屬漸層 + 白把手。 */
+  .wl-switch { flex: none; width: 46px; height: 26px; border-radius: 5px; border: 1px solid var(--line);
+    background: var(--card); position: relative; cursor: pointer; padding: 0; transition: var(--t-base) ease-out; }
+  .wl-switch .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 4px;
+    background: var(--muted); transition: var(--t-base) ease-out; }
+  .wl-switch.on { border: none; background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent) 78%, #fff), var(--accent) 50%, color-mix(in srgb, var(--accent) 82%, #000));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2); }
+  .wl-switch.on .knob { left: auto; right: 3px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .wl-switch:disabled { cursor: default; }
+
+  /* 卡片 mini chip（§11.4）：唯讀展示、比篩選 chip 小；框線綠 */
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; min-width: 0; }
+  .ctag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 4px;
+    border: 1px solid rgba(150,206,180,.6); font-family: var(--font-body); font-size: 11px;
+    line-height: 1.35; color: #cdeadf; white-space: nowrap; }
+  .ctag .more { color: #92c9b4; }
+  /* 分級顯示（§11.4）：標準／寬大展開整排（full）、緊湊一顆彙整（brief）；觸控裝置一律彙整 */
+  .grid.size-compact .card-tags.full { display: none; }
+  .grid.size-wide .card-tags.brief, .grid.size-std .card-tags.brief { display: none; }
+  @media (hover: none), (pointer: coarse) {
+    .card-tags.full { display: none !important; }
+    .card-tags.brief { display: flex !important; }
+  }
+
+  /* 燈箱：完整 tag 清單置中於標題下方（§11.4） */
+  .stage .cap .vtags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+  .stage .cap .vtags:empty { display: none; }
+  .stage .cap .vtags .ctag { font-size: 12px; padding: 4px 10px; }
+
+  /* ===================================================================
      ↓↓↓ 觸控裝置互動（touch-interaction-spec.md） ↓↓↓
      =================================================================== */
 
@@ -766,11 +813,15 @@
     border-radius: 4px 4px 0 0;
     box-shadow: var(--shadow-lg);
     padding: 12px var(--gutter);
-    display: flex; align-items: center; gap: 8px;
+    display: flex; flex-direction: column; align-items: stretch; gap: 10px;
     transform: translateY(100%);
     transition: transform var(--t-base) ease-out;
   }
   #touchToolbar.show { transform: translateY(0); }
+  /* 完整 tag 清單：工具列本體上方一列（tag-spec §11.4）；無 tag 時收起 */
+  #touchToolbar .tb-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  #touchToolbar .tb-tags:empty { display: none; }
+  .tb-row   { display: flex; align-items: center; gap: 8px; }
   .tb-left  { display: flex; gap: 7px; }
   .tb-right { margin-left: auto; }
 

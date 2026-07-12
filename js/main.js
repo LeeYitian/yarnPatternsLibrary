@@ -41,6 +41,7 @@ function showIntro() {
 }
 function showLibrary() {
   intro.classList.add("hidden"); bar.classList.remove("hidden"); dock.hidden = false;
+  updateFoldertagUI();   // 開關列狀態跟著掃描結果走（平資料夾＝disabled，tag-spec §11.2）
   const total = items.length + urls.length;
   $("count").textContent = `（${total} 件）`;
   empty.classList.toggle("hidden", total > 0);

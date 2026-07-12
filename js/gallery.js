@@ -33,7 +33,7 @@ function localCardHTML(it) {
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar"></span><div class="txt">` +
     `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
-    `<div class="size">${it.size ? humanSize(it.size) : ""}</div></div></div></div>`;
+    `<div class="size">${it.size ? humanSize(it.size) : ""}</div>${cardTagsHTML(it)}</div></div></div>`;
 }
 function urlCardHTML(it) {
   return `<div class="thumb"><div class="spin"></div>` +
