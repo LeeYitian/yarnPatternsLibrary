@@ -144,10 +144,13 @@
   <button class="vnav prev" id="vPrev" title="上一張 (←)">‹</button>
   <div class="stage">
     <div class="frame"><img id="vImg" alt=""></div>
-    <div class="ornate-divider" aria-hidden="true"></div>
-    <div class="cap"><div class="t" id="vTitle"></div><div class="vtags" id="vTags"></div></div>
-    <div class="vbtns">
-      <button class="btn primary" id="vOpen">開啟檔案</button>
+    <!-- 側欄：桌面與預覽圖左右並排、底部對齊（盡量放大圖、開啟鈕不被裁掉）；手機仍直向堆疊 -->
+    <div class="vside">
+      <div class="ornate-divider" aria-hidden="true"></div>
+      <div class="cap"><div class="t" id="vTitle"></div><div class="vtags" id="vTags"></div></div>
+      <div class="vbtns">
+        <button class="btn primary" id="vOpen">開啟檔案</button>
+      </div>
     </div>
   </div>
   <button class="vnav next" id="vNext" title="下一張 (→)">›</button>

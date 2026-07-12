@@ -8,18 +8,36 @@ function ensureCards() {
   allItems().forEach((it) => {
     if (it._card) return;
     const card = document.createElement("div");
-    card.className = "card " + (it.kind === "url" ? "url" : "local");   // 篩選 / 樣式靠這個 class
-    card.dataset.name = (it.kind === "url"
-      ? `${it.title} ${it._host || hostOf(it.url)} ${it.url}`
-      : it.name).toLowerCase();
+    card.className = "card " + (it.kind === "url" ? "url" : "local"); // 篩選 / 樣式靠這個 class
+    card.dataset.name = (
+      it.kind === "url"
+        ? `${it.title} ${it._host || hostOf(it.url)} ${it.url}`
+        : it.name
+    ).toLowerCase();
     card.innerHTML = it.kind === "url" ? urlCardHTML(it) : localCardHTML(it);
-    card.querySelector(".expand").onclick = (e) => { e.stopPropagation(); openViewer(visibleIndexOf(it)); };
+    card.querySelector(".expand").onclick = (e) => {
+      e.stopPropagation();
+      openViewer(visibleIndexOf(it));
+    };
+    // 點 tag 區＝想看分類 → 開燈箱（完整 tag 在那）；點卡片其他處照舊開檔／開連結。
+    // 用 e.target 判斷而非綁在 chips 上：chips 會被 refreshCardTags() 就地重建，監聽不能掛死在節點上。
+    card.onclick = (e) => {
+      if (mqTouch.matches) return;
+      if (e.target.closest(".card-tags")) {
+        openViewer(visibleIndexOf(it));
+        return;
+      }
+      openItem(it);
+    };
     if (it.kind === "url") {
-      card.onclick = () => { if (!mqTouch.matches) openItem(it); };
-      card.querySelector(".edit").onclick = (e) => { e.stopPropagation(); openDialog("edit", it); };
-      card.querySelector(".del").onclick = (e) => { e.stopPropagation(); openConfirm(it); };
-    } else {
-      card.onclick = () => { if (!mqTouch.matches) openItem(it); };
+      card.querySelector(".edit").onclick = (e) => {
+        e.stopPropagation();
+        openDialog("edit", it);
+      };
+      card.querySelector(".del").onclick = (e) => {
+        e.stopPropagation();
+        openConfirm(it);
+      };
     }
     attachLongPress(card, it);
     card.__item = it;
@@ -28,62 +46,83 @@ function ensureCards() {
 }
 
 function localCardHTML(it) {
-  return `<div class="thumb"><div class="spin"></div>` +
+  return (
+    `<div class="thumb"><div class="spin"></div>` +
     `<span class="badge ${it.type}">${it.type === "pdf" ? "PDF" : it.ext.toUpperCase()}</span>` +
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar"></span><div class="txt">` +
     `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
-    `<div class="size">${it.size ? humanSize(it.size) : ""}</div>${cardTagsHTML(it)}</div></div></div>`;
+    `<div class="size">${it.size ? humanSize(it.size) : ""}</div>${cardTagsHTML(it)}</div></div></div>`
+  );
 }
 function urlCardHTML(it) {
-  return `<div class="thumb"><div class="spin"></div>` +
+  return (
+    `<div class="thumb"><div class="spin"></div>` +
     `<span class="badge url">連結</span>` +
     `<div class="card-actions"><button class="edit" title="編輯">${SVG_EDIT}</button><button class="del" title="刪除">${SVG_DEL}</button></div>` +
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar url"></span><div class="txt">` +
     `<div class="name">${escapeHtml(displayName(it))}</div>` +
-    `<div class="size">${escapeHtml(it._host || hostOf(it.url))}</div></div></div></div>`;
+    `<div class="size">${escapeHtml(it._host || hostOf(it.url))}</div></div></div></div>`
+  );
 }
 
 // 點卡片其他地方 → 另開視窗：本機=新分頁開檔；URL=開連結（handoff §4）
-function openItem(it) { openFile(it); }
+function openItem(it) {
+  openFile(it);
+}
 
-const byName = (a, b) => sortKeyName(a).localeCompare(sortKeyName(b), "zh-Hant", { numeric: true });
+const byName = (a, b) =>
+  sortKeyName(a).localeCompare(sortKeyName(b), "zh-Hant", { numeric: true });
 
 function render() {
   ensureCards();
   grid.innerHTML = "";
   grid.classList.toggle("mode-timeline", sortMode === "time");
   grid.classList.toggle("mode-name", sortMode !== "time");
-  if (sortMode === "time") renderTimeline(); else renderFlat();
+  if (sortMode === "time") renderTimeline();
+  else renderFlat();
   applyFilter();
 }
 
 function renderFlat() {
-  allItems().slice().sort(byName).forEach((it, i) => {
-    it._card.style.animationDelay = Math.min(i * 22, 600) + "ms";
-    grid.appendChild(it._card);
-  });
+  allItems()
+    .slice()
+    .sort(byName)
+    .forEach((it, i) => {
+      it._card.style.animationDelay = Math.min(i * 22, 600) + "ms";
+      grid.appendChild(it._card);
+    });
 }
 
 // 依時間（新→舊）分月；本機用 lastModified，URL 把 added 當天 00:00 轉時間戳，共用同一條軸（handoff §2）。
 function renderTimeline() {
-  const arr = allItems().slice().sort((a, b) => itemTs(b) - itemTs(a));
-  let curKey = null, curGrid = null, i = 0;
+  const arr = allItems()
+    .slice()
+    .sort((a, b) => itemTs(b) - itemTs(a));
+  let curKey = null,
+    curGrid = null,
+    i = 0;
   arr.forEach((it) => {
     const ts = itemTs(it);
     const d = ts ? new Date(ts) : null;
     const key = d ? `${d.getFullYear()}-${d.getMonth()}` : "?";
     if (key !== curKey) {
       curKey = key;
-      const month = document.createElement("div"); month.className = "tl-month";
-      const head = document.createElement("div"); head.className = "tl-head";
+      const month = document.createElement("div");
+      month.className = "tl-month";
+      const head = document.createElement("div");
+      head.className = "tl-head";
       head.innerHTML = `<span class="tl-label">${d ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月` : "無日期"}</span>`;
-      curGrid = document.createElement("div"); curGrid.className = "tl-grid";
-      month.appendChild(head); month.appendChild(curGrid); grid.appendChild(month);
+      curGrid = document.createElement("div");
+      curGrid.className = "tl-grid";
+      month.appendChild(head);
+      month.appendChild(curGrid);
+      grid.appendChild(month);
     }
     it._card.style.animationDelay = Math.min(i * 12, 480) + "ms";
-    curGrid.appendChild(it._card); i++;
+    curGrid.appendChild(it._card);
+    i++;
   });
 }
 
@@ -95,12 +134,17 @@ async function openFile(it) {
     return;
   }
   try {
-    let fh = it._entry;          // 本次有掃描資料夾時直接用
-    if (!fh) {                   // 純從快取載入時，沿相對路徑逐層重新取得（舊快取無 path → fallback 檔名＝頂層）
-      if (!await ensureRead(dirHandle)) { alert("請先選擇放編織圖的資料夾。"); return; }
+    let fh = it._entry; // 本次有掃描資料夾時直接用
+    if (!fh) {
+      // 純從快取載入時，沿相對路徑逐層重新取得（舊快取無 path → fallback 檔名＝頂層）
+      if (!(await ensureRead(dirHandle))) {
+        alert("請先選擇放編織圖的資料夾。");
+        return;
+      }
       const segs = (it.path || it.name).split("/");
       let dir = dirHandle;
-      for (let i = 0; i < segs.length - 1; i++) dir = await dir.getDirectoryHandle(segs[i]);
+      for (let i = 0; i < segs.length - 1; i++)
+        dir = await dir.getDirectoryHandle(segs[i]);
       fh = await dir.getFileHandle(segs[segs.length - 1]);
       it._entry = fh;
     }
@@ -116,24 +160,31 @@ async function openFile(it) {
 
 // 篩選：搜尋字 AND 來源（兩維正交，handoff §2）；只加 .hidden，不重建 DOM。
 function applyFilter() {
-  const q = $("search").value.trim().toLowerCase(); let shown = 0;
+  const q = $("search").value.trim().toLowerCase();
+  let shown = 0;
   for (const it of allItems()) {
     const matchSearch = !q || it._card.dataset.name.includes(q);
-    const matchSource = sourceMode === "all"
-      || (sourceMode === "local" && it.kind !== "url")
-      || (sourceMode === "url" && it.kind === "url");
+    const matchSource =
+      sourceMode === "all" ||
+      (sourceMode === "local" && it.kind !== "url") ||
+      (sourceMode === "url" && it.kind === "url");
     const hit = matchSearch && matchSource;
-    it._card.classList.toggle("hidden", !hit); if (hit) shown++;
+    it._card.classList.toggle("hidden", !hit);
+    if (hit) shown++;
   }
   // 時間軸模式：把篩選後沒有任何可見卡片的月份整塊收起，避免留白
   if (sortMode === "time") {
-    grid.querySelectorAll(".tl-month").forEach(m => {
-      m.classList.toggle("hidden", !m.querySelector(".tl-grid > .card:not(.hidden)"));
+    grid.querySelectorAll(".tl-month").forEach((m) => {
+      m.classList.toggle(
+        "hidden",
+        !m.querySelector(".tl-grid > .card:not(.hidden)"),
+      );
     });
   }
   const total = items.length + urls.length;
   if (total) {
     empty.classList.toggle("hidden", shown > 0);
-    if (!shown) empty.textContent = q ? "找不到符合的項目。" : "這個來源目前沒有項目。";
+    if (!shown)
+      empty.textContent = q ? "找不到符合的項目。" : "這個來源目前沒有項目。";
   }
 }

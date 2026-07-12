@@ -385,7 +385,7 @@
   .label {
     position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; align-items: flex-end;
     padding: 14px 14px 13px; color: #fff;
-    background: linear-gradient(to top, rgba(16,34,30,.66), rgba(16,34,30,.22) 78%, transparent);
+    background: linear-gradient(to top, rgb(16 34 30), rgb(16 34 30 / 27%) 78%, transparent);
   }
   .label .bar { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px;
     background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
@@ -429,7 +429,10 @@
   }
   #viewer.show { display: flex; animation: fade .25s ease-out; }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 100%; max-height: 100%; }
+  /* 桌面：預覽圖 × 側欄（標題+tag+開啟鈕）左右並排、底部對齊——圖可以吃滿高度，開啟鈕不會被擠出畫面 */
+  .stage { display: flex; flex-direction: row; align-items: flex-end; gap: 16px; max-width: 100%; max-height: 100%; }
+  .stage .vside { flex: none; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    width: min(300px, 34vw); min-width: 0; }
   .stage .frame {
     position: relative; background: var(--card-solid); border-radius: 4px;
     box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,.14);
@@ -445,8 +448,8 @@
   /* 燈箱華麗分隔線（沿用首頁 .ornate-divider，僅調尺寸與透明背景） */
   .stage .ornate-divider { width: 180px; margin: 4px auto 0; }
   .stage .ornate-divider::before { background: transparent; padding: 0 10px; }
-  /* 圖片高度上限預留分隔線／標題／按鈕的空間，避免在較矮的視窗把下方按鈕擠出畫面 */
-  .stage img { display: block; max-width: 92vw; max-height: min(82vh, calc(100vh - 200px)); object-fit: contain; cursor: pointer; border-radius: 2px; }
+  /* 側欄在旁邊，不再需要往下預留標題／按鈕空間：高度幾乎吃滿視窗，寬度扣掉側欄 */
+  .stage img { display: block; max-width: calc(92vw - 340px); max-height: calc(100vh - 130px); object-fit: contain; cursor: pointer; border-radius: 2px; }
   .stage .cap { text-align: center; color: #eef6f2; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
   .stage .cap .t { font-family: var(--font-head); font-size: 16px; font-weight: 500; letter-spacing: .01em; color: var(--muted); }
   .stage .cap .i { font-family: var(--font-disp); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
@@ -472,10 +475,12 @@
   }
   body.no-scroll { overflow: hidden; }
 
-  /* 手機燈箱：左右 padding 拉到 58px，讓 stage 擠進 nav 按鈕內側，避免重疊跑版 */
+  /* 手機燈箱：左右 padding 拉到 58px，讓 stage 擠進 nav 按鈕內側，避免重疊跑版；
+     並排空間不夠 → 側欄退回直向堆疊（沿用舊版面） */
   @media (max-width: 600px) {
     #viewer { padding: clamp(14px,3vw,40px) 58px; }
-    .stage { width: 100%; }
+    .stage { width: 100%; flex-direction: column; align-items: center; gap: 12px; }
+    .stage .vside { width: 100%; }
     .stage .frame { max-width: 100%; }
     .stage img { max-width: 100%; max-height: min(72svh, calc(100svh - 220px)); }
     .vnav { width: 44px; height: 44px; font-size: 20px; }
