@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&amp;family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Crimson+Pro:ital,wght@0,400;0,600;1,400&amp;family=Noto+Serif+TC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#050a08; }
+  a { color:#6dbd9f; }
+  a:hover { color:#84b6d6; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; padding:56px; font-family:'Crimson Pro','Noto Serif TC',serif; color:#e7f0ec;">
+
+  <div style="margin-bottom:44px;">
+    <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:#6dbd9f; margin-bottom:10px;">Bibliotheca Textilis</div>
+    <h1 style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:44px; font-weight:500; margin:0;">Wireframe · 織圖圖書館</h1>
+    <p style="color:#92a69f; font-size:14.5px; margin-top:10px; max-width:640px; line-height:1.8;">從現有系統整理出的畫面結構圖，涵蓋所有主要流程。視覺沿用真實的深色學院風配色與字體；灰色斜紋區塊代表使用者資料夾裡的真實封面／縮圖。</p>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:40px; align-items:flex-start;">
+
+    <!-- 1. 首頁引導 · 第一屏 -->
+    <div data-screen-label="首頁引導 · 第一屏" style="width:380px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">1 · 首頁引導（第一屏）</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:60px 30px; display:flex; flex-direction:column; align-items:center; text-align:center; height:460px; justify-content:center; box-shadow:0 14px 40px rgba(0,0,0,.5);">
+        <div style="width:56px; height:56px; border-radius:6px; background:#141f1c; border:1px solid #6dbd9f; margin-bottom:16px;"></div>
+        <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:#6dbd9f;">Bibliotheca Textilis</div>
+        <h2 style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:32px; font-weight:500; margin:10px 0 0;">編織圖圖書館</h2>
+        <div style="height:1px; width:150px; margin:20px auto; background:linear-gradient(90deg,transparent,#6dbd9f,transparent);"></div>
+        <div style="margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:6px; color:#6dbd9f; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.25em;">
+          往&nbsp;下&nbsp;捲&nbsp;動
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:20px; height:20px;"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 首頁引導 · 說明區 -->
+    <div data-screen-label="首頁引導 · 說明區" style="width:380px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">2 · 首頁引導（捲動後）</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:36px 30px; height:460px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 14px 40px rgba(0,0,0,.5);">
+        <div style="position:relative; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:22px 24px; font-size:13px; line-height:1.9; color:#e7f0ec;">
+          <span style="position:absolute; top:6px; left:6px; width:22px; height:22px; border-top:2px solid #6dbd9f; border-left:2px solid #6dbd9f; border-radius:2px 0 0 0;"></span>
+          <span style="position:absolute; bottom:6px; right:6px; width:22px; height:22px; border-bottom:2px solid #6dbd9f; border-right:2px solid #6dbd9f; border-radius:0 0 2px 0;"></span>
+          <p style="margin:0 0 10px;"><span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; color:#6dbd9f; float:left; line-height:.8; padding-right:6px;">把</span>你的編織圖資料夾變成可瀏覽的畫廊！</p>
+          <p style="margin:0 0 10px; color:#92a69f;">第一次使用請選取資料夾；瀏覽器安全規定，網頁不能自己讀取電腦裡的檔案。</p>
+          <p style="margin:0; color:#92a69f;">內容以資料夾為準，不會搬動或修改既有檔案。</p>
+        </div>
+        <button style="margin-top:24px; border:none; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:12px; letter-spacing:.15em; text-transform:uppercase; padding:14px 30px; border-radius:4px; background:linear-gradient(180deg,#94d6be,#6dbd9f 50%,#549174);">選擇資料夾</button>
+        <div style="margin-top:14px; font-style:italic; font-size:11.5px; color:#92a69f;">※ 請使用 Chrome 或 Edge 開啟</div>
+      </div>
+    </div>
+
+    <!-- 3. 主畫廊 · 標準網格 -->
+    <div data-screen-label="主畫廊 · 標準網格" style="width:640px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">3 · 主畫廊（依檔名排序 · 標準大小）</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; box-shadow:0 14px 40px rgba(0,0,0,.5); overflow:hidden;">
+        <div style="display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid rgba(150,185,172,.14); background:rgba(10,22,20,.7); flex-wrap:wrap;">
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:19px; font-weight:600; display:flex; align-items:center; gap:8px;"><span style="width:20px; height:20px; border-radius:4px; background:#141f1c; border:1px solid #6dbd9f;"></span>織圖圖書館 <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.2em; color:#92a69f;">42 項</span></div>
+          <div style="flex:1;"></div>
+          <div style="border:1px solid rgba(150,185,172,.14); background:rgba(26,38,35,.52); border-radius:4px; padding:7px 12px; font-size:12px; font-style:italic; color:#92a69f; min-width:100px;">搜尋名稱…</div>
+          <div style="border:none; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; padding:8px 12px; border-radius:4px; background:#6dbd9f; display:flex; align-items:center; gap:5px;">＋新增網址</div>
+          <div style="width:32px; height:32px; border:1px solid rgba(150,185,172,.14); border-radius:4px;"></div>
+          <div style="width:32px; height:32px; border:1px solid rgba(150,185,172,.14); border-radius:4px;"></div>
+        </div>
+        <div style="position:relative; padding:26px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+          <sc-for list="{{ galleryCards }}" as="card" hint-placeholder-count="6">
+            <div style="position:relative; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:8px;">
+              <div style="aspect-ratio:1/1; border-radius:2px; overflow:hidden; position:relative; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 8px, rgba(109,189,159,.18) 8px 16px); display:flex; align-items:center; justify-content:center;">
+                <span style="font-family:ui-monospace,Menlo,monospace; font-size:9px; color:#92a69f;">{{ card.type }} 縮圖</span>
+                <span style="position:absolute; top:6px; right:6px; font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:#fff; background:{{ card.badgeColor }}; padding:2px 6px; border-radius:3px;">{{ card.type }}</span>
+                <div style="position:absolute; left:0; right:0; bottom:0; display:flex; gap:6px; align-items:flex-end; padding:8px; background:linear-gradient(to top, rgba(16,34,30,.72), transparent);">
+                  <span style="width:2px; align-self:stretch; min-height:14px; border-radius:2px; background:{{ card.barColor }};"></span>
+                  <span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:11px; color:#fff;">{{ card.name }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+          <div style="position:absolute; right:-56px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px;">
+            <div style="width:44px; min-height:44px; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(20,31,28,.9); display:flex; align-items:center; justify-content:center;"><svg viewBox="0 0 24 24" fill="none" stroke="#e7f0ec" stroke-width="2" style="width:16px; height:16px;"><rect x="3" y="3" width="7" height="7"></rect></svg></div>
+            <div style="width:44px; min-height:44px; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(20,31,28,.9);"></div>
+            <div style="width:44px; min-height:44px; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(20,31,28,.9);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 時間軸版面 -->
+    <div data-screen-label="主畫廊 · 時間軸" style="width:420px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">4 · 主畫廊（依時間排序 · 時間軸）</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; box-shadow:0 14px 40px rgba(0,0,0,.5); padding:30px 30px 30px 50px;">
+        <sc-for list="{{ timelineMonths }}" as="mo" hint-placeholder-count="2">
+          <div style="position:relative; margin-bottom:34px; padding-left:26px; border-left:2px solid #6dbd9f;">
+            <div style="position:absolute; left:-7px; top:2px; width:14px; height:14px; border-radius:50%; background:#141f1c; border:3px solid #6dbd9f;"></div>
+            <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:20px; margin-bottom:12px;">{{ mo.label }} <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; color:#92a69f; letter-spacing:.14em;">{{ mo.count }}</span></div>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+              <sc-for list="{{ mo.items }}" as="it" hint-placeholder-count="3">
+                <div style="aspect-ratio:1/1; border-radius:3px; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 6px, rgba(109,189,159,.18) 6px 12px); border:1px solid rgba(150,185,172,.14);"></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- 5. 設定選單 -->
+    <div data-screen-label="設定選單" style="width:280px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">5 · 設定選單（頂欄齒輪下拉）</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:60px 24px; box-shadow:0 14px 40px rgba(0,0,0,.5); display:flex; justify-content:flex-end;">
+        <div style="background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; box-shadow:0 26px 64px rgba(0,0,0,.62); padding:6px; display:flex; flex-direction:column; gap:2px; min-width:160px;">
+          <sc-for list="{{ menuItems }}" as="mi" hint-placeholder-count="4">
+            <div style="padding:10px 14px; border-radius:3px; font-size:13.5px; color:{{ mi.color }};">{{ mi.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. 燈箱／幻燈片 -->
+    <div data-screen-label="燈箱／幻燈片" style="width:420px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">6 · 燈箱／幻燈片瀏覽</div>
+      <div style="background:color-mix(in srgb, #0a1614 26%, rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:34px; height:420px; position:relative; display:flex; align-items:center; justify-content:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+        <div style="position:absolute; top:14px; left:16px; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; color:#e7f0ec; background:#141f1c; border:1px solid rgba(150,185,172,.14); padding:5px 10px; border-radius:4px;">3 / 42</div>
+        <div style="position:absolute; top:12px; right:16px; width:34px; height:34px; border-radius:50%; background:#141f1c; border:1px solid rgba(150,185,172,.14); display:flex; align-items:center; justify-content:center; color:#e7f0ec;">✕</div>
+        <div style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:#141f1c; border:1px solid rgba(150,185,172,.14); display:flex; align-items:center; justify-content:center; color:#e7f0ec; font-size:18px;">‹</div>
+        <div style="position:absolute; right:10px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:#141f1c; border:1px solid rgba(150,185,172,.14); display:flex; align-items:center; justify-content:center; color:#e7f0ec; font-size:18px;">›</div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div style="position:relative; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:10px;">
+            <div style="width:220px; height:220px; border-radius:2px; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 10px, rgba(109,189,159,.18) 10px 20px); display:flex; align-items:center; justify-content:center;"><span style="font-family:ui-monospace,Menlo,monospace; font-size:10px; color:#92a69f;">高解析大圖</span></div>
+          </div>
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:15px; color:#92a69f;">蕾絲圍巾.pdf</div>
+          <button style="border:none; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; padding:10px 22px; border-radius:4px; background:#6dbd9f;">開啟檔案</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. 新增／編輯網址對話框 -->
+    <div data-screen-label="新增網址對話框" style="width:400px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">7 · 新增／編輯網址對話框</div>
+      <div style="background:color-mix(in srgb, #0a1614 26%, rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+        <div style="position:relative; width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:24px; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:24px; margin-bottom:16px;">新增網址</div>
+          <div style="margin-bottom:14px;"><div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:#92a69f; margin-bottom:6px;">網址</div><div style="border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:9px 12px; font-size:13px; font-style:italic; color:#92a69f;">https://…</div></div>
+          <div style="margin-bottom:14px;"><div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:#92a69f; margin-bottom:6px;">標題（可選）</div><div style="border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:9px 12px; font-size:13px; color:#92a69f;"></div></div>
+          <div style="display:flex; gap:10px;">
+            <div style="width:70px; aspect-ratio:1/1; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(109,189,159,.08); display:flex; align-items:center; justify-content:center; font-size:9px; color:#92a69f; text-align:center;">縮圖<br>預覽</div>
+            <div style="flex:1; border:1.5px dashed rgba(109,189,159,.4); border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:11.5px; color:#92a69f;">點此選擇圖片<span style="font-style:italic; font-size:10px;">或拖曳／貼上</span></div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:22px; justify-content:flex-end;">
+            <div style="padding:10px 18px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">取消</div>
+            <div style="padding:10px 18px; border-radius:4px; background:#6dbd9f; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">儲存</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 刪除確認 -->
+    <div data-screen-label="刪除確認" style="width:320px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">8 · 刪除二次確認</div>
+      <div style="background:color-mix(in srgb, #0a1614 26%, rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+        <div style="width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:26px; text-align:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; margin-bottom:12px;">刪除這筆收藏？</div>
+          <div style="font-size:13px; color:#92a69f; margin-bottom:20px; line-height:1.7;">將從 links.md 移除<br>「蕾絲圍巾」</div>
+          <div style="display:flex; gap:10px; justify-content:center;">
+            <div style="padding:10px 18px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">取消</div>
+            <div style="padding:10px 18px; border-radius:4px; color:#d08672; border:1px solid rgba(150,185,172,.14); font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">確認刪除</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. 更換資料夾確認 -->
+    <div data-screen-label="更換資料夾確認" style="width:400px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">9 · 更換資料夾確認</div>
+      <div style="background:color-mix(in srgb, #0a1614 26%, rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+        <div style="width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:24px; box-shadow:0 26px 64px rgba(0,0,0,.62); font-size:13px; color:#92a69f; line-height:1.7;">
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; color:#e7f0ec; margin-bottom:12px;">換到這個資料夾？</div>
+          <div style="margin-bottom:10px;">你選了：<br><span style="color:#e7f0ec; font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:16px;">📁 我的織圖 2025</span></div>
+          <p style="margin:0 0 8px;">換的只是網頁顯示哪個資料夾的內容，電腦裡的檔案不會被動到。</p>
+          <div style="border:1px solid rgba(150,185,172,.14); border-left:3px solid #84b6d6; border-radius:4px; padding:10px 12px; background:rgba(132,182,214,.08); margin-top:10px;">🔄 若新資料夾已有 links.md／thumbs/，會直接讀進來，不會覆蓋。</div>
+          <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+            <div style="padding:10px 18px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#e7f0ec;">取消</div>
+            <div style="padding:10px 18px; border-radius:4px; background:#6dbd9f; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">換過去</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. 清除資料確認 -->
+    <div data-screen-label="清除資料確認" style="width:320px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">10 · 清除所有資料確認</div>
+      <div style="background:color-mix(in srgb, #0a1614 26%, rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+        <div style="width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:26px; text-align:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; margin-bottom:12px;">清除所有資料？</div>
+          <div style="font-size:13px; color:#92a69f; margin-bottom:20px; line-height:1.7;">刪除瀏覽器儲存的預覽圖快取。<br>網址收藏不受影響（存於 links.md）。</div>
+          <div style="display:flex; gap:10px; justify-content:center;">
+            <div style="padding:10px 18px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">取消</div>
+            <div style="padding:10px 18px; border-radius:4px; color:#d08672; border:1px solid rgba(150,185,172,.14); font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.12em; text-transform:uppercase;">確認清除</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. Onboarding A -->
+    <div data-screen-label="Onboarding · 置中卡片" style="width:380px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">11 · Onboarding（A 模式 · 置中卡片）</div>
+      <div style="background:color-mix(in srgb, #0a1614 26%, rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:40px; display:flex; align-items:center; justify-content:center; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+        <div style="width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:24px 24px 30px; box-shadow:0 26px 64px rgba(0,0,0,.62); position:relative;">
+          <div style="position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:4px; border:1px solid rgba(150,185,172,.14); display:flex; align-items:center; justify-content:center; color:#92a69f; font-size:12px;">✕</div>
+          <div style="display:inline-flex; font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.1em; color:#e7f0ec; background:rgba(109,189,159,.16); border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:4px 9px; margin-bottom:12px;">👀 看過就好</div>
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; font-weight:600; margin-bottom:10px;">歡迎使用織圖圖書館</div>
+          <div style="font-size:13.5px; color:#92a69f; line-height:1.7; margin-bottom:18px;">花幾秒認識這個工具怎麼幫你整理編織圖，全部都在你自己的電腦上完成。</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="display:flex; gap:6px; flex:1;"><span style="width:8px; height:8px; border-radius:50%; background:#6dbd9f;"></span><span style="width:8px; height:8px; border-radius:50%; background:rgba(231,240,236,.22);"></span><span style="width:8px; height:8px; border-radius:50%; background:rgba(231,240,236,.22);"></span></div>
+            <div style="padding:8px 14px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:#e7f0ec;">上一步</div>
+            <div style="padding:8px 14px; border-radius:4px; background:#6dbd9f; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;">下一步</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Onboarding B -->
+    <div data-screen-label="Onboarding · Spotlight氣泡" style="width:460px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">12 · Onboarding（B 模式 · Spotlight 氣泡）</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:24px; height:280px; position:relative; box-shadow:0 14px 40px rgba(0,0,0,.5);">
+        <div style="display:flex; justify-content:flex-end;">
+          <div style="width:36px; height:36px; border-radius:4px; background:#141f1c; border:2px solid #6dbd9f; box-shadow:0 0 0 3px rgba(109,189,159,.3), 0 0 18px 4px rgba(109,189,159,.3);"></div>
+        </div>
+        <div style="position:absolute; top:70px; right:24px; width:260px; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; box-shadow:0 26px 64px rgba(0,0,0,.62); padding:16px;">
+          <div style="display:inline-flex; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.1em; color:#e7f0ec; background:rgba(109,189,159,.16); border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:3px 8px; margin-bottom:10px;">🖱 換你試試</div>
+          <div style="font-size:13px; color:#e7f0ec; line-height:1.6; margin-bottom:12px;">按這顆齒輪打開設定選單，重新整理或更換資料夾都在這裡。</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; gap:5px; flex:1;"><span style="width:7px; height:7px; border-radius:50%; background:#6dbd9f;"></span><span style="width:7px; height:7px; border-radius:50%; background:rgba(231,240,236,.22);"></span></div>
+            <div style="padding:7px 12px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.1em; text-transform:uppercase;">上一步</div>
+            <div style="padding:7px 12px; border-radius:4px; background:#6dbd9f; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.1em; text-transform:uppercase;">下一步</div>
+          </div>
+        </div>
+        <div style="position:absolute; bottom:14px; left:14px; right:14px; font-size:11.5px; color:#92a69f; font-style:italic;">背景其餘畫面壓暗（inset box-shadow 鏤空，不用 clip-path）</div>
+      </div>
+    </div>
+
+    <!-- 13. 觸控長按工具列 -->
+    <div data-screen-label="手機 · 觸控長按工具列" style="width:340px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:10px;">13 · 手機／觸控長按工具列</div>
+      <div style="background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:16px; height:420px; position:relative; box-shadow:0 14px 40px rgba(0,0,0,.5); display:flex; flex-direction:column;">
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; flex:1;">
+          <sc-for list="{{ touchCards }}" as="tc" hint-placeholder-count="4">
+            <div style="aspect-ratio:1/1; border-radius:3px; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 6px, rgba(109,189,159,.18) 6px 12px); border:{{ tc.border }};"></div>
+          </sc-for>
+        </div>
+        <div style="position:absolute; left:0; right:0; bottom:0; background:#141f1c; border-top:1px solid rgba(150,185,172,.14); border-radius:4px 4px 0 0; padding:10px 14px; display:flex; align-items:center; gap:8px; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+          <div style="width:30px; height:30px; border-radius:4px; background:rgba(10,18,15,.6); border:1px solid rgba(255,255,255,.35);"></div>
+          <div style="width:30px; height:30px; border-radius:4px; background:rgba(10,18,15,.6); border:1px solid rgba(255,255,255,.35);"></div>
+          <div style="flex:1;"></div>
+          <div style="padding:0 12px; height:30px; display:flex; align-items:center; gap:6px; border-radius:4px; background:#6dbd9f; font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#fff;">開啟</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const galleryCards = [
+      { name: '蕾絲圍巾.pdf', type: 'PDF', badgeColor: '#4f9a80', barColor: '#6dbd9f' },
+      { name: '毛帽圖解.jpg', type: 'JPG', badgeColor: '#5f8fad', barColor: '#6dbd9f' },
+      { name: '棒針手套.pdf', type: 'PDF', badgeColor: '#4f9a80', barColor: '#6dbd9f' },
+      { name: '編織教學影片', type: '連結', badgeColor: '#5f8fad', barColor: '#84b6d6' },
+      { name: '毛衣下針法.pdf', type: 'PDF', badgeColor: '#4f9a80', barColor: '#6dbd9f' },
+      { name: '鉤針花樣.jpg', type: 'JPG', badgeColor: '#5f8fad', barColor: '#6dbd9f' },
+    ];
+
+    const timelineMonths = [
+      { label: '2026年6月', count: '5 項', items: [1,2,3] },
+      { label: '2026年3月', count: '8 項', items: [1,2,3] },
+    ];
+
+    const menuItems = [
+      { label: '重新整理', color: '#e7f0ec' },
+      { label: '更換資料夾', color: '#e7f0ec' },
+      { label: '重看使用教學', color: '#e7f0ec' },
+      { label: '清除所有資料', color: '#d08672' },
+    ];
+
+    const touchCards = [
+      { border: '2px solid #6dbd9f' },
+      { border: '1px solid rgba(150,185,172,.14)' },
+      { border: '1px solid rgba(150,185,172,.14)' },
+      { border: '1px solid rgba(150,185,172,.14)' },
+    ];
+
+    return { galleryCards, timelineMonths, menuItems, touchCards };
+  }
+}
+
+</script>
+</body>
+</html>

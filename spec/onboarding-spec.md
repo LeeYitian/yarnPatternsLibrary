@@ -396,3 +396,30 @@ PDF ／ 圖片檔案：
 
 - **Step 1a 修改**（「檔案」段改為支援子資料夾）：`subfolder-spec.md` §9a。
 - **新步驟「資料夾標籤」**（互動 ／ 純說明兩形式）＋篩選列 spotlight：`tag-spec.md` §9a。
+
+### 9.6 設計規格（implementation-ready）
+
+> 由設計階段回填。互動稿見 `Tag Feature Designs.dc.html`（§F），截圖 `spec-assets/F-onboarding.png`。沿用 §5 既有 onboarding design system（A 模式對話框 `design-style.md` §7.4、spotlight 氣泡 §7.11、`--sprig` 花飾），**不引入第三套規範**。
+
+![Tag onboarding](spec-assets/F-onboarding.png)
+
+**F1 · 有子資料夾 → 互動步驟（🖱 換你試試）**
+
+1. **開場對話框**（A 模式，含 🖱 徽章）：標題「資料夾也能當標籤」，文案見 `tag-spec.md` §9a。底部「上一步／下一步」。
+2. **Spotlight → 設定選單內的 folder-tag 開關**：教學期間設定選單保持展開並鎖住；目標開關套呼吸光暈環（`design-style.md` §7.11 的 `box-shadow` 環，**不用 clip-path**），旁浮氣泡（🖱 徽章 + 「按這顆開啟『資料夾標籤』…」）。
+   - **觸發推進**：使用者按下開關 → 寫入 `wlib-foldertag` → 推進（比照 Step 4「儲存」的「做了會生效」）。此為**第二個互動步驟**（§9.3）。
+
+**F2 · 無子資料夾 → 純說明步驟（👀 看過就好，不顯示徽章）**
+
+- 僅一個 A 模式對話框：標題「資料夾也能當標籤」+ 說明（§9a）；**無徽章、無開關**。跳過此步 → folder-tag 預設**關**（§9.4）。步驟指示器數量固定（§9.4）。
+
+**F3 · 桌面／手機差異**
+
+| | 桌面 | 手機 |
+| --- | --- | --- |
+| folder-tag 開關 spotlight | 設定選單下拉內的開關 | 手機版設定選單內的開關（選單自身在頂欄，氣泡置底） |
+| **篩選列 spotlight**（工具列巡禮，純說明 👀） | 指 header 下的**篩選區** | 指 **dock 第 4 顆「篩選」鈕**（點開才是滿版遮罩） |
+
+- **既有使用者進入點**：點上線 toast（`subfolder-spec.md` §6）→ 重新整理掃出子資料夾 → **單獨播放此一步**（不重播整場，§9.3 對 O11 的例外）。
+- 兩進入點寫**同一** `wlib-foldertag`，不重複詢問。
+- spotlight 座標於視窗 resize 時重算（§3.1 ⚠️）；手機設定選單/ dock 位置不同，兩版各自量測目標。

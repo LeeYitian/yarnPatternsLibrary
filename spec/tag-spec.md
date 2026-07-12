@@ -185,3 +185,134 @@
 - **`url-spec.md`**：`links.md` 解析器已容忍未知欄位，URL 手動 tag 落地靠這層（延後）。
 - **`About.md`**：實作後更新 §6.1（`files.md` ／ tag）、§9（「本機檔案唯讀」語意澄清）、§10（移除 tag 待辦）。
 - **`onboarding-spec.md` §7.3**：新增 tag 功能 → review onboarding §4 是否補一步教 tag。
+
+---
+
+## 11. 設計規格（implementation-ready）
+
+> 本章由設計階段回填，供實作者直接對照。完整互動稿見專案內 `Tag Feature Designs.dc.html`；截圖存於 `spec-assets/`。所有值沿用 `design-style.md` 既有 token（`--accent #6dbd9f`、`--accent2 #84b6d6`、`--line`、`--card-solid #141f1c`、`--font-body/head/disp`、4px 圓角、`--t-base` ease-out）。**不引入新色、不引入無襯線字、任何元素不用 `backdrop-filter`/`filter`**。
+
+### 11.0 核心設計決定
+
+| 項 | 決定 |
+| --- | --- |
+| 自動 tag 樣式 | 綠 `--accent`、**框線**風格（量大、每卡都有，框線讓畫廊不被色塊淹沒；綠色一眼即「網頁生成」） |
+| 手動 tag 樣式（未來） | 藍 `--accent2`、**實心**風格（稀少、刻意，實心副色最醒目）。本回合僅示意 |
+| 共通 | 兩者皆帶 `#` 前綴、**不用 icon**、4px 圓角、中文走 `--font-body`（Cinzel 不含中文） |
+| folder→tag 開關 | 設定選單內 **inline toggle switch**，不另跳彈窗（見 §11.2） |
+| 卡片上的 tag | **C 分級顯示**（見 §11.4）：桌面標準/寬大卡展開整排；緊湊卡與手機卡一顆彙整 chip `#圍巾 +2`；完整清單一律在燈箱與長按工具列 |
+
+### 11.1 新元件
+
+![新元件](spec-assets/A-components.png)
+
+**Toggle Switch（新）** — 方形化以 honor「4px 圓角、不用膠囊」。軌道 `46×26`／圓角 `5px`，把手 `18×18`／圓角 `4px`；過渡 `--t-base` ease-out。
+
+```html
+<!-- OFF -->
+<button class="wl-switch" role="switch" aria-checked="false"><span class="knob"></span></button>
+<!-- ON：aria-checked="true"，加 .on -->
+```
+```css
+.wl-switch { width:46px; height:26px; border-radius:5px; border:1px solid var(--line);
+  background:var(--card); position:relative; cursor:pointer; transition:var(--t-base) ease-out; }
+.wl-switch .knob { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:4px;
+  background:var(--muted); transition:var(--t-base) ease-out; }
+.wl-switch.on { border:none; background:linear-gradient(180deg,
+  color-mix(in srgb,var(--accent) 78%,#fff), var(--accent) 50%, color-mix(in srgb,var(--accent) 82%,#000));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2); }
+.wl-switch.on .knob { left:auto; right:3px; background:#fff; }
+```
+
+**Tag Chip 狀態**
+
+```css
+/* 自動 tag：框線綠（未選） */
+.tag { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:4px;
+  font-family:var(--font-body); font-size:13px; cursor:pointer; transition:var(--t-fast) ease-out;
+  border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line)); background:transparent; color:#a9d8c6; }
+/* 自動 tag：選中（篩選啟用）——加勾 + accent 底 */
+.tag.sel { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 20%,transparent); color:#d6f0e5; }
+.tag.sel::before { content:""; width:11px; height:11px; /* 用內嵌 ✓ svg，stroke var(--accent) */ }
+/* 手動 tag（未來）：實心藍，可刪 */
+.tag.manual { border:none; background:var(--accent2); color:#0a1614; font-weight:600; }
+.tag.manual .x { display:none; } .tag.manual:hover .x, .tag.manual:focus-within .x { display:inline-flex; }
+```
+- 自動 tag **無刪除鍵**（現算，關開關即消失，§3）；手動 tag 的 `×` 只在 hover/focus 浮現。
+
+### 11.2 設定選單（含 folder→tag 開關）
+
+![設定選單](spec-assets/B-settings-menu.png)
+
+選單收斂成兩段：上為**偏好開關區**（帶說明副標的 toggle 列），下為既有**動作項目**，中間 `1px var(--line)` 分隔。開關 inline、**即時生效**（切換即重算 folder-tag、重繪篩選區，無需按重新整理）、不另跳彈窗。
+
+```html
+<div class="menu-list">
+  <div class="menu-group-label">偏好</div>
+  <div class="menu-toggle">
+    <div class="mt-txt"><div class="mt-title">資料夾名稱轉標籤</div>
+      <div class="mt-sub">子資料夾名自動變成可篩選的標籤</div></div>
+    <button class="wl-switch on" role="switch" aria-checked="true"><span class="knob"></span></button>
+  </div>
+  <div class="menu-sep"></div>
+  <button class="menu-item">重新整理</button>
+  <button class="menu-item">更換資料夾</button>
+  <button class="menu-item">重看使用教學</button>
+  <button class="menu-item" style="color:#d08672">清除所有資料</button>
+</div>
+```
+- `.menu-group-label`：`--font-disp` 9px、`letter-spacing:.18em`、大寫、`--muted`。
+- `.menu-toggle` 比一般項目高，含主標 + 說明副標；**hover 不變底色**（點擊落在 switch）。
+- **平資料夾（無子資料夾）**：此列仍顯示，整列 `opacity:.5` + switch 不可點，副標改「目前資料夾沒有子資料夾」。
+- 偏好存 `localStorage["wlib-foldertag"]`（§4a）。
+
+### 11.3 篩選區
+
+**桌面**（`spec-assets/C-filter-desktop.png`）：位於 **header 之下、grid 之上**，`position:sticky` 貼 header 下緣。搜尋欄由頂欄**移入**此區與 tag 並列（§7.2）。
+
+![桌面篩選區](spec-assets/C-filter-desktop.png)
+
+```html
+<div class="filterbar">
+  <span class="fb-label">篩選</span>
+  <div class="fb-search"><svg class="i-search"></svg><input id="search" placeholder="搜尋名稱…"></div>
+  <div class="fb-sep"></div>
+  <div class="fb-tags"><!-- .tag / .tag.sel，依出現次數多→少排序，flex-wrap 換行 --></div>
+  <button class="fb-clear">清除 2</button>   <!-- 選中≥1 才顯示 -->
+</div>
+```
+- 版面：`display:flex; align-items:center; gap:14px; padding:14px var(--gutter); flex-wrap:wrap;` 底色 `color-mix(in srgb,var(--bg3) 55%,transparent)`。
+- `.fb-label` `--font-disp` 大寫；`.fb-sep` 是 `1px var(--line)` 直線分隔搜尋與 tag。
+- **無自動 tag**（平資料夾或關閉開關）→ 整條只留搜尋欄。
+
+**手機**（`spec-assets/D-filter-mobile.png`）：dock 新增第 4 顆「篩選」按鈕（漏斗/標籤語彙圖示，有啟用篩選時 `.active` 綠框），開**滿版遮罩**；手機整個篩選區（搜尋欄 + 全部 tag）收進遮罩。
+
+![手機篩選](spec-assets/D-filter-mobile.png)
+
+- 遮罩沿用燈箱/對話框深墨綠、**不用毛玻璃**；結構：標題列（「篩選」+ ✕）→ 搜尋欄 → 「標籤」段標 + tag 雲 → 底列（「清除」+ 綠 primary「完成 · N 項」）。
+- **即時套用**：選 tag 時背後 grid 已在篩選，「完成」列即時顯示剩餘項數；「完成」關遮罩，「清除」取消所有 tag（保留搜尋字）。tag 過多時內容區可捲動。
+- 多選 **AND（交集）**；與搜尋、來源篩選皆 AND 疊加（§7.1）。
+
+### 11.4 卡片上的 tag（採 C 方案 · 分級顯示）
+
+![卡片 tag](spec-assets/E-card-tags.png)
+
+| 情境 | 呈現 |
+| --- | --- |
+| 桌面 標準/寬大卡 | `.label` 內、檔名下方**展開整排** mini chip（`flex-wrap`，框線綠） |
+| 緊湊卡 & 手機卡 | 檔名下方**一顆彙整 chip**：`#圍巾 +2`（`+N` 用較淡的 `#92c9b4`）；點/長按看全部 |
+| 燈箱 & 手機長按工具列 | **完整 tag 清單**（標題下方置中） |
+
+```html
+<!-- 卡片 mini chip（label 內），比篩選 chip 小：padding 3px 9px、font 11px、框線 rgba(150,206,180,.6)、色 #cdeadf -->
+<div class="card-tags"><span class="ctag">#圍巾</span><span class="ctag">#蕾絲</span><span class="ctag">#手工</span></div>
+<!-- 彙整版：--> <span class="ctag">#圍巾 <span class="more">+2</span></span>
+```
+- 卡片 mini chip 為**唯讀展示**（非篩選互動點）；點卡片仍是開檔/放大既有行為。
+- 觸控裝置（`@media (hover:none)`）緊湊卡一律用彙整 chip，避免 label 過擠。
+
+### 11.5 與現有 CSS 的接點
+
+- 新 class 建議前綴 `wl-` 或沿用既有命名慣例；集中放在 `css/style.css` 既有分區（`.dock`、`.menu-list`、`.card`/`.label`、`.overlay`）附近。
+- 篩選區是**新 DOM**：插在 `header` 與 `main > .grid` 之間；`applyFilter()` 需再加一層 tag AND（總體＝搜尋 ∩ 來源 ∩ 所有選中 tag，§7.1）。
+- dock 第 4 顆按鈕沿用 `.dock-btn` 規格；手機遮罩沿用 `.overlay` 規格（深墨綠、無毛玻璃）。

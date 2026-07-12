@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&amp;family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Crimson+Pro:ital,wght@0,400;0,600;1,400&amp;family=Noto+Serif+TC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:linear-gradient(165deg,#0a1614,#08120f 48%,#0c1a15); background-attachment:fixed; }
+  a { color:#6dbd9f; }
+  a:hover { color:#84b6d6; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; color:#e7f0ec; font-family:'Crimson Pro','Noto Serif TC',serif; padding:60px 0 120px;">
+  <div style="max-width:1080px; margin:0 auto; padding:0 44px;">
+
+    <!-- Title -->
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:#6dbd9f; margin-bottom:10px;">Bibliotheca Textilis · Design Addendum</div>
+      <h1 style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:46px; font-weight:500; margin:0;">標籤系統 · 設計稿</h1>
+      <p style="color:#92a69f; font-size:14.5px; margin-top:12px; max-width:680px; line-height:1.8;">依 <code style="color:#84b6d6;">tag-spec.md</code>、<code style="color:#84b6d6;">subfolder-spec.md</code>、<code style="color:#84b6d6;">onboarding-spec.md</code> 整理的新增設計，沿用既有深色學院風設計系統。給下一位實作者：每一區塊末的說明即設計要點。</p>
+    </div>
+
+    <!-- decisions banner -->
+    <div style="background:rgba(26,38,35,.52); border:1px solid rgba(150,185,172,.14); border-left:3px solid #6dbd9f; border-radius:4px; padding:20px 24px; margin-bottom:56px; font-size:13.5px; line-height:1.8; color:#92a69f;">
+      <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#6dbd9f; margin-bottom:10px;">核心設計決定</div>
+      <div>· <b style="color:#e7f0ec;">自動 tag</b>（資料夾路徑）＝綠 <b style="color:#6dbd9f;">--accent</b>、<b style="color:#e7f0ec;">框線</b>風格；量大、每卡都有，框線讓畫廊不被色塊淹沒，綠色一眼即「網頁生成」。</div>
+      <div>· <b style="color:#e7f0ec;">手動 tag</b>（未來）＝藍 <b style="color:#84b6d6;">--accent2</b>、<b style="color:#e7f0ec;">實心</b>風格；稀少、刻意，實心副色最醒目。本回合僅示意。</div>
+      <div>· 兩者皆帶 <b style="color:#e7f0ec;">#</b> 前綴、<b style="color:#e7f0ec;">不用 icon</b>、4px 圓角。</div>
+      <div>· folder→tag 為設定選單內的 <b style="color:#e7f0ec;">inline 開關</b>（不另跳彈窗）。</div>
+    </div>
+
+    <!-- ============ A. 新元件 ============ -->
+    <h2 id="sec-components" style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; font-weight:600; margin:0 0 24px; border-bottom:1px solid rgba(150,185,172,.14); padding-bottom:14px;">A · 新元件</h2>
+
+    <!-- Toggle switch -->
+    <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:14px;">Toggle Switch（新）· 方形化開關，honor「4px 圓角、不用膠囊」</div>
+    <div style="display:flex; gap:40px; align-items:center; flex-wrap:wrap; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:26px 30px; margin-bottom:20px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <div style="width:46px; height:26px; border-radius:5px; border:1px solid rgba(150,185,172,.14); background:rgba(26,38,35,.6); position:relative;">
+          <div style="position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:4px; background:#92a69f;"></div>
+        </div>
+        <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f;">關 OFF</span>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <div style="width:46px; height:26px; border-radius:5px; border:none; background:linear-gradient(180deg,#94d6be,#6dbd9f 50%,#549174); position:relative; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2), 0 2px 6px rgba(0,0,0,.25);">
+          <div style="position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:4px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.3);"></div>
+        </div>
+        <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#6dbd9f;">開 ON</span>
+      </div>
+      <div style="flex:1; min-width:240px; font-size:13px; color:#92a69f; line-height:1.8;">軌道 46×26 / 圓角 5px，把手 18×18 / 圓角 4px。關＝<code style="color:#84b6d6;">--line</code> 邊框 + 半透底 + 灰把手；開＝綠拋光金屬漸層 + 白把手。過渡 <code style="color:#84b6d6;">--t-base</code> ease-out。</div>
+    </div>
+
+    <!-- Tag chips -->
+    <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin:30px 0 14px;">Tag Chip · 狀態一覽</div>
+    <div style="background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:26px 30px; margin-bottom:14px;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:24px;">
+
+        <div>
+          <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">自動 tag · 未選（框線綠）</div>
+          <span style="display:inline-flex; align-items:center; padding:5px 11px; border:1px solid color-mix(in srgb,#6dbd9f 42%,rgba(150,185,172,.14)); border-radius:4px; background:transparent; font-family:'Crimson Pro','Noto Serif TC',serif; font-size:13px; color:#a9d8c6;">#圍巾</span>
+        </div>
+
+        <div>
+          <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">自動 tag · 選中（篩選啟用）</div>
+          <span style="display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border:1px solid #6dbd9f; border-radius:4px; background:color-mix(in srgb,#6dbd9f 20%,transparent); font-family:'Crimson Pro','Noto Serif TC',serif; font-size:13px; color:#d6f0e5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#6dbd9f" stroke-width="3" style="width:11px; height:11px;"><path d="M20 6 9 17l-5-5"></path></svg>#圍巾</span>
+        </div>
+
+        <div>
+          <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">手動 tag · 未來（實心藍）</div>
+          <span style="display:inline-flex; align-items:center; padding:5px 11px; border:none; border-radius:4px; background:#84b6d6; font-family:'Crimson Pro','Noto Serif TC',serif; font-size:13px; color:#0a1614; font-weight:600;">#送禮</span>
+        </div>
+
+        <div>
+          <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">手動 tag · hover 出現 ×（可刪，未來）</div>
+          <span style="display:inline-flex; align-items:center; gap:6px; padding:5px 8px 5px 11px; border:none; border-radius:4px; background:#84b6d6; font-family:'Crimson Pro','Noto Serif TC',serif; font-size:13px; color:#0a1614; font-weight:600;">#未完成
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:3px; background:rgba(10,22,20,.28); color:#0a1614; font-size:11px;">✕</span></span>
+        </div>
+
+      </div>
+      <div style="font-size:12.5px; color:#92a69f; line-height:1.8; margin-top:22px; border-top:1px solid rgba(150,185,172,.14); padding-top:16px;">自動 tag 無刪除鍵（現算、關掉開關即消失）。手動 tag 的 × 只在 hover／focus 浮現。中文字用 <code style="color:#84b6d6;">--font-body</code>（Cinzel 不含中文，會 fallback）。</div>
+    </div>
+
+    <!-- ============ B. 設定選單 ============ -->
+    <h2 id="sec-settings" style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; font-weight:600; margin:56px 0 10px; border-bottom:1px solid rgba(150,185,172,.14); padding-bottom:14px;">B · 設定選單（含 folder→tag 開關）</h2>
+    <p style="color:#92a69f; font-size:14px; margin:0 0 24px; line-height:1.8;">選單收斂成兩段：上為<b style="color:#e7f0ec;">偏好開關區</b>（帶說明副標的 toggle 列），下為既有<b style="color:#e7f0ec;">動作項目</b>，中間 <code style="color:#84b6d6;">--line</code> 分隔。開關 inline、即時生效、不另跳彈窗。</p>
+    <div style="display:flex; gap:34px; align-items:flex-start; flex-wrap:wrap; margin-bottom:14px;">
+      <div style="width:288px; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; box-shadow:0 26px 64px rgba(0,0,0,.62); padding:8px;">
+        <div style="padding:8px 12px 6px; font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:#92a69f;">偏好</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:8px 12px 12px;">
+          <div style="min-width:0;">
+            <div style="font-size:13.5px; color:#e7f0ec;">資料夾名稱轉標籤</div>
+            <div style="font-size:11.5px; color:#92a69f; margin-top:3px; line-height:1.45;">子資料夾名自動變成可篩選的標籤</div>
+          </div>
+          <div style="flex:none; width:46px; height:26px; border-radius:5px; border:none; background:linear-gradient(180deg,#94d6be,#6dbd9f 50%,#549174); position:relative; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.2);">
+            <div style="position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:4px; background:#fff;"></div>
+          </div>
+        </div>
+        <div style="height:1px; background:rgba(150,185,172,.14); margin:2px 6px 6px;"></div>
+        <div style="padding:10px 14px; border-radius:3px; font-size:13.5px; color:#e7f0ec;">重新整理</div>
+        <div style="padding:10px 14px; border-radius:3px; font-size:13.5px; color:#e7f0ec;">更換資料夾</div>
+        <div style="padding:10px 14px; border-radius:3px; font-size:13.5px; color:#e7f0ec;">重看使用教學</div>
+        <div style="padding:10px 14px; border-radius:3px; font-size:13.5px; color:#d08672;">清除所有資料</div>
+      </div>
+      <div style="flex:1; min-width:260px; font-size:13px; color:#92a69f; line-height:1.9;">
+        <div>· 開關列比一般項目高，含主標 + 說明副標；hover 不變底色（非按鈕，點擊落在 switch）。</div>
+        <div>· 偏好存 <code style="color:#84b6d6;">localStorage["wlib-foldertag"]</code>（tag-spec §4a）。</div>
+        <div>· <b style="color:#e7f0ec;">平資料夾（無子資料夾）</b>時此列仍顯示，但整列 <code style="color:#84b6d6;">opacity:.5</code> + switch 不可點，說明副標改為「目前資料夾沒有子資料夾」。</div>
+        <div>· 開關切換 = 立即重算 folder-tag、重繪篩選區，無需重新整理。</div>
+      </div>
+    </div>
+
+    <!-- ============ C. 桌面篩選區 ============ -->
+    <h2 id="sec-filter-desktop" style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; font-weight:600; margin:56px 0 10px; border-bottom:1px solid rgba(150,185,172,.14); padding-bottom:14px;">C · 桌面篩選區</h2>
+    <p style="color:#92a69f; font-size:14px; margin:0 0 22px; line-height:1.8;">位於 <b style="color:#e7f0ec;">header 之下、grid 之上</b>。搜尋欄由頂欄<b style="color:#e7f0ec;">移入</b>此區與 tag 並列（tag-spec §7.2）。sticky 貼在 header 下緣。</p>
+    <div style="border:1px solid rgba(150,185,172,.14); border-radius:6px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,.5); margin-bottom:14px;">
+      <!-- header (search removed) -->
+      <div style="display:flex; align-items:center; gap:12px; padding:13px 24px; background:rgba(10,22,20,.7); border-bottom:1px solid rgba(150,185,172,.14);">
+        <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:18px; font-weight:600; display:flex; align-items:center; gap:8px;"><span style="width:19px; height:19px; border-radius:4px; background:#141f1c; border:1px solid #6dbd9f;"></span>織圖圖書館 <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.2em; color:#92a69f;">42 項</span></div>
+        <div style="flex:1;"></div>
+        <div style="border:none; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; padding:8px 12px; border-radius:4px; background:#6dbd9f;">＋新增網址</div>
+        <div style="width:32px; height:32px; border:1px solid rgba(150,185,172,.14); border-radius:4px;"></div>
+        <div style="width:32px; height:32px; border:1px solid rgba(150,185,172,.14); border-radius:4px;"></div>
+      </div>
+      <!-- filter bar -->
+      <div style="display:flex; align-items:center; gap:14px; padding:14px 24px; background:rgba(12,26,21,.55); flex-wrap:wrap;">
+        <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:#92a69f;">篩選</span>
+        <div style="display:flex; align-items:center; gap:8px; border:1px solid rgba(150,185,172,.14); background:rgba(26,38,35,.52); border-radius:4px; padding:8px 12px; min-width:190px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#92a69f" stroke-width="2" style="width:14px; height:14px;"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <span style="font-size:12.5px; font-style:italic; color:#92a69f;">搜尋名稱…</span>
+        </div>
+        <div style="width:1px; align-self:stretch; background:rgba(150,185,172,.14); margin:2px 2px;"></div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; flex:1;">
+          <sc-for list="{{ filterTags }}" as="t" hint-placeholder-count="8">
+            <span style="display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:4px; font-family:'Crimson Pro','Noto Serif TC',serif; font-size:13px; {{ t.style }}"><sc-if value="{{ t.sel }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" fill="none" stroke="#6dbd9f" stroke-width="3" style="width:11px; height:11px;"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>{{ t.name }}</span>
+          </sc-for>
+        </div>
+        <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:#84b6d6; cursor:pointer;">清除 2</span>
+      </div>
+      <div style="padding:22px 24px; background:linear-gradient(165deg,#0a1614,#0c1a15); display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+        <sc-for list="{{ miniCards }}" as="c" hint-placeholder-count="4">
+          <div style="aspect-ratio:1/1; border-radius:4px; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 8px, rgba(109,189,159,.18) 8px 16px); border:1px solid rgba(150,185,172,.14);"></div>
+        </sc-for>
+      </div>
+    </div>
+    <p style="color:#92a69f; font-size:13px; line-height:1.9; margin:0 0 8px;">· 多選 <b style="color:#e7f0ec;">AND（交集）</b>；與搜尋、來源篩選皆 AND 疊加。· tag 依<b style="color:#e7f0ec;">出現次數</b>（多→少）排序，過多時整區 <code style="color:#84b6d6;">flex-wrap</code> 換行。· 選中≥1 顆才顯示「清除 N」。· 無自動 tag（平資料夾或關閉開關）時整條篩選區只留搜尋欄。</p>
+
+    <!-- ============ D. 手機篩選 ============ -->
+    <h2 id="sec-filter-mobile" style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; font-weight:600; margin:56px 0 10px; border-bottom:1px solid rgba(150,185,172,.14); padding-bottom:14px;">D · 手機篩選（dock 觸發滿版遮罩）</h2>
+    <p style="color:#92a69f; font-size:14px; margin:0 0 22px; line-height:1.8;">dock 新增第四顆「篩選」按鈕，開<b style="color:#e7f0ec;">滿版遮罩</b>；手機整個篩選區（搜尋欄 + 全部 tag）收進遮罩，概念與桌面一致。</p>
+    <div style="display:flex; gap:34px; align-items:flex-start; flex-wrap:wrap; margin-bottom:14px;">
+      <!-- dock -->
+      <div style="width:200px;">
+        <div style="font-size:12px; color:#92a69f; margin-bottom:12px;">手機 dock（右下、4 顆）</div>
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-start;">
+          <div style="width:52px; min-height:52px; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(20,31,28,.9); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#e7f0ec;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><rect x="3" y="3" width="7" height="7" rx="1.4"></rect><rect x="14" y="3" width="7" height="7" rx="1.4"></rect></svg>
+            <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase;">寬大</span>
+          </div>
+          <div style="width:52px; min-height:52px; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(20,31,28,.9); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#e7f0ec;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path></svg>
+            <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase;">排序</span>
+          </div>
+          <div style="width:52px; min-height:52px; border-radius:4px; border:1px solid rgba(150,185,172,.14); background:rgba(20,31,28,.9); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#e7f0ec;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><path d="M3 4h18l-7 8v6l-4 2v-8z"></path></svg>
+            <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase;">來源</span>
+          </div>
+          <div style="width:52px; min-height:52px; border-radius:4px; border:1px solid #6dbd9f; background:color-mix(in srgb,#6dbd9f 14%,#141f1c); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#6dbd9f;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><path d="M3 5h18l-7 8v5l-4 2v-7z"></path></svg>
+            <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase;">篩選</span>
+          </div>
+        </div>
+        <div style="font-size:11.5px; color:#92a69f; line-height:1.7; margin-top:14px;">tag 圖示用漏斗/標籤語彙，選中或有啟用篩選時 <code style="color:#84b6d6;">.active</code> 綠框。</div>
+      </div>
+      <!-- overlay -->
+      <div style="width:300px;">
+        <div style="font-size:12px; color:#92a69f; margin-bottom:12px;">滿版篩選遮罩</div>
+        <div style="border-radius:12px; overflow:hidden; border:1px solid rgba(150,185,172,.14); background:color-mix(in srgb,#0a1614 92%,#000); box-shadow:0 26px 64px rgba(0,0,0,.62);">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid rgba(150,185,172,.14);">
+            <span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:20px;">篩選</span>
+            <span style="width:32px; height:32px; border-radius:50%; border:1px solid rgba(150,185,172,.14); display:flex; align-items:center; justify-content:center; color:#e7f0ec;">✕</span>
+          </div>
+          <div style="padding:18px;">
+            <div style="display:flex; align-items:center; gap:8px; border:1px solid rgba(150,185,172,.14); background:rgba(26,38,35,.52); border-radius:4px; padding:10px 12px; margin-bottom:20px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#92a69f" stroke-width="2" style="width:15px; height:15px;"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <span style="font-size:13px; font-style:italic; color:#92a69f;">搜尋名稱…</span>
+            </div>
+            <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:#92a69f; margin-bottom:12px;">標籤</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <sc-for list="{{ filterTags }}" as="t" hint-placeholder-count="8">
+                <span style="display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:4px; font-family:'Crimson Pro','Noto Serif TC',serif; font-size:13.5px; {{ t.style }}"><sc-if value="{{ t.sel }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" fill="none" stroke="#6dbd9f" stroke-width="3" style="width:11px; height:11px;"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>{{ t.name }}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; padding:14px 18px; border-top:1px solid rgba(150,185,172,.14);">
+            <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#84b6d6;">清除</span>
+            <div style="flex:1;"></div>
+            <div style="border:none; color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; padding:11px 24px; border-radius:4px; background:linear-gradient(180deg,#94d6be,#6dbd9f 50%,#549174);">完成 · 12 項</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:220px; font-size:13px; color:#92a69f; line-height:1.9;">
+        <div>· 遮罩沿用燈箱/對話框深墨綠、不用毛玻璃。</div>
+        <div>· 即時套用：選 tag 時背後 grid 已在篩選，「完成」列即時顯示剩餘項數。</div>
+        <div>· 「完成」關遮罩；「清除」一鍵取消所有 tag（保留搜尋字）。</div>
+        <div>· tag 過多時遮罩內容區可捲動。</div>
+      </div>
+    </div>
+
+    <!-- ============ E. 卡片上的 tag ============ -->
+    <h2 id="sec-cards" style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; font-weight:600; margin:56px 0 10px; border-bottom:1px solid rgba(150,185,172,.14); padding-bottom:14px;">E · 卡片上的 tag（三方案對比）</h2>
+    <p style="color:#92a69f; font-size:14px; margin:0 0 24px; line-height:1.8;">手機縮圖已很擠。以下三案並列，<b style="color:#6dbd9f;">推薦 C（分級顯示）</b>。</p>
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+
+      <!-- A -->
+      <div style="width:300px;">
+        <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:12px;">A · 併入底部 label</div>
+        <div style="position:relative; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:8px;">
+          <div style="aspect-ratio:1/1; border-radius:2px; overflow:hidden; position:relative; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 8px, rgba(109,189,159,.18) 8px 16px);">
+            <div style="position:absolute; left:0; right:0; bottom:0; padding:10px; background:linear-gradient(to top, rgba(16,34,30,.82), transparent);">
+              <div style="display:flex; gap:6px; align-items:flex-end;"><span style="width:2px; align-self:stretch; min-height:16px; border-radius:2px; background:#6dbd9f;"></span><span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:13px; color:#fff;">蕾絲圍巾.pdf</span></div>
+              <div style="display:flex; gap:5px; margin-top:7px; overflow:hidden; mask-image:linear-gradient(90deg,#000 78%,transparent);">
+                <span style="flex:none; padding:3px 8px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11px; color:#cdeadf;">#圍巾</span>
+                <span style="flex:none; padding:3px 8px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11px; color:#cdeadf;">#蕾絲</span>
+                <span style="flex:none; padding:3px 8px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11px; color:#cdeadf;">#手工</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:#92a69f; line-height:1.7; margin-top:12px;">桌面清楚；手機兩欄下 chip 會被切到剩一兩個，密度吃緊。</div>
+      </div>
+
+      <!-- B -->
+      <div style="width:300px;">
+        <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:12px;">B · 只在放大處顯示</div>
+        <div style="position:relative; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:8px;">
+          <div style="aspect-ratio:1/1; border-radius:2px; overflow:hidden; position:relative; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 8px, rgba(109,189,159,.18) 8px 16px);">
+            <div style="position:absolute; left:0; right:0; bottom:0; padding:10px; background:linear-gradient(to top, rgba(16,34,30,.75), transparent); display:flex; gap:6px; align-items:flex-end;"><span style="width:2px; align-self:stretch; min-height:16px; border-radius:2px; background:#6dbd9f;"></span><span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:13px; color:#fff;">蕾絲圍巾.pdf</span></div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:#92a69f; line-height:1.7; margin-top:12px;">卡片最乾淨，tag 只在燈箱／長按工具列展開。缺點：瀏覽時看不到分類。</div>
+      </div>
+
+      <!-- C -->
+      <div style="width:300px;">
+        <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#6dbd9f; margin-bottom:12px;">C · 分級顯示（推薦）</div>
+        <div style="position:relative; background:#141f1c; border:1px solid #6dbd9f; border-radius:4px; padding:8px; box-shadow:0 0 0 1px rgba(109,189,159,.3);">
+          <div style="aspect-ratio:1/1; border-radius:2px; overflow:hidden; position:relative; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 8px, rgba(109,189,159,.18) 8px 16px);">
+            <div style="position:absolute; left:0; right:0; bottom:0; padding:10px; background:linear-gradient(to top, rgba(16,34,30,.82), transparent);">
+              <div style="display:flex; gap:6px; align-items:flex-end;"><span style="width:2px; align-self:stretch; min-height:16px; border-radius:2px; background:#6dbd9f;"></span><span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:13px; color:#fff;">蕾絲圍巾.pdf</span></div>
+              <div style="margin-top:7px;"><span style="display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11px; color:#cdeadf;">#圍巾 <span style="color:#92c9b4;">+2</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:#92a69f; line-height:1.7; margin-top:12px;">手機／緊湊卡：一顆彙整 chip「#圍巾 +2」，點/長按看全部。桌面標準/寬大卡則展開整排（見下）。</div>
+      </div>
+    </div>
+
+    <!-- C detail: desktop expanded + lightbox -->
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; margin-top:32px;">
+      <div style="width:360px;">
+        <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:12px;">C · 桌面標準卡（展開整排）</div>
+        <div style="position:relative; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:10px;">
+          <div style="aspect-ratio:16/9; border-radius:2px; overflow:hidden; position:relative; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 8px, rgba(109,189,159,.18) 8px 16px);">
+            <div style="position:absolute; left:0; right:0; bottom:0; padding:12px; background:linear-gradient(to top, rgba(16,34,30,.85), transparent);">
+              <div style="display:flex; gap:7px; align-items:flex-end;"><span style="width:3px; align-self:stretch; min-height:18px; border-radius:2px; background:#6dbd9f;"></span><span style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:16px; color:#fff;">蕾絲圍巾.pdf</span></div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+                <span style="padding:3px 9px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11.5px; color:#cdeadf;">#圍巾</span>
+                <span style="padding:3px 9px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11.5px; color:#cdeadf;">#蕾絲</span>
+                <span style="padding:3px 9px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:11.5px; color:#cdeadf;">#手工</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="width:300px;">
+        <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:12px;">C · 燈箱／長按顯示完整 tag</div>
+        <div style="background:color-mix(in srgb,#0a1614 26%,rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:22px; display:flex; flex-direction:column; align-items:center; gap:12px;">
+          <div style="background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:8px;"><div style="width:150px; height:150px; border-radius:2px; background:repeating-linear-gradient(45deg, rgba(109,189,159,.10) 0 10px, rgba(109,189,159,.18) 10px 20px);"></div></div>
+          <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:14px; color:#92a69f;">蕾絲圍巾.pdf</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
+            <span style="padding:4px 10px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:12px; color:#cdeadf;">#圍巾</span>
+            <span style="padding:4px 10px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:12px; color:#cdeadf;">#蕾絲</span>
+            <span style="padding:4px 10px; border:1px solid rgba(150,206,180,.6); border-radius:4px; font-size:12px; color:#cdeadf;">#手工</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ F. Tag onboarding ============ -->
+    <h2 id="sec-onboarding" style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:30px; font-weight:600; margin:56px 0 10px; border-bottom:1px solid rgba(150,185,172,.14); padding-bottom:14px;">F · Tag Onboarding 步驟「資料夾標籤」</h2>
+    <p style="color:#92a69f; font-size:14px; margin:0 0 24px; line-height:1.8;">一律出現、步驟數固定（onboarding-spec §9）。依偵測結果分兩形式；桌面／手機的 spotlight 目標不同。</p>
+
+    <!-- F1 有子資料夾 · 互動（桌面） -->
+    <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:14px;">F1 · 有子資料夾 → 互動步驟（🖱 換你試試）· 桌面</div>
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; margin-bottom:32px;">
+      <!-- opening dialog -->
+      <div style="width:360px;">
+        <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">① 開場對話框（A 模式）</div>
+        <div style="background:color-mix(in srgb,#0a1614 26%,rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:26px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:relative; width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:22px 22px 26px; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+            <div style="display:inline-flex; font-family:'Cinzel','Noto Serif TC',serif; font-size:10.5px; letter-spacing:.1em; color:#e7f0ec; background:color-mix(in srgb,#6dbd9f 16%,transparent); border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:4px 9px; margin-bottom:12px;">🖱 換你試試</div>
+            <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; font-weight:600; margin-bottom:10px;">資料夾也能當標籤</div>
+            <div style="font-size:13px; color:#92a69f; line-height:1.75; margin-bottom:18px;">你的檔案有分資料夾放嗎？網頁可以把「資料夾名稱」自動變成標籤，讓你用標籤快速篩選（例如只看「圍巾」或「蕾絲」）。來決定要不要開啟吧！</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="display:flex; gap:6px; flex:1;"><span style="width:8px; height:8px; border-radius:50%; background:rgba(231,240,236,.22);"></span><span style="width:8px; height:8px; border-radius:50%; background:#6dbd9f;"></span><span style="width:8px; height:8px; border-radius:50%; background:rgba(231,240,236,.22);"></span></div>
+              <div style="padding:8px 14px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:#e7f0ec;">上一步</div>
+              <div style="padding:8px 14px; border-radius:4px; background:linear-gradient(180deg,#94d6be,#6dbd9f 50%,#549174); color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;">下一步</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- spotlight on switch -->
+      <div style="width:360px;">
+        <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">② Spotlight → 設定選單內的 folder-tag 開關</div>
+        <div style="position:relative; background:color-mix(in srgb,#0a1614 55%,rgba(8,14,11,.85)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:22px; min-height:230px;">
+          <!-- highlighted switch row -->
+          <div style="display:flex; justify-content:flex-end;">
+            <div style="width:220px; background:#141f1c; border-radius:4px; padding:6px; box-shadow:0 0 0 3px color-mix(in srgb,#6dbd9f 55%,transparent), 0 0 22px 6px color-mix(in srgb,#6dbd9f 34%,transparent);">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px;">
+                <div style="font-size:12.5px; color:#e7f0ec;">資料夾名稱轉標籤</div>
+                <div style="flex:none; width:42px; height:24px; border-radius:5px; border:1px solid rgba(150,185,172,.14); background:rgba(26,38,35,.6); position:relative;"><div style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:4px; background:#92a69f;"></div></div>
+              </div>
+            </div>
+          </div>
+          <!-- bubble -->
+          <div style="position:absolute; left:22px; bottom:22px; width:230px; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; box-shadow:0 26px 64px rgba(0,0,0,.62); padding:15px;">
+            <div style="display:inline-flex; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.1em; color:#e7f0ec; background:color-mix(in srgb,#6dbd9f 16%,transparent); border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:3px 8px; margin-bottom:9px;">🖱 換你試試</div>
+            <div style="font-size:12.5px; color:#e7f0ec; line-height:1.6;">按這顆開啟「資料夾標籤」。之後隨時能在右上角設定選單裡開／關。</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:220px; font-size:13px; color:#92a69f; line-height:1.9;">
+        <div>· 觸發：使用者按下開關→寫入 <code style="color:#84b6d6;">wlib-foldertag</code>→推進（比照 Step 4「儲存」的「做了會生效」）。</div>
+        <div>· 教學期間設定選單保持展開、鎖住。</div>
+        <div>· 是第二個互動步驟（onboarding-spec §9.3）。</div>
+      </div>
+    </div>
+
+    <!-- F2 無子資料夾 · 純說明 -->
+    <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:14px;">F2 · 無子資料夾 → 純說明步驟（👀 看過就好，不顯示徽章）</div>
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; margin-bottom:32px;">
+      <div style="width:360px;">
+        <div style="background:color-mix(in srgb,#0a1614 26%,rgba(8,14,11,.92)); border:1px solid rgba(150,185,172,.14); border-radius:6px; padding:26px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:relative; width:100%; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:22px 22px 26px; box-shadow:0 26px 64px rgba(0,0,0,.62);">
+            <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; font-weight:600; margin-bottom:10px;">資料夾也能當標籤</div>
+            <div style="font-size:13px; color:#92a69f; line-height:1.75; margin-bottom:18px;">把檔案分到不同子資料夾裡，網頁可以把資料夾名稱自動變成標籤，方便篩選。你這個資料夾目前還沒有子資料夾；之後有了，網頁會再問你要不要開啟。</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="display:flex; gap:6px; flex:1;"><span style="width:8px; height:8px; border-radius:50%; background:rgba(231,240,236,.22);"></span><span style="width:8px; height:8px; border-radius:50%; background:#6dbd9f;"></span><span style="width:8px; height:8px; border-radius:50%; background:rgba(231,240,236,.22);"></span></div>
+              <div style="padding:8px 14px; border:1px solid rgba(150,185,172,.14); border-radius:4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:#e7f0ec;">上一步</div>
+              <div style="padding:8px 14px; border-radius:4px; background:linear-gradient(180deg,#94d6be,#6dbd9f 50%,#549174); color:#fff; font-family:'Cinzel','Noto Serif TC',serif; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;">下一步</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:220px; font-size:13px; color:#92a69f; line-height:1.9;">
+        <div>· 無徽章、無開關；只告知功能存在。</div>
+        <div>· 跳過此步 → folder-tag 預設<b style="color:#e7f0ec;">關</b>（§9.4）。</div>
+        <div>· 步驟指示器數量固定，不因結構增減（§9.4）。</div>
+      </div>
+    </div>
+
+    <!-- F3 手機差異 -->
+    <div style="font-family:'Cinzel','Noto Serif TC',serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#92a69f; margin-bottom:14px;">F3 · 手機差異 · folder-tag 開關 spotlight（設定選單）＋ 篩選列 spotlight</div>
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; margin-bottom:20px;">
+      <!-- mobile switch spotlight -->
+      <div style="width:280px;">
+        <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">手機：開關在手機版設定選單內</div>
+        <div style="position:relative; background:color-mix(in srgb,#0a1614 55%,rgba(8,14,11,.85)); border:1px solid rgba(150,185,172,.14); border-radius:12px; padding:18px; min-height:300px;">
+          <div style="display:flex; justify-content:flex-end;">
+            <div style="width:210px; background:#141f1c; border-radius:4px; padding:6px; box-shadow:0 0 0 3px color-mix(in srgb,#6dbd9f 55%,transparent), 0 0 22px 6px color-mix(in srgb,#6dbd9f 34%,transparent);">
+              <div style="padding:6px 10px 4px; font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:#92a69f;">偏好</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 10px 10px;">
+                <div style="font-size:12px; color:#e7f0ec;">資料夾名稱轉標籤</div>
+                <div style="flex:none; width:40px; height:23px; border-radius:5px; border:1px solid rgba(150,185,172,.14); background:rgba(26,38,35,.6); position:relative;"><div style="position:absolute; top:3px; left:3px; width:15px; height:15px; border-radius:4px; background:#92a69f;"></div></div>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute; left:18px; bottom:18px; right:18px; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; box-shadow:0 26px 64px rgba(0,0,0,.62); padding:14px;">
+            <div style="display:inline-flex; font-family:'Cinzel','Noto Serif TC',serif; font-size:9px; letter-spacing:.1em; color:#e7f0ec; background:color-mix(in srgb,#6dbd9f 16%,transparent); border:1px solid rgba(150,185,172,.14); border-radius:4px; padding:3px 8px; margin-bottom:8px;">🖱 換你試試</div>
+            <div style="font-size:12px; color:#e7f0ec; line-height:1.55;">點開設定選單，按這顆開啟資料夾標籤。</div>
+          </div>
+        </div>
+      </div>
+      <!-- mobile filter spotlight -->
+      <div style="width:280px;">
+        <div style="font-size:12px; color:#92a69f; margin-bottom:10px;">手機：篩選列 spotlight 指 <b style="color:#e7f0ec;">dock 篩選鈕</b></div>
+        <div style="position:relative; background:color-mix(in srgb,#0a1614 55%,rgba(8,14,11,.85)); border:1px solid rgba(150,185,172,.14); border-radius:12px; padding:18px; min-height:300px;">
+          <div style="position:absolute; right:18px; bottom:18px; width:52px; min-height:52px; border-radius:4px; border:2px solid #6dbd9f; background:#141f1c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#6dbd9f; box-shadow:0 0 0 3px color-mix(in srgb,#6dbd9f 40%,transparent), 0 0 20px 5px color-mix(in srgb,#6dbd9f 32%,transparent);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><path d="M3 5h18l-7 8v5l-4 2v-7z"></path></svg>
+            <span style="font-family:'Cinzel','Noto Serif TC',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase;">篩選</span>
+          </div>
+          <div style="position:absolute; left:18px; bottom:82px; width:210px; background:#141f1c; border:1px solid rgba(150,185,172,.14); border-radius:4px; box-shadow:0 26px 64px rgba(0,0,0,.62); padding:14px;">
+            <div style="font-size:12px; color:#e7f0ec; line-height:1.55;">用標籤篩選收藏；選多個標籤取交集。搜尋欄也在這一區。</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:220px; font-size:13px; color:#92a69f; line-height:1.9;">
+        <div>· <b style="color:#e7f0ec;">桌面</b>篩選列 spotlight 指 header 下的篩選區；<b style="color:#e7f0ec;">手機</b>指 dock 篩選鈕（純說明 👀）。</div>
+        <div>· 既有使用者：點上線 toast→重新整理掃出子資料夾→<b style="color:#e7f0ec;">單獨播放</b>此一步（不重播整場，§9.3）。</div>
+        <div>· 兩進入點寫同一 <code style="color:#84b6d6;">wlib-foldertag</code>，不重複問。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const outline = "border:1px solid color-mix(in srgb,#6dbd9f 42%,rgba(150,185,172,.14)); background:transparent; color:#a9d8c6;";
+    const selected = "border:1px solid #6dbd9f; background:color-mix(in srgb,#6dbd9f 20%,transparent); color:#d6f0e5;";
+
+    const filterTags = [
+      { name: '#圍巾', sel: true },
+      { name: '#蕾絲', sel: true },
+      { name: '#帽子', sel: false },
+      { name: '#2024', sel: false },
+      { name: '#鉤針', sel: false },
+      { name: '#棒針', sel: false },
+      { name: '#嬰兒', sel: false },
+      { name: '#圍脖', sel: false },
+    ].map(t => ({ name: t.name, sel: t.sel, style: t.sel ? selected : outline }));
+
+    const miniCards = [1, 2, 3, 4];
+
+    return { filterTags, miniCards };
+  }
+}
+
+</script>
+</body>
+</html>
