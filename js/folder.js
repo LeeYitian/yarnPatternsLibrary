@@ -18,9 +18,9 @@ async function start(forcePick, feedback) {
   let handle;
   try { handle = await getHandle(forcePick); } catch (e) { return; }
 
-  // 舊狀態快照：供「重新整理」差異統計（spec §11.1.2）。
+  // 舊狀態快照：供「重新整理」差異統計與移動偵測（spec §11.1.2、subfolder-spec §5.6）。
   // key 用 path（無 path 的舊快取 fallback 檔名）：子資料夾後不同資料夾可能有同名檔（subfolder-spec §2.2）。
-  const oldLocal = new Set(items.map(it => it.path || it.name));
+  const oldItems = items.map(it => ({ path: it.path || it.name, name: it.name, size: it.size, lastModified: it.lastModified }));
   const oldUrl = new Set(urls.map(it => it.url));
 
   status.textContent = "讀取資料夾…";
@@ -55,6 +55,18 @@ async function start(forcePick, feedback) {
   // 立刻存清單：即使封面還沒畫完就重新整理／關頁，下次也能直接載入，免重選資料夾。
   await persistItems();
 
+  // 移動偵測（subfolder-spec §5.6）：消失／新出現的 path 配對成「移動」，
+  // 並把舊 key 的封面搬到新 key——generateThumbs 直接命中快取，移動的檔案封面不重畫。
+  const oldPaths = new Set(oldItems.map(it => it.path));
+  const newPaths = new Set(items.map(it => it.path));
+  const removedItems = oldItems.filter(it => !newPaths.has(it.path));
+  const addedItems = items.filter(it => !oldPaths.has(it.path));
+  const moved = pairMoves(removedItems, addedItems);
+  for (const m of moved) {
+    try { const blob = await DB.get("thumbs", thumbKey(m.from)); if (blob) await DB.set("thumbs", thumbKey(m.to), blob); }
+    catch (_) {}
+  }
+
   // 讀 links.md → parse → urls（含災難復原，spec §6.3 步驟3、§7）
   status.textContent = "讀取 links.md…";
   urls = await loadUrls();
@@ -67,15 +79,37 @@ async function start(forcePick, feedback) {
   status.textContent = "";
 
   if (feedback) {
-    const addedL = items.filter(it => !oldLocal.has(it.path || it.name)).length;
-    const removedL = [...oldLocal].filter(p => !items.some(it => (it.path || it.name) === p)).length;
+    // 移動的檔案從新增／移除數字中扣除，另計「移動 N」（不誤報成刪除）
+    const movedL = moved.length;
+    const addedL = addedItems.length - movedL;
+    const removedL = removedItems.length - movedL;
     const addedU = urls.filter(it => !oldUrl.has(it.url)).length;
     const removedU = [...oldUrl].filter(u => !urls.some(it => it.url === u)).length;
-    const changed = addedL + removedL + addedU + removedU;
+    const changed = addedL + removedL + addedU + removedU + movedL;
     let msg = `已重新整理：本機檔案 <b>${items.length}</b> 筆、URL <b>${urls.length}</b> 筆`;
-    if (changed) msg += `<br>（新增 ${addedL + addedU}、移除 ${removedL + removedU}）`;
+    if (changed) {
+      const parts = [];
+      if (addedL + addedU + removedL + removedU) parts.push(`新增 ${addedL + addedU}、移除 ${removedL + removedU}`);
+      if (movedL) parts.push(`移動 ${movedL}`);
+      msg += `<br>（${parts.join("、")}）`;
+    }
     toast(msg);
   }
+}
+
+// 移動偵測（subfolder-spec §5.6）：消失與新出現的項目用「檔名+size+lastModified」簽章一對一配對。
+// 移動檔案（含搬進子資料夾）不會改這三者，配得起來即視為移動；改名或內容有變的檔案配不上，照舊算新增+移除。
+// 同簽章多筆時貪婪配對，數字守恆，最壞只影響 toast 文字。
+function pairMoves(removedItems, addedItems) {
+  const sig = it => `${it.name}|${it.size}|${it.lastModified}`;
+  const bySig = new Map();
+  removedItems.forEach(it => { const k = sig(it); if (!bySig.has(k)) bySig.set(k, []); bySig.get(k).push(it); });
+  const moved = [];
+  for (const to of addedItems) {
+    const q = bySig.get(sig(to));
+    if (q && q.length) moved.push({ from: q.shift(), to });
+  }
+  return moved;
 }
 
 // 遞迴走訪（subfolder-spec §4／§8）：
