@@ -82,8 +82,9 @@ yarn-patterns-library/
 
 - **不指定版本開啟**(沿用瀏覽器現有版本),若缺 `thumbs`／`kv` store 才升一版補建。
   - 為什麼:早期寫死 `open("weaving-lib", 2)`,若使用者瀏覽器裡的資料庫版本已較新,`open` 會直接失敗 → 所有讀寫被吞掉 → **每次重新整理都要重選資料夾**。改成不指定版本即可避免這個雷。
-- store `thumbs`:封面圖。key = `` `${name}|${size}|${lastModified}|w${THUMB_W}` ``,value = JPEG `Blob`。
-  - key 帶上 `w${THUMB_W}`,所以**改 `THUMB_W` 會自動讓舊封面失效重畫**。
+- store `thumbs`:預覽圖快取(store 無 keyPath,key 由程式明碼帶入)。裝兩種:
+  - **本機封面**:key = `thumbKey(it)` = `` `${it.name}|${it.size}|${it.lastModified}|w${THUMB_W}` ``(見 `js/state.js`),value = JPEG `Blob`。key 帶 `w${THUMB_W}`,所以**改 `THUMB_W` 會自動讓舊封面失效重畫**。
+  - **URL 縮圖顯示快取**:key = `urlThumbCacheKey(path)`(形如 `urlthumb:<thumbs/…>`,見 `js/urls.js`),value = WEBP `Blob`。用途見 §6.1(cache-first 開 app 無授權也能顯示)。
 - store `kv`:
   - `"items"`:清單 meta 陣列 `{name, ext, type, size, lastModified}`(不含 handle,因為要可序列化)。
     - **掃描完就先 `persistItems()` 寫入一次**(在畫封面之前),`size`／`lastModified` 在掃描時用 `getFile()` 取得。這樣即使封面還沒畫完就重新整理,下次也能直接載入、免重選資料夾。
@@ -92,9 +93,21 @@ yarn-patterns-library/
 
 ### localStorage
 
-- `"wlib-size"`:檢視大小索引(0／1／2)。
+- `"wlib-size-cls"`:檢視大小的 class 字串(`size-wide`／`size-std`／`size-compact`);目前實際採用的鍵(見 `js/controls.js`)。
+- `"wlib-size"`:**舊鍵**,檢視大小索引(0／1／2);只在 `wlib-size-cls` 不存在時當 fallback 讀。
 - `"wlib-sort"`:排序模式,`"name"`(依檔名)或 `"time"`(依修改時間,時間軸版面)。
 - `"wlib-source"`:來源篩選,`"all"`／`"local"`／`"url"`(全部／本機／網址);與排序正交。
+- `"wlib-onboarding-seen"`:onboarding 教學已看過的**版本字串**(`OB_SEEN_KEY`,見 `js/onboarding.js`、`spec/onboarding-spec.md` §3.2)。有值→首次不自動跳;值 < 當前版本→升版 toast。
+
+### 規劃中的結構變更(未實作)
+
+> 以下是子資料夾遞迴 ／ 標籤功能一起帶進來的結構調整,**目前尚未實作**;真相見 `spec/subfolder-spec.md`、`spec/tag-spec.md`。實作後把對應項併回上面。
+
+- **`kv.items` 每筆新增 `path`**(相對路徑,如 `圍巾/蕾絲/scarf.pdf`;頂層檔案 `path` = 檔名)。載入舊快取(無 `path`)時 fallback `path = name`。
+- **`thumbKey` 改用 `path`**:key 變 `` `${it.path || it.name}|${it.size}|${it.lastModified}|w${THUMB_W}` ``。頂層 `path` = 檔名,故舊封面快取 key 不變、**既有使用者封面不重畫**。
+- **不需 IndexedDB 升版**:`thumbs` ／ `kv` store 結構未變,只是 value 物件多一欄位(schemaless)。
+- **新增 localStorage `wlib-foldertag`**(暫名):資料夾名轉標籤的開關(持久偏好);另一個一次性旗標記錄上線告知 toast 是否已顯示。
+- **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):手動 tag 的持久真相檔,沿用 `links.md` 模式;延後啟用。
 
 ### 開啟流程(`init()`)
 
