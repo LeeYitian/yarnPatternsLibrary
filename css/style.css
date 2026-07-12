@@ -196,6 +196,57 @@
   .tag svg { width: 11px; height: 11px; color: var(--accent); flex: none; }
   .tag.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, transparent); color: #d6f0e5; }
 
+  /* 手機滿版篩選遮罩專用元素（標題列／「標籤」段標／底列）：桌面一律隱藏 */
+  .fb-head, .fb-taglabel, .fb-foot { display: none; }
+  /* dock 第 4 顆「篩選」：桌面隱藏（篩選區直接在 header 下），手機才出現 */
+  #filterBtn { display: none; }
+
+  /* 手機（≤600px，同 header／dock 斷點）：整個篩選區收進 dock 觸發的滿版遮罩（tag-spec §11.3／T15） */
+  @media (max-width: 600px) {
+    #filterBtn { display: flex; }
+    .filterbar {
+      position: fixed; inset: 0; z-index: 55; top: 0;
+      display: none; flex-direction: column; align-items: stretch; gap: 0;
+      padding: 0; border-bottom: none; transition: none;
+      /* 沿用燈箱／對話框深墨綠、不用毛玻璃 */
+      background: color-mix(in srgb, var(--bg1) 26%, rgba(8,14,11,.96));
+    }
+    .filterbar.open { display: flex; animation: fade .25s ease-out; }
+    .fb-label, .fb-sep, .fb-clear { display: none; }
+    .fb-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px; border-bottom: 1px solid var(--line);
+    }
+    .fb-title { font-family: var(--font-head); font-size: 21px; font-weight: 500; }
+    .fb-close {
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 15px;
+      border: 1px solid var(--line); background: none; color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .fb-search { margin: 18px 18px 0; }
+    .fb-taglabel {
+      display: block; margin: 20px 18px 12px;
+      font-family: var(--font-disp); font-size: 9.5px; letter-spacing: .16em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    /* tag 過多時中段自己捲動 */
+    .fb-tags { flex: 1; min-width: 0; overflow-y: auto; align-content: flex-start; padding: 0 18px 18px; }
+    .filterbar.no-tags .fb-taglabel, .filterbar.no-tags .fb-tags { display: none; }
+    .fb-foot {
+      display: flex; align-items: center; gap: 10px; margin-top: auto;   /* 無 tag 時也貼底 */
+      padding: 14px 18px; border-top: 1px solid var(--line);
+    }
+    .fb-foot .spacer { flex: 1; }
+    .fb-clear-m {
+      border: none; background: none; cursor: pointer; padding: 8px 6px;
+      font-family: var(--font-disp); font-size: 10px; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--accent2);
+    }
+    #fbDone { font-size: 10px; padding: 11px 20px; }
+    /* 完成鈕不長主按鈕的白花押（項數文字已夠長，花飾會擠壓） */
+    #fbDone::before, #fbDone::after { content: none; }
+  }
+
   /* main 帶不透明背景並疊在 footer 之上：捲到底之前都遮住下方的 sticky footer，露出時也不會蓋住內容 */
   main {
     padding: clamp(20px,3vw,40px) var(--gutter); position: relative; z-index: 1;

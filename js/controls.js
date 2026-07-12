@@ -45,6 +45,28 @@ function syncFilterbarTop() {
 window.addEventListener("resize", syncFilterbarTop);
 syncFilterbarTop();
 
+// 手機滿版篩選遮罩（tag-spec §11.3）：dock「篩選」鈕開啟；「完成」／✕ 關閉；
+// 「清除」只取消所有 tag（保留搜尋字）。即時套用：遮罩開著時背後 grid 已在篩選。
+function openFilter() {
+  $("filterbar").classList.add("open");
+  document.body.classList.add("no-scroll");
+}
+function closeFilter() {
+  $("filterbar").classList.remove("open");
+  // 比照 hideOverlay：還有其他 overlay／燈箱開著就別解鎖捲動
+  if (!document.querySelector(".overlay.show") && !$("viewer").classList.contains("show"))
+    document.body.classList.remove("no-scroll");
+}
+$("filterBtn").onclick = openFilter;
+$("fbClose").onclick = closeFilter;
+$("fbDone").onclick = closeFilter;
+$("fbClearM").onclick = () => { selectedTags.clear(); renderFilterbar(); applyFilter(); };
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("filterbar").classList.contains("open")) closeFilter();
+});
+// 開著遮罩把視窗拉寬跨過 600px：桌面版沒有關閉鈕，強制收合以免鎖死捲動
+matchMedia("(max-width: 600px)").addEventListener("change", (e) => { if (!e.matches) closeFilter(); });
+
 // folder→tag 開關（tag-spec §4a／§11.2）：列狀態依「有無子資料夾檔案」與偏好即時反映
 function updateFoldertagUI() {
   const has = hasSubfolderFiles(), on = foldertagOn();

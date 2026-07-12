@@ -79,14 +79,26 @@
 <!-- 篩選區（tag-spec §7.2／§11.3）：搜尋欄＋tag badge 合成一塊；sticky 補位貼頂（T16）。
      必須緊跟在 header 之後：CSS 用 header.nav-hidden + .filterbar 做貼頂連動。 -->
 <div class="filterbar hidden" id="filterbar">
+  <!-- 手機滿版遮罩才顯示的標題列（桌面 display:none） -->
+  <div class="fb-head">
+    <span class="fb-title">篩選</span>
+    <button class="fb-close" id="fbClose" title="關閉">✕</button>
+  </div>
   <span class="fb-label">篩選</span>
   <div class="fb-search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
     <input id="search" type="search" placeholder="搜尋名稱…" autocomplete="off">
   </div>
   <div class="fb-sep"></div>
+  <div class="fb-taglabel">標籤</div>
   <div class="fb-tags" id="fbTags"></div>
   <button class="fb-clear" id="fbClear" style="display:none">清除 0</button>
+  <!-- 手機底列：「清除」取消所有 tag（保留搜尋字）＋「完成 · N 項」關遮罩（桌面 display:none） -->
+  <div class="fb-foot">
+    <button class="fb-clear-m" id="fbClearM">清除</button>
+    <div class="spacer"></div>
+    <button class="btn primary" id="fbDone">完成</button>
+  </div>
 </div>
 
 <!-- 側邊浮動按鈕 -->
@@ -102,6 +114,11 @@
   <button class="dock-btn" id="sourceBtn" title="切換來源：全部 ／ 本機檔案 ／ 網址">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
     <span class="dock-lbl" id="sourceLbl">全部</span>
+  </button>
+  <!-- 手機第 4 顆「篩選」（tag-spec §11.3）：開滿版篩選遮罩；桌面隱藏（篩選區直接在 header 下） -->
+  <button class="dock-btn" id="filterBtn" title="篩選：搜尋與標籤">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg>
+    <span class="dock-lbl">篩選</span>
   </button>
 </div>
 

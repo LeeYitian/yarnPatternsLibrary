@@ -194,4 +194,7 @@ function applyFilter() {
     if (!shown)
       empty.textContent = (q || selected.length) ? "找不到符合的項目。" : "這個來源目前沒有項目。";
   }
+  // 手機篩選遮罩的即時回饋（tag-spec §11.3）：「完成」鈕顯示剩餘項數；dock 篩選鈕有啟用篩選時亮起
+  $("fbDone").textContent = `完成 · ${shown} 項`;
+  $("filterBtn").classList.toggle("active", selected.length > 0 || q.length > 0);
 }
