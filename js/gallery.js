@@ -158,17 +158,24 @@ async function openFile(it) {
   }
 }
 
-// 篩選：搜尋字 AND 來源（兩維正交，handoff §2）；只加 .hidden，不重建 DOM。
+// 篩選：搜尋 ∩ 來源 ∩ 所有選中 tag（AND 疊加，tag-spec §7.1）；只加 .hidden，不重建 DOM。
+// URL 條目無自動 tag → 選中任一 tag 即被濾出，屬預期行為（T13）。
 function applyFilter() {
   const q = $("search").value.trim().toLowerCase();
   let shown = 0;
+  const selected = [...selectedTags];
   for (const it of allItems()) {
     const matchSearch = !q || it._card.dataset.name.includes(q);
     const matchSource =
       sourceMode === "all" ||
       (sourceMode === "local" && it.kind !== "url") ||
       (sourceMode === "url" && it.kind === "url");
-    const hit = matchSearch && matchSource;
+    let matchTags = true;
+    if (selected.length) {
+      const ks = new Set(autoTags(it).map(tagKey));
+      matchTags = selected.every((k) => ks.has(k));
+    }
+    const hit = matchSearch && matchSource && matchTags;
     it._card.classList.toggle("hidden", !hit);
     if (hit) shown++;
   }
@@ -185,6 +192,6 @@ function applyFilter() {
   if (total) {
     empty.classList.toggle("hidden", shown > 0);
     if (!shown)
-      empty.textContent = q ? "找不到符合的項目。" : "這個來源目前沒有項目。";
+      empty.textContent = (q || selected.length) ? "找不到符合的項目。" : "這個來源目前沒有項目。";
   }
 }

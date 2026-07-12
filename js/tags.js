@@ -46,6 +46,55 @@ function refreshCardTags() {
   }
 }
 
+// ---------- 篩選（§7）----------
+// 已選 tag 的正規化 key。session-only、不持久化（T12，比照搜尋字）。
+let selectedTags = new Set();
+
+// 全庫 tag 統計：正規化 key → { display: 出現次數較多的原樣（平手取先掃到，T11）, count }
+function tagStats() {
+  const m = new Map();
+  for (const it of items) {
+    for (const t of autoTags(it)) {
+      const k = tagKey(t);
+      let e = m.get(k);
+      if (!e) { e = { count: 0, forms: new Map() }; m.set(k, e); }
+      e.count++;
+      e.forms.set(t, (e.forms.get(t) || 0) + 1);
+    }
+  }
+  return [...m.entries()].map(([key, e]) => {
+    let display, best = -1;
+    for (const [form, c] of e.forms) if (c > best) { best = c; display = form; }
+    return { key, display, count: e.count };
+  }).sort((a, b) => b.count - a.count || a.display.localeCompare(b.display, "zh-Hant"));   // 次數多→少（§11.3）
+}
+
+// 篩選區 tag badge 重繪：items／開關變動後呼叫；同時清掉已不存在的選取
+function renderFilterbar() {
+  const stats = tagStats();
+  const alive = new Set(stats.map(s => s.key));
+  for (const k of [...selectedTags]) if (!alive.has(k)) selectedTags.delete(k);
+  const wrap = $("fbTags");
+  wrap.innerHTML = "";
+  for (const s of stats) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const sel = selectedTags.has(s.key);
+    b.className = "tag" + (sel ? " sel" : "");
+    b.innerHTML = (sel ? SVG_CHECK : "") + `#${escapeHtml(s.display)}`;
+    b.onclick = () => {
+      selectedTags.has(s.key) ? selectedTags.delete(s.key) : selectedTags.add(s.key);
+      renderFilterbar(); applyFilter();
+    };
+    wrap.appendChild(b);
+  }
+  $("filterbar").classList.toggle("no-tags", !stats.length);   // 無自動 tag → 整條只留搜尋欄（§11.3）
+  const n = selectedTags.size;
+  $("fbClear").textContent = `清除 ${n}`;
+  $("fbClear").style.display = n ? "" : "none";                // 選中 ≥1 才顯示
+}
+$("fbClear").onclick = () => { selectedTags.clear(); renderFilterbar(); applyFilter(); };
+
 // 寫入偏好＋立即生效（§11.2：切換即重算，無需重新整理）。
 // wlib:foldertag 事件給 onboarding「資料夾標籤」步驟當推進掛鉤（onboarding-spec §9.6）。
 function setFoldertag(on) {
@@ -53,8 +102,10 @@ function setFoldertag(on) {
   applyFoldertag();
   document.dispatchEvent(new Event("wlib:foldertag"));
 }
-// 生效總入口：開關列 UI＋卡片 chips（篩選區於後續 commit 接上）
+// 生效總入口：開關列 UI＋卡片 chips＋篩選區（關閉時 renderFilterbar 會順帶清空已選 tag，T12）
 function applyFoldertag() {
   updateFoldertagUI();
   refreshCardTags();
+  renderFilterbar();
+  applyFilter();
 }

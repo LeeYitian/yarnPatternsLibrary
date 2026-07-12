@@ -70,13 +70,12 @@
   }
   header.nav-hidden { transform: translateY(-100%); }
 
-  /* 手機版：搜尋欄自己一行，三顆按鈕一行 */
+  /* 手機版：標題一行、按鈕一行（搜尋欄已移入 header 下方的篩選區，tag-spec §7.2） */
   @media (max-width: 600px) {
     :root { --gutter: 16px; }
     header { padding: 12px var(--gutter); gap: 10px 8px; }
     h1 { flex: 1 1 100%; }
     .grow { display: none; }
-    #search { order: 1; flex: 1 1 100%; min-width: 0; }
     #addUrlBtn { order: 2; flex: 1 1 auto; justify-content: center; }
     #slideBtn { order: 3; }
     .menu { order: 4; }
@@ -153,12 +152,49 @@
     margin-top: 3px; line-height: 1.45; }
   .menu-toggle.disabled { opacity: .5; }   /* 平資料夾：整列半透明 + switch 不可點（disabled） */
   .menu-sep { height: 1px; background: var(--line); margin: 2px 6px 6px; }
-  #search {
-    border: 1px solid var(--line); background: var(--card); color: var(--ink); backdrop-filter: blur(6px);
-    font-family: var(--font-body); font-size: 15px; padding: 10px 14px; border-radius: 4px; min-width: 160px; outline: none;
+  /* ---------- 篩選區（tag-spec §11.3）：header 之下、grid 之上 ---------- */
+  /* sticky 補位貼頂（T16）：平時 top=header 高（JS 量入 --fb-top）；header 收合時滑上貼住視窗頂端。
+     底色為 bg1 疊 bg3-55%（不透明、不用毛玻璃）：sticky 蓋在卡片上仍可讀。 */
+  .filterbar {
+    position: sticky; top: var(--fb-top, 69px); z-index: 19;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 14px var(--gutter);
+    background-color: var(--bg1);
+    background-image: linear-gradient(color-mix(in srgb, var(--bg3) 55%, transparent),
+                                      color-mix(in srgb, var(--bg3) 55%, transparent));
+    border-bottom: 1px solid var(--line);
+    transition: top var(--t-base) ease-out;
   }
+  header.nav-hidden + .filterbar { top: 0; }
+  .fb-label { font-family: var(--font-disp); font-size: 9.5px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted); }
+  .fb-search { display: flex; align-items: center; gap: 8px; flex: none; min-width: 190px;
+    border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 0 12px;
+    transition: var(--t-fast) ease-out; }
+  .fb-search svg { width: 14px; height: 14px; color: var(--muted); flex: none; }
+  .fb-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  #search {
+    border: none; background: none; color: var(--ink);
+    font-family: var(--font-body); font-size: 15px; padding: 10px 0; flex: 1; min-width: 0; outline: none;
+  }
+  /* focus 視覺由外層 .fb-search:focus-within 承擔：關掉全站 :focus-visible 給 input 的光環，避免雙框 */
+  #search:focus-visible { box-shadow: none; }
   #search::placeholder { font-style: italic; color: var(--muted); }
-  #search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .fb-sep { width: 1px; align-self: stretch; background: var(--line); }
+  .fb-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1; min-width: 180px; }
+  /* 無自動 tag（平資料夾或關閉開關）→ 整條只留搜尋欄（§11.3） */
+  .filterbar.no-tags .fb-sep, .filterbar.no-tags .fb-tags, .filterbar.no-tags .fb-clear { display: none; }
+  .fb-clear { border: none; background: none; cursor: pointer; padding: 6px 4px;
+    font-family: var(--font-disp); font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent2); transition: var(--t-fast) ease-out; }
+  .fb-clear:hover { color: var(--accent); }
+  /* 篩選 tag badge（§11.1）：框線綠（未選）／勾 + accent 底（選中） */
+  .tag { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 4px;
+    font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: var(--t-fast) ease-out;
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line)); background: transparent; color: #a9d8c6; }
+  .tag:hover { border-color: var(--accent); color: #d6f0e5; }
+  .tag svg { width: 11px; height: 11px; color: var(--accent); flex: none; }
+  .tag.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, transparent); color: #d6f0e5; }
 
   /* main 帶不透明背景並疊在 footer 之上：捲到底之前都遮住下方的 sticky footer，露出時也不會蓋住內容 */
   main {

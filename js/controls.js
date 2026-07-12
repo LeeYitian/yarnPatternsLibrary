@@ -37,6 +37,14 @@ function updateSourceBtn() {
 }
 updateSourceBtn();
 
+// 篩選區 sticky 補位貼頂（tag-spec T16）：平時貼 header 下緣（量實際高度，桌機／手機列數不同）；
+// header 收合（nav-hidden）時由 CSS 兄弟選擇器把 top 切到 0，篩選區滑上貼住視窗頂端。
+function syncFilterbarTop() {
+  document.documentElement.style.setProperty("--fb-top", bar.offsetHeight + "px");
+}
+window.addEventListener("resize", syncFilterbarTop);
+syncFilterbarTop();
+
 // folder→tag 開關（tag-spec §4a／§11.2）：列狀態依「有無子資料夾檔案」與偏好即時反映
 function updateFoldertagUI() {
   const has = hasSubfolderFiles(), on = foldertagOn();

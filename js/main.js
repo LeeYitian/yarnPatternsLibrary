@@ -36,12 +36,16 @@ $("scrollCue").onclick = () => introReveal.scrollIntoView({ behavior: "smooth", 
 
 function showIntro() {
   intro.classList.remove("hidden"); bar.classList.add("hidden"); grid.classList.add("hidden"); dock.hidden = true;
+  $("filterbar").classList.add("hidden");
   if (introObserver) introObserver.observe(introReveal);
   else introReveal.classList.add("in");   // 不支援 IO 時直接顯示，避免說明被永久藏住
 }
 function showLibrary() {
   intro.classList.add("hidden"); bar.classList.remove("hidden"); dock.hidden = false;
   updateFoldertagUI();   // 開關列狀態跟著掃描結果走（平資料夾＝disabled，tag-spec §11.2）
+  $("filterbar").classList.remove("hidden");
+  renderFilterbar();     // tag badge 跟著掃描結果重繪（次數排序，§11.3）
+  syncFilterbarTop();    // header 顯示後才量得到高度
   const total = items.length + urls.length;
   $("count").textContent = `（${total} 件）`;
   empty.classList.toggle("hidden", total > 0);

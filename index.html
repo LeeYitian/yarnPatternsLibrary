@@ -54,7 +54,6 @@
   <h1><img class="logo-ico" src="favicon.png" alt="">織圖圖書館 <span class="sub" id="count"></span></h1>
   <span id="status"></span>
   <div class="grow"></div>
-  <input id="search" type="search" placeholder="搜尋名稱…" autocomplete="off">
   <button class="btn primary" id="addUrlBtn" title="新增網址：收藏一個網頁／影片連結"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>新增網址</button>
   <button class="btn icon" id="slideBtn" title="幻燈片：從第一張開始瀏覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M10 8.5v3l3-1.5-3-1.5z" fill="currentColor"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></button>
   <div class="menu">
@@ -76,6 +75,19 @@
     </div>
   </div>
 </header>
+
+<!-- 篩選區（tag-spec §7.2／§11.3）：搜尋欄＋tag badge 合成一塊；sticky 補位貼頂（T16）。
+     必須緊跟在 header 之後：CSS 用 header.nav-hidden + .filterbar 做貼頂連動。 -->
+<div class="filterbar hidden" id="filterbar">
+  <span class="fb-label">篩選</span>
+  <div class="fb-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="search" type="search" placeholder="搜尋名稱…" autocomplete="off">
+  </div>
+  <div class="fb-sep"></div>
+  <div class="fb-tags" id="fbTags"></div>
+  <button class="fb-clear" id="fbClear" style="display:none">清除 0</button>
+</div>
 
 <!-- 側邊浮動按鈕 -->
 <div class="dock" id="dock" hidden>
@@ -146,8 +158,8 @@
     <div class="frame"><img id="vImg" alt=""></div>
     <!-- 側欄：桌面與預覽圖左右並排、底部對齊（盡量放大圖、開啟鈕不被裁掉）；手機仍直向堆疊 -->
     <div class="vside">
-      <div class="ornate-divider" aria-hidden="true"></div>
       <div class="cap"><div class="t" id="vTitle"></div><div class="vtags" id="vTags"></div></div>
+      <div class="ornate-divider" aria-hidden="true"></div>
       <div class="vbtns">
         <button class="btn primary" id="vOpen">開啟檔案</button>
       </div>
