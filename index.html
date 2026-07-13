@@ -213,11 +213,43 @@
       </div>
     </div>
 
+    <div class="field" id="fieldTags">
+      <label>標籤（可選）</label>
+      <div class="wl-tagfield" id="urlTags">
+        <div class="wl-chips"><input class="wl-tag-input" type="text" placeholder="輸入標籤後按 Enter…" autocomplete="off" spellcheck="false"></div>
+        <div class="wl-tag-suggest"></div>
+      </div>
+    </div>
+
     <div class="dialog-foot">
       <button class="btn ghost-danger lg" id="dlgDelete" style="display:none">刪除</button>
       <div class="spacer"></div>
       <button class="btn lg" id="dlgCancel">取消</button>
       <button class="btn primary lg" id="dlgSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 本機檔案「編輯標籤」對話框（tag-spec §11.6.2）：沿用 .overlay/.dialog 骨架，欄位只有一組 chip 輸入 -->
+<div class="overlay" id="fileTagDialog">
+  <div class="dialog">
+    <h3>編輯標籤</h3>
+    <div class="field">
+      <label>檔案</label>
+      <div class="ft-filename" id="ftName"></div>
+    </div>
+    <div class="field">
+      <label>標籤</label>
+      <div class="wl-tagfield" id="fileTags">
+        <div class="wl-chips"><input class="wl-tag-input" type="text" placeholder="輸入標籤後按 Enter…" autocomplete="off" spellcheck="false"></div>
+        <div class="wl-tag-suggest"></div>
+      </div>
+    </div>
+    <p class="ft-orphan-note">標籤是依檔名和位置記住的，之後改檔名或搬資料夾會對不上；舊標籤仍留在資料夾的 <span class="nm">files.md</span> 裡。</p>
+    <div class="dialog-foot">
+      <div class="spacer"></div>
+      <button class="btn lg" id="fileTagCancel">取消</button>
+      <button class="btn primary lg" id="fileTagSave">儲存</button>
     </div>
   </div>
 </div>
@@ -342,6 +374,7 @@
 <script src="./js/utils.js"></script>
 <script src="./js/state.js"></script>
 <script src="./js/tags.js"></script>
+<script src="./js/tagfield.js"></script>
 <script src="./js/controls.js"></script>
 <script src="./js/gallery.js"></script>
 <script src="./js/thumbs.js"></script>

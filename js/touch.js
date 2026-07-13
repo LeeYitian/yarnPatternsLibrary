@@ -27,7 +27,9 @@ function tbShow(it) {
     leftEl.querySelector(".tb-edit").onclick = (e) => { e.stopPropagation(); tbHide(); openDialog("edit", it); };
     leftEl.querySelector(".tb-del").onclick  = (e) => { e.stopPropagation(); tbHide(); openConfirm(it); };
   } else {
-    leftEl.innerHTML = "";
+    // 本機卡：長按工具列左側放「編輯標籤」（動 files.md、無刪除，§11.6.1／T24）
+    leftEl.innerHTML = `<button class="tb-edit" title="編輯標籤">${SVG_TAG}</button>`;
+    leftEl.querySelector(".tb-edit").onclick = (e) => { e.stopPropagation(); tbHide(); openFileTagDialog(it); };
   }
   rightEl.innerHTML = `<button class="tb-open">${isUrl ? SVG_TB_EXT : SVG_TB_FILE}開啟</button>`;
   rightEl.querySelector(".tb-open").onclick = (e) => { e.stopPropagation(); tbHide(); openFile(it); };

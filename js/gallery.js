@@ -38,6 +38,12 @@ function ensureCards() {
         e.stopPropagation();
         openConfirm(it);
       };
+    } else {
+      // 本機卡：唯一動作＝編輯標籤（動 files.md，非改檔案內容，§11.6.1／T24）
+      card.querySelector(".tagedit").onclick = (e) => {
+        e.stopPropagation();
+        openFileTagDialog(it);
+      };
     }
     attachLongPress(card, it);
     card.__item = it;
@@ -49,6 +55,7 @@ function localCardHTML(it) {
   return (
     `<div class="thumb"><div class="spin"></div>` +
     `<span class="badge ${it.type}">${it.type === "pdf" ? "PDF" : it.ext.toUpperCase()}</span>` +
+    `<div class="card-actions"><button class="tagedit" title="編輯標籤">${SVG_TAG}</button></div>` +
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar"></span><div class="txt">` +
     `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
@@ -63,7 +70,7 @@ function urlCardHTML(it) {
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar url"></span><div class="txt">` +
     `<div class="name">${escapeHtml(displayName(it))}</div>` +
-    `</div></div></div>`
+    `${cardTagsHTML(it)}</div></div></div>`
   );
 }
 

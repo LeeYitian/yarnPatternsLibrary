@@ -234,21 +234,21 @@ async function reparseForWrite() {
 }
 
 // ---- CRUD（讀-改-寫，spec §6.4 / §6.5 / §6.6） ----
-async function saveNewUrl({ url, title, thumbBlob }) {
+async function saveNewUrl({ url, title, thumbBlob, tags }) {
   if (!dirHandle) { toast("請先選擇一個資料夾再收藏網址。", true); return false; }
   if (!await ensureWrite(dirHandle)) { toast("需要資料夾的寫入權限才能儲存。", true); return false; }
   let thumbField = "";
   if (thumbBlob) { thumbField = await saveUploadedThumb(url, thumbBlob); }
   else { const id = parseYouTubeId(url); if (id) thumbField = "youtube:" + id; }
   const { entries } = await reparseForWrite();
-  entries.push({ url, title: title || "", thumb: thumbField, added: todayStr(), _extra: {} });
+  entries.push({ url, title: title || "", thumb: thumbField, added: todayStr(), tags: Array.isArray(tags) ? tags : [], _extra: {} });
   await writeText(dirHandle, "links.md", serializeLinks(entries));
   urls = entries.map(hydrateUrl);
   await persistUrls(urls);
   showLibrary(); render(); paintAllUrlThumbs();
   return true;
 }
-async function saveEditUrl(orig, { url, title, thumbBlob }) {
+async function saveEditUrl(orig, { url, title, thumbBlob, tags }) {
   if (!await ensureWrite(dirHandle)) { toast("需要資料夾的寫入權限才能儲存。", true); return false; }
   let thumbField = orig.thumb || "";
   if (thumbBlob) { thumbField = await saveUploadedThumb(url, thumbBlob); }
@@ -261,11 +261,12 @@ async function saveEditUrl(orig, { url, title, thumbBlob }) {
     toast("此條目已被外部修改或刪除，請確認後重做。已為你重新整理顯示。", true);
     await start(false); return false;
   }
-  entries[idx] = { url, title: title || "", thumb: thumbField, added: entries[idx].added || orig.added || todayStr(), tags: entries[idx].tags || [], _extra: entries[idx]._extra || {} };   // 保留手動 tag（編輯 UI 於第二期接上，§6.2）
+  entries[idx] = { url, title: title || "", thumb: thumbField, added: entries[idx].added || orig.added || todayStr(), tags: Array.isArray(tags) ? tags : (entries[idx].tags || []), _extra: entries[idx]._extra || {} };   // 手動 tag 來自對話框 chip 輸入（§6.2）
   await writeText(dirHandle, "links.md", serializeLinks(entries));
   urls = entries.map(hydrateUrl);
   await persistUrls(urls);
   render(); paintAllUrlThumbs();
+  refreshCardTags(); renderFilterbar();   // tag 可能變動 → 重畫該卡 chips 與篩選區（§11.6.4）
   return true;
 }
 async function doDeleteUrl(orig) {
@@ -288,6 +289,7 @@ async function doDeleteUrl(orig) {
 }
 
 // ---- 新增／編輯對話框 ----
+const urlTagField = makeTagField("urlTags");
 let dlgMode = "add", editTarget = null, stagedThumbBlob = null;
 function openDialog(mode, it) {
   dlgMode = mode; editTarget = it || null; stagedThumbBlob = null;
@@ -296,6 +298,7 @@ function openDialog(mode, it) {
   $("fUrl").value = it ? it.url : "";
   $("fTitle").value = it ? (it.title || "") : "";
   $("thumbPreview").innerHTML = (it && it._thumbUrl) ? `<img src="${it._thumbUrl}" alt="">` : `<span class="ph">縮圖<br>預覽</span>`;
+  urlTagField.set(it ? (it.tags || []) : [], []);   // URL 無自動 tag → blocked 空（§11.6.2）
   updatePlatformPill($("fUrl").value);
   showOverlay("urlDialog");
   setTimeout(() => $("fUrl").focus(), 50);
@@ -309,14 +312,14 @@ $("fUrl").addEventListener("input", () => updatePlatformPill($("fUrl").value));
 $("dlgCancel").onclick = () => hideOverlay("urlDialog");
 $("dlgDelete").onclick = () => { if (editTarget) { hideOverlay("urlDialog"); openConfirm(editTarget); } };
 $("dlgSave").onclick = async () => {
-  const url = $("fUrl").value.trim(), title = $("fTitle").value.trim();
+  const url = $("fUrl").value.trim(), title = $("fTitle").value.trim(), tags = urlTagField.get();
   if (!/^https?:\/\/.+/i.test(url)) { toast("請輸入有效的網址（需以 http(s):// 開頭）。", true); $("fUrl").focus(); return; }
   document.dispatchEvent(new Event("wlib:urlsaveattempt"));   // onboarding Step 4-4：有效網址、確實嘗試寫入 → 露出「下一步」
   const btn = $("dlgSave"); btn.disabled = true; const prev = btn.textContent; btn.textContent = "儲存中…";
   try {
     const ok = (dlgMode === "edit" && editTarget)
-      ? await saveEditUrl(editTarget, { url, title, thumbBlob: stagedThumbBlob })
-      : await saveNewUrl({ url, title, thumbBlob: stagedThumbBlob });
+      ? await saveEditUrl(editTarget, { url, title, thumbBlob: stagedThumbBlob, tags })
+      : await saveNewUrl({ url, title, thumbBlob: stagedThumbBlob, tags });
     if (ok) {
       if (dlgMode !== "edit") document.dispatchEvent(new Event("wlib:urladded"));   // onboarding Step 4-4：寫入成功自動推進
       hideOverlay("urlDialog"); toast(dlgMode === "edit" ? "已更新這筆收藏。" : "已新增收藏。");
@@ -375,7 +378,7 @@ $("clearDataOk").onclick = () => {
   req.onblocked = () => { toast("請關閉其他開著本頁的分頁後再試。", true); };
 };
 
-["urlDialog", "confirmDialog", "clearDataDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
+["urlDialog", "confirmDialog", "clearDataDialog", "fileTagDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
 document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const o = document.querySelector(".overlay.show"); if (!o) return; if (o.id === "switchDialog") closeSwitch(false); else hideOverlay(o.id); });
 
 // 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11）

@@ -97,3 +97,66 @@ async function recoverFiles(brokenExists) {
   await persistFiles(cachedMap);
   return cachedMap;
 }
+
+// ---- CRUD（讀-改-寫原子寫回，比照 urls.js reparseForWrite，§6.1）----
+// 讀磁碟 files.md → re-parse（順便吃進外部對其他條目的修改）。回傳可序列化的 entries。
+async function reparseFilesForWrite() {
+  let raw = "", existed = true;
+  try { raw = await readText(dirHandle, "files.md"); }
+  catch (e) { if (e && e.name === "NotFoundError") { existed = false; raw = ""; } else throw e; }
+  try { return { entries: parseFiles(raw) }; }
+  catch (e) { return { entries: mapToFileEntries(await recoverFiles(existed)), recovered: true }; }
+}
+
+// 儲存某本機檔的手動 tag（§6.1）：讀-改-寫 files.md、更新 kv.files。
+// 空條目清除規則：正在編輯的檔案必存在（非孤兒）→ 清空即移除該條目；其他孤兒條目原樣保留（reparse 不動它們）。
+async function saveFileTags(it, newTags) {
+  if (!dirHandle) { toast("請先選擇一個資料夾。", true); return false; }
+  if (!await ensureWrite(dirHandle)) { toast("需要資料夾的寫入權限才能儲存。", true); return false; }
+  const path = it.path || it.name;
+  const clean = [], seen = new Set();
+  for (const t of newTags || []) { const k = tagKey(t); if (!seen.has(k)) { seen.add(k); clean.push(t); } }
+  const { entries } = await reparseFilesForWrite();
+  const idx = entries.findIndex(e => e.path === path);
+  if (idx >= 0) {
+    if (clean.length) entries[idx].tags = clean;
+    else entries.splice(idx, 1);              // 清空且對得到現有檔案 → 移除條目
+  } else if (clean.length) {
+    entries.push({ path, tags: clean, _extra: {} });
+  }
+  await writeText(dirHandle, "files.md", serializeFiles(entries));
+  filesMap = new Map(entries.map(e => [e.path, e.tags || []]));   // 含孤兒條目（顯示時對不到 item 自然不出現）
+  await persistFiles(filesMap);
+  return true;
+}
+
+// ---- 「編輯標籤」對話框（本機檔案，§11.6.2）----
+const fileTagField = makeTagField("fileTags");
+let fileTagTarget = null;
+function openFileTagDialog(it) {
+  fileTagTarget = it;
+  $("ftName").textContent = prettyTitle(it.name);
+  fileTagField.set(manualTags(it), autoTags(it).map(tagKey));   // 既有手動 tag 為 chips；自動 tag 的 key 擋重複新增
+  showOverlay("fileTagDialog");
+  setTimeout(() => fileTagField.focus(), 50);
+}
+$("fileTagCancel").onclick = () => hideOverlay("fileTagDialog");
+$("fileTagSave").onclick = async () => {
+  const it = fileTagTarget; if (!it) return;
+  const btn = $("fileTagSave"); btn.disabled = true; const prev = btn.textContent; btn.textContent = "儲存中…";
+  try {
+    const before = manualTags(it).slice();
+    const next = fileTagField.get();
+    if (await saveFileTags(it, next)) {
+      hideOverlay("fileTagDialog");
+      refreshCardTags(); renderFilterbar(); applyFilter();   // 比照 applyFoldertag：卡片 chips＋篩選區重繪
+      // T25：移除的手動 tag 若同時仍是自動 tag → chip 退回綠框（refreshCardTags 已處理），並提示
+      const nextKeys = new Set(next.map(tagKey));
+      const stillAuto = before.filter(t => !nextKeys.has(tagKey(t)) && autoTags(it).some(a => tagKey(a) === tagKey(t)));
+      toast(stillAuto.length
+        ? `已移除手動標籤，「#${escapeHtml(stillAuto[0])}」仍由資料夾自動產生。`
+        : "已更新標籤。");
+    }
+  } catch (e) { console.warn("[lib] 儲存 files.md 標籤失敗：", e); toast("儲存失敗：" + (e && e.message ? e.message : e), true); }
+  finally { btn.disabled = false; btn.textContent = prev; }
+};

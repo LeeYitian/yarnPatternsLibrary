@@ -79,9 +79,9 @@ function cardTagsHTML(it) {
          `<div class="card-tags brief">${chip(tags[0], more)}</div>`;   // lead 取首顆（自動在前、手動在後）
 }
 
-// 開關切換後重算既有卡片的 chips（卡片 DOM 只建一次，見 gallery.js ensureCards）
+// 開關切換／手動 tag 編輯後重算既有卡片的 chips（卡片 DOM 只建一次，見 gallery.js ensureCards）
 function refreshCardTags() {
-  for (const it of items) {
+  for (const it of allItems()) {
     if (!it._card) continue;
     const txt = it._card.querySelector(".label .txt");
     txt.querySelectorAll(".card-tags").forEach(n => n.remove());
