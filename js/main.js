@@ -19,9 +19,18 @@ async function init() {
   try { dirHandle = await DB.get("kv", "dir"); } catch (e) { console.warn("[lib] 讀取資料夾把手失敗：", e); }
   items = (meta && meta.length) ? meta.map(m => ({ ...m, kind: "local" })) : [];
   urls = Array.isArray(cachedUrls) ? cachedUrls.map(hydrateUrl) : [];
-  if (items.length || urls.length) { showLibrary(); render(); fillThumbsFromCache(); }
+  if (items.length || urls.length) { showLibrary(); render(); fillThumbsFromCache(); maybeSubfolderToast(); }
   else showIntro();
   obMaybeUpgradeToast();   // 後續開 app（cache 直出）：教學大升版才跳可點 toast
+}
+
+// 上線告知（subfolder-spec §6）：既有使用者（cache 直出有東西）要按一次「重新整理」
+// 才會掃出子資料夾＋啟用 tag。一次性 toast、顯示即寫旗標（不擾民）。
+function maybeSubfolderToast() {
+  if (localStorage.getItem("wlib-subfolder-toast")) return;
+  try { localStorage.setItem("wlib-subfolder-toast", "1"); } catch (_) {}
+  toast("網站更新！現在會連同<b>子資料夾</b>裡的檔案一起顯示，資料夾名稱還能變成<b>標籤</b>用來篩選。",
+    false, [["重新整理", () => start(false, true)]], 12000);
 }
 
 // 首頁進場：第一屏只見 icon+標題，捲到說明區才讓它浮現

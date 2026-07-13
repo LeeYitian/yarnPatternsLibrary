@@ -98,13 +98,13 @@ yarn-patterns-library/
 - `"wlib-sort"`:排序模式,`"name"`(依檔名)或 `"time"`(依修改時間,時間軸版面)。
 - `"wlib-source"`:來源篩選,`"all"`／`"local"`／`"url"`(全部／本機／網址);與排序正交。
 - `"wlib-onboarding-seen"`:onboarding 教學已看過的**版本字串**(`OB_SEEN_KEY`,見 `js/onboarding.js`、`spec/onboarding-spec.md` §3.2)。有值→首次不自動跳;值 < 當前版本→升版 toast。
-- `"wlib-foldertag"`:資料夾名稱轉標籤的開關(`"on"`／`"off"`;**未設=尚未詢問**,行為同 off)。設定選單 toggle 切換,即時生效(`js/tags.js`、`spec/tag-spec.md` §4a)。
+- `"wlib-foldertag"`:資料夾名稱轉標籤的開關(`"on"`／`"off"`;**未設=尚未詢問**,行為同 off)。設定選單 toggle 切換,即時生效(`js/tags.js`、`spec/tag-spec.md` §4a)。未詢問時重新整理掃出子資料夾→單獨播放 onboarding「資料夾標籤」步驟讓使用者選;跳過=寫 `"off"` 不再問。
+- `"wlib-subfolder-toast"`:子資料夾／tag 上線告知 toast 的一次性旗標(顯示即寫,`spec/subfolder-spec.md` §6)。
 
 ### 規劃中的結構變更(未實作)
 
-> 以下是標籤功能帶進來的結構調整,**目前尚未實作**;真相見 `spec/tag-spec.md`。實作後把對應項併回上面。(子資料夾遞迴的 `path` 欄位與 `thumbKey` 遷移**已實作**,見上方 IndexedDB 段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。)
+> 標籤功能的儲存結構(path、thumbKey、`wlib-foldertag`、`wlib-subfolder-toast`)皆**已實作**,見上方各段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。僅剩以下延後項,真相見 `spec/tag-spec.md` §6:
 
-- **一次性旗標 `wlib-subfolder-toast`**:記錄上線告知 toast 是否已顯示(`wlib-foldertag` 開關**已實作**,見上方 localStorage 段落)。
 - **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):手動 tag 的持久真相檔,沿用 `links.md` 模式;延後啟用。
 
 ### 開啟流程(`init()`)
@@ -131,7 +131,8 @@ yarn-patterns-library/
 | 開啟檔案     | 點封面 → 用 file handle 取出該檔 → blob URL 開新分頁。快取載入時沿 `path` 逐段 `getDirectoryHandle` → `getFileHandle` 重新取得(會跳一次授權;無 `path` 的舊快取 fallback 檔名)                                                | `openFile()`                                               |
 | 放大預覽     | 卡片中央 hover 出現的放大鏡(Iconify lucide:search 內嵌 SVG)→ 開燈箱                                                                                                                                                         | `.expand`、`openViewer()`                                  |
 | 燈箱／幻燈片 | 大圖瀏覽(`max 94vw／80vh`),**純手動**(◀ ▶ ／ ← → ／ Esc),**無自動播放**。只顯示標題;單擊圖片=開啟原始檔。開啟時鎖背景捲動。**無縮放／拖曳**(曾做過滾輪縮放+拖曳,實測不實用已移除)。`vList` 依畫面實際排列(含時間軸順序)取得 | `openViewer／showSlide／step／closeViewer`                 |
-| 搜尋         | 即時依檔名過濾。時間軸模式下,**整月都被濾掉的月份區塊會收起**不留白                                                                                                                                                         | `applyFilter()`                                            |
+| 搜尋         | 即時依檔名過濾。**搜尋欄在 header 下的篩選區**(手機收進 dock「篩選」遮罩)。時間軸模式下,**整月都被濾掉的月份區塊會收起**不留白                                                                                              | `applyFilter()`、`#filterbar`                              |
+| 標籤篩選     | 資料夾名稱→自動 tag(可開關,`wlib-foldertag`)。篩選區=搜尋欄+tag badge(次數排序、多選 **AND**,與搜尋/來源疊加);桌面 sticky 補位貼頂、手機 dock 第 4 顆開滿版遮罩。卡片分級 chips、燈箱/長按工具列顯示完整清單                 | `js/tags.js`、`renderFilterbar()`、`#filterBtn`            |
 | 幻燈片入口   | 頂欄的 icon 按鈕(Iconify 風格內嵌 SVG)→ `openViewer(0)` 從第一張開始                                                                                                                                                        | `#slideBtn`                                                |
 | 檢視大小     | 寬大／標準／緊湊,切換欄數**與裁切比例**(class `size-wide／std／compact`,改 `--min`／`--ar`／`--pos`)。**按鈕在側邊浮動列 `.dock`**                                                                                          | `SIZES`、`applySize()`、`#sizeBtn`                         |
 | 排序         | 檔名 ↔ 時間切換。**按鈕在側邊浮動列 `.dock`**;選時間 → 切到時間軸版面                                                                                                                                                       | `sortMode`、`#sortBtn`、`render()`                         |
@@ -155,7 +156,7 @@ yarn-patterns-library/
 - **找不到資料夾**:「重新整理」時若資料夾讀不到(外接硬碟拔了／被刪改名),跳 toast(「再試一次」「選擇新資料夾」兩個動作),**完全不動 `links.md` 與 cache**。
 - 解析器**保留不認識的欄位原樣**,未來 tag 系統可在 `links.md` 加 `- tags:` 而不破壞舊資料。
 - **本機檔案仍完全唯讀**:卡片不出現編輯／刪除鈕(只有 URL 卡片有);要改本機檔案請去檔案總管再按重新整理。
-- 完整需求與決策見 `spec/url-spec.md`、版面對應見 `spec/url-ui-handoff.md`。**onboarding wizard(`spec/onboarding-spec.md`)已實作**(獨立 controller,疊在 cache-first app 之上,無資料耦合);設定齒輪選單已放回「重看使用教學」入口(`#replayOnboarding`)。
+- 完整需求與決策見 `spec/url-spec.md`、版面對應見 `spec/url-ui-handoff.md`。**onboarding wizard(`spec/onboarding-spec.md`)已實作**(獨立 controller,疊在 cache-first app 之上,無資料耦合;現為 8 大步,含「資料夾標籤」互動步驟與單步播放模式);設定齒輪選單已放回「重看使用教學」入口(`#replayOnboarding`)。
 
 ---
 
@@ -192,15 +193,14 @@ yarn-patterns-library/
 - 時間軸排序目前只用 `lastModified`(File System Access API **拿不到建立時間**,只有修改時間)。
 - Masonry(瀑布流)版面。
 - 把已產生的封面一鍵匯出成檔案。
-- 子資料夾遞迴掃描**已實作**(攤平全遞迴、item 帶相對路徑 `path`,見 `spec/subfolder-spec.md`);「資料夾路徑轉自動 tag」與 tag 篩選尚未實作,見下方標籤系統項。
+- 子資料夾遞迴掃描與「資料夾路徑轉自動 tag」＋tag 篩選皆**已實作**(見 §6「標籤篩選」、`spec/subfolder-spec.md`、`spec/tag-spec.md`)。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
-- **標籤(tag)系統**:URL 條目跟本機檔案(PDF／圖片)都能下 hashtag,可按 tag 篩選。
-  - `links.md` 解析器(見 `spec/url-spec.md` §4)**已實作**「不認識的欄位保留原樣」,所以未來加 `- tags: #a #b` 欄位不會破壞現有資料——後端解析這層已就緒。
-  - UI 還沒做:需要新增／編輯對話框的 tag 輸入框、列表頁的 tag 篩選列。
-  - 本機檔案目前完全靠掃資料夾,沒進 markdown;要做 tag 的話這個架構要先擴。
-  - **規格方向已定**、尚未實作,見 `spec/tag-spec.md`:自動 tag(資料夾路徑,live 衍生不落地)本回合先做;手動 tag(存 `files.md` sidecar)與本機卡片編輯入口延後。
+- **手動 tag**(標籤系統的延後半邊,見 `spec/tag-spec.md` §6／§8):自動 tag(資料夾路徑,live 衍生不落地)與 tag 篩選**已實作**;還缺——
+  - 本機檔案的手動 tag(`files.md` sidecar 的實際啟用,會推翻「本機卡片無編輯鈕」的設計)。
+  - URL 條目的手動 tag 輸入 UI(`links.md` 解析器已保留未知欄位,加 `- tags:` 不會破壞舊資料,後端解析這層已就緒)。
+  - 手動 tag 的視覺(實心藍 `--accent2`)已在設計稿定案,上線後顯現。
 
-> **已完成(不再列後續工作)**:URL onboarding 教學精靈——`spec/onboarding-spec.md` 規格已落地(controller 在 `js/onboarding.js`、教學文案在 `js/constants.js`;完整 7 步、混合對話框 + spotlight),設定選單「重看使用教學」入口已補回。
+> **已完成(不再列後續工作)**:URL onboarding 教學精靈——`spec/onboarding-spec.md` 規格已落地(controller 在 `js/onboarding.js`、教學文案在 `js/constants.js`;完整 8 步、混合對話框 + spotlight、「資料夾標籤」單步播放),設定選單「重看使用教學」入口已補回。
 
 ---
 

@@ -74,6 +74,9 @@ async function start(forcePick, feedback) {
   showLibrary(); render();
   // O1：首次成功選資料夾、渲染一開始就同步進教學（不等封面跑完；只有 forcePick=首次親自選才觸發）
   if (forcePick) maybeAutoOnboarding();
+  // 掃出子資料夾且 folder-tag 偏好尚未詢問（null）→ 單獨播放「資料夾標籤」步驟讓使用者選擇
+  // （tag-spec §4a／onboarding-spec §9.2；新使用者正在跑整場教學時 obOn=true 不重複問）
+  if (!obOn && hasSubfolderFiles() && foldertagPref() === null) playFoldertagStep();
   await generateThumbs();
   paintAllUrlThumbs();
   status.textContent = "";
