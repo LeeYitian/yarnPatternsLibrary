@@ -101,13 +101,13 @@ yarn-patterns-library/
 - `"wlib-foldertag"`:資料夾名稱轉標籤的開關(`"on"`／`"off"`;**未設=尚未詢問**,行為同 off)。設定選單 toggle 切換,即時生效(`js/tags.js`、`spec/tag-spec.md` §4a)。未詢問時重新整理掃出子資料夾→單獨播放 onboarding「資料夾標籤」步驟讓使用者選;跳過=寫 `"off"` 不再問。
 - `"wlib-subfolder-toast"`:子資料夾／tag 上線告知 toast 的一次性旗標(顯示即寫,`spec/subfolder-spec.md` §6)。
 
-### 規劃中的結構變更(手動 tag 第二期,設計定案、待實作)
+### 手動 tag 的儲存結構(第二期,已實作)
 
-> 標籤功能自動半邊的儲存結構(path、thumbKey、`wlib-foldertag`、`wlib-subfolder-toast`)皆**已實作**,見上方各段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。手動 tag 半邊**設計已定案、待實作**,真相見 `spec/tag-spec.md` §6:
+> 標籤功能自動半邊的儲存結構(path、thumbKey、`wlib-foldertag`、`wlib-subfolder-toast`)皆**已實作**,見上方各段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。手動 tag 半邊亦**已實作**(`js/files.js`、`js/tagfield.js`),真相見 `spec/tag-spec.md` §6:
 
-- **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):本機檔案手動 tag 的持久真相檔,key＝相對路徑、只存手動 tag,沿用 `links.md` 模式(讀-改-寫原子寫回＋災難復原);孤兒條目保留不刪(`tag-spec.md` §6.1)。
+- **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):本機檔案手動 tag 的持久真相檔,key＝相對路徑、只存手動 tag,沿用 `links.md` 模式(讀-改-寫原子寫回＋災難復原、壞檔備份 `files.md.broken-{ts}`);孤兒條目保留不刪(`tag-spec.md` §6.1)。
 - **`kv.files`**(既有 `kv` store **新增一個 key**,`[{path, tags:[]}]`):本機手動 tag 的顯示快取＋復原副本,角色同 `kv.urls`。**只是加 key,不新增 store、不升 IndexedDB 版本**。
-- **`links.md` 的 `tags` 欄位**:URL 手動 tag;解析器已容忍未知欄位,第二期把 `tags` 從 `_extra` 升成一級欄位(`tag-spec.md` §6.2)。
+- **`links.md` 的 `tags` 欄位**:URL 手動 tag;`tags` 已從 `_extra` 升成一級欄位(`parseLinks`／`serializeLinks`／`hydrateUrl`／`stripUrl`,`tag-spec.md` §6.2)。
 
 ### 開啟流程(`init()`)
 
@@ -157,8 +157,8 @@ yarn-patterns-library/
 - **燈箱／幻燈片相容**:URL 卡片也能進燈箱放大;但**點擊分流**——點放大鏡進燈箱,點卡片其他地方／燈箱「開啟連結」一律 `window.open(url)`(本機則是 blob URL 開新分頁,見 `openFile()` 內分流)。
 - **找不到資料夾**:「重新整理」時若資料夾讀不到(外接硬碟拔了／被刪改名),跳 toast(「再試一次」「選擇新資料夾」兩個動作),**完全不動 `links.md` 與 cache**。
 - 解析器**保留不認識的欄位原樣**,未來 tag 系統可在 `links.md` 加 `- tags:` 而不破壞舊資料。
-- **本機檔案內容唯讀**:卡片目前不出現編輯／刪除鈕(只有 URL 卡片有);要改本機檔案的**內容**請去檔案總管再按重新整理。
-  - ⚠️ **語意澄清**(手動 tag 第二期會用到,`tag-spec.md` §6.3):「唯讀」指的是**檔案內容本身**。手動 tag 第二期會給本機卡片加一顆「編輯標籤」入口(**只加標籤、無刪除鈕**),它動的是 app 管理的 `files.md` 標註檔、**不碰 PDF／圖片原檔**,故與此唯讀原則不衝突。實作後本行與 §9 一併更新。
+- **本機檔案內容唯讀**:卡片不出現「刪除／改檔名／改內容」鈕;要改本機檔案的**內容**請去檔案總管再按重新整理。本機卡片有一顆「編輯標籤」入口(標籤 icon、**只加標籤、無刪除鈕**)。
+  - ⚠️ **語意澄清**(`tag-spec.md` §6.3):「唯讀」指的是**檔案內容本身**。本機卡片的「編輯標籤」動的是 app 管理的 `files.md` 標註檔、**不碰 PDF／圖片原檔**,故與此唯讀原則不衝突(桌面 hover 浮出、手機長按工具列左側,`js/gallery.js`／`js/touch.js`)。
 - 完整需求與決策見 `spec/url-spec.md`、版面對應見 `spec/url-ui-handoff.md`。**onboarding wizard(`spec/onboarding-spec.md`)已實作**(獨立 controller,疊在 cache-first app 之上,無資料耦合;現為 8 大步,含「資料夾標籤」互動步驟與單步播放模式);設定齒輪選單已放回「重看使用教學」入口(`#replayOnboarding`)。
 
 ---
@@ -198,14 +198,10 @@ yarn-patterns-library/
 - 把已產生的封面一鍵匯出成檔案。
 - 子資料夾遞迴掃描與「資料夾路徑轉自動 tag」＋tag 篩選皆**已實作**(見 §6「標籤篩選」、`spec/subfolder-spec.md`、`spec/tag-spec.md`)。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
-- **手動 tag**(標籤系統的第二期,**設計已定案、待實作**,見 `spec/tag-spec.md` §6／§8／§11.6／決策 T20–T27):自動 tag(資料夾路徑,live 衍生不落地)與 tag 篩選**已實作**;第二期尚未動工,已拍板的設計——
-  - 本機檔案手動 tag：`files.md` sidecar(key＝相對路徑)＋`kv.files` 快取;孤兒條目保留不刪、風險靠編輯標籤彈窗底部小灰字當場交代;本機卡片加「編輯標籤」入口(標籤 icon、無刪除),唯讀語意見 §6.1。
-  - URL 手動 tag：`links.md` 的 `tags` 升成一級欄位(解析器已保留未知欄位,加 `- tags:` 不破壞舊資料);沿用既有新增／編輯彈窗加一欄。
-  - 輸入介面：chip 輸入元件＋既有 tag 建議列;commit 用 Enter＋blur(擋中文 IME 組字、不用空白鍵)。
-  - 視覺：自動綠框／手動實心藍 `--accent2`;同一 tag 既自動又手動時手動優先(藍實心),卡片 chip 純顯示不帶 ×,篩選／卡片改吃 `union(auto, manual)`。
-  - onboarding：折進既有「資料夾標籤」步驟、純說明(只說可手動加 tag 與 tag 存放位置;孤兒警語改放編輯彈窗小灰字),`spec/onboarding-spec.md` §9.1。
 
-> **已完成(不再列後續工作)**:URL onboarding 教學精靈——`spec/onboarding-spec.md` 規格已落地(controller 在 `js/onboarding.js`、教學文案在 `js/constants.js`;完整 8 步、混合對話框 + spotlight、「資料夾標籤」單步播放),設定選單「重看使用教學」入口已補回。
+> **已完成(不再列後續工作)**:
+> - **手動 tag**(標籤系統第二期,`spec/tag-spec.md` §6／§8／§11.6／決策 T20–T27)——本機 `files.md` sidecar＋`kv.files` 快取(孤兒保留、災難復原,`js/files.js`)、URL 的 `links.md` `tags` 升一級欄位、chip 輸入元件(Enter／blur commit、擋 IME、去重、建議列,`js/tagfield.js`)、本機「編輯標籤」彈窗＋URL 彈窗 tags 欄、卡片／篩選／燈箱吃 `union(auto,manual)`(自動綠框／手動藍實心、手動優先)、onboarding「也能自己貼標籤」純說明子畫面皆已落地。
+> - **URL onboarding 教學精靈**——`spec/onboarding-spec.md` 規格已落地(controller 在 `js/onboarding.js`、教學文案在 `js/constants.js`;完整 8 步、混合對話框 + spotlight、「資料夾標籤」單步播放),設定選單「重看使用教學」入口已補回。
 
 ---
 

@@ -30,6 +30,14 @@ const OB_SEEN_KEY = "wlib-onboarding-seen";
 const OB_VERSION = "v1";       // 內容大改版才升（v2…）；小修不動
 const OB_MAJOR = 1;            // 升版 toast 比對用的主版號
 const OB_SEE = "👀 看過就好", OB_DO = "🖱 換你試試";
+// 手動 tag 純說明文案（tag-spec §9a／T27）：sub／flat 兩形式都播，放在開關 spotlight 之後、篩選區 spotlight 之前。
+const OB_MANUAL_TAG_BODY =
+`除了資料夾自動變成的標籤，
+你也可以自己幫檔案或網址貼標籤（例如 #送禮、#未完成）：
+· 檔案在卡片的標籤鈕、網址在編輯視窗裡都能加。
+
+這些自己貼的標籤會存在資料夾的 files.md（檔案）
+和 links.md（網址）裡，屬於你、可以自己搬或編輯。`;
 // 「畫面」對應 8 大步（macro）；多子步的大步（4／5／6）以 sub 計位。文案逐字照 onboarding-spec.md §4／§9、tag-spec.md §9a。
 // when: "sub"＝有子資料夾檔案才播、"flat"＝平資料夾才播（onboarding-spec §9.1 兩形式；無 when＝一律播）。
 // menu: true＝該步設定選單保持展開並鎖住；targetM＝手機（≤600px）改指的 spotlight 目標；alt＝氣泡的次要鈕文字。
@@ -72,7 +80,8 @@ const OB_SCREENS = [
   { macro: 3, kind: "spot", badge: OB_SEE, target: "#refresh", side: "left", menu: true, next: true,
     text: "「重新整理」收在右上角的設定選單裡，就是這顆。" },
   // ── Step 4：資料夾標籤（onboarding-spec §9.1；依偵測結果二選一播放）──
-  //   有子資料夾 → 互動：開場 dialog → 開關 spotlight（按開關或「先不開啟」推進）→ 篩選區 spotlight（純說明）
+  //   有子資料夾 → 互動：開場 dialog → 開關 spotlight（按開關或「先不開啟」推進）→ 手動 tag 純說明 → 篩選區 spotlight
+  //   無子資料夾 → 純說明：開場 dialog → 手動 tag 純說明（手動 tag 與子資料夾無關，故兩形式都播，§9.1／T27）
   { macro: 4, when: "sub", kind: "dialog", badge: OB_DO, title: "資料夾也能當標籤", body:
 `你的檔案有分資料夾放嗎？
 網頁可以把「資料夾名稱」自動變成標籤，
@@ -82,15 +91,18 @@ const OB_SCREENS = [
   { macro: 4, when: "sub", kind: "spot", badge: OB_DO, target: "#foldertagSwitch", side: "left",
     menu: true, interactive: true, advance: "foldertag", alt: "先不開啟",
     text: "按這顆開啟「資料夾標籤」。\n之後隨時能在右上角設定選單裡開／關。" },
+  //   手動 tag 純說明（純說明 👀；開關 spotlight 之後、篩選區 spotlight 之前，§9.1 子流程 ③）
+  { macro: 4, when: "sub", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
   { macro: 4, when: "sub", kind: "spot", badge: OB_SEE, target: "#filterbar", targetM: "#filterBtn", side: "bottom", next: true,
     text: "用標籤篩選收藏；選多個標籤會取交集（同時符合才顯示）。\n搜尋欄也在這一區，兩個都是用來縮小範圍。" },
-  //   無子資料夾 → 純說明（不給開／關、不播 spotlight；跳過＝預設關）
+  //   無子資料夾 → 純說明（不給開／關、不播篩選區 spotlight；跳過＝預設關）：開場 dialog → 手動 tag 純說明
   { macro: 4, when: "flat", kind: "dialog", badge: OB_SEE, title: "資料夾也能當標籤", body:
 `把檔案分到不同子資料夾裡，
 網頁可以把資料夾名稱自動變成標籤，方便篩選。
 
 你這個資料夾目前還沒有子資料夾；
 之後有了，網頁會再問你要不要開啟。` },
+  { macro: 4, when: "flat", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
   // ── Step 5：試試新增網址（互動步驟）──
   { macro: 5, kind: "dialog", badge: OB_DO, title: "試試把一個網址收進來", body:
 `網頁右上角的「新增網址」鈕可以

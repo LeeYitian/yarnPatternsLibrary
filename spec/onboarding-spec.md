@@ -374,7 +374,7 @@ PDF ／ 圖片檔案：
 
 > 以下增修已隨 `subfolder-spec.md`（遞迴掃描）、`tag-spec.md`（資料夾標籤）一起**落地**：新 Step 4（`OB_SCREENS` 的 `when: "sub"/"flat"` 條件畫面）、單步播放 `playFoldertagStep()`、「先不開啟」次要鈕（`#obBubbleAlt`）、選單鎖定（`obSyncMenu`＋`obMenuLock`）、spotlight 目標分流（`targetM`）。
 >
-> 🟡 **手動 tag 純說明子畫面（子流程 ③）尚未實作**——隨手動 tag 第二期一起做（`tag-spec.md` §8）。設計已定案：在 Step 4「資料夾標籤」的開關 spotlight 之後、篩選區 spotlight 之前插一張純說明對話框，**只說明「可手動加 tag」與「tag 存在 `files.md`／`links.md`」**（孤兒警語改放編輯標籤彈窗底部小灰字，不在 onboarding，`tag-spec.md` §11.6.2），有／無子資料夾都播。子流程編號因此由「開場→開關→篩選區」變成「開場→開關→**手動 tag 純說明**→篩選區」。
+> ✅ **手動 tag 純說明子畫面（子流程 ③）已實作**——`OB_SCREENS` 加入標題「也能自己貼標籤」的 A 模式對話框（文案常數 `OB_MANUAL_TAG_BODY`），在 Step 4「資料夾標籤」的開關 spotlight 之後、篩選區 spotlight 之前，**只說明「可手動加 tag」與「tag 存在 `files.md`／`links.md`」**（孤兒警語改放編輯標籤彈窗底部小灰字，不在 onboarding，`tag-spec.md` §11.6.2），有／無子資料夾都播。實際子流程：sub＝「開場→開關→**手動 tag 純說明**→篩選區」；flat＝「開場→**手動 tag 純說明**」。`OB_TOTAL` 維持 8、不升版。
 
 ### 9.1 新增步驟：「資料夾標籤」
 
