@@ -3,9 +3,9 @@
    （links.md 是唯一真相；kv.urls 只是 read-side cache + 復原副本。spec §4–§8）
    ===================================================================== */
 
-const stripUrl = u => ({ url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", _extra: u._extra || {} });
+const stripUrl = u => ({ url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", tags: u.tags || [], _extra: u._extra || {} });
 // 把快取／parse 後的 URL 純資料補上衍生欄位（kind、網域）
-const hydrateUrl = u => ({ kind: "url", url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", _extra: u._extra || {}, _host: hostOf(u.url) });
+const hydrateUrl = u => ({ kind: "url", url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", tags: u.tags || [], _extra: u._extra || {}, _host: hostOf(u.url) });
 
 // ---- Markdown（容錯 + 未知欄位原樣保留，spec §4.2） ----
 function parseLinks(text) {
@@ -17,7 +17,7 @@ function parseLinks(text) {
     if (link) {
       const url = link[2].trim();
       if (!url.includes("://")) { console.warn("[lib] 略過無效 URL 行：", rawLine); cur = null; continue; }
-      cur = { url, title: link[1].trim(), thumb: "", added: "", _extra: {} };
+      cur = { url, title: link[1].trim(), thumb: "", added: "", tags: [], _extra: {} };
       out.push(cur); continue;
     }
     const field = line.match(/^\s+-\s*([A-Za-z][\w-]*)\s*:\s*(.*)$/);
@@ -25,6 +25,7 @@ function parseLinks(text) {
       const key = field[1].toLowerCase(), val = field[2].trim();
       if (key === "thumb") cur.thumb = val;
       else if (key === "added") cur.added = val;
+      else if (key === "tags") cur.tags = parseTagField(val);   // 手動 tag 升為一級欄位（§6.2）
       else cur._extra[field[1]] = val;      // 未知欄位：保留原 key，再寫回時不丟（未來 tag 系統可平滑擴充）
       continue;
     }
@@ -38,6 +39,7 @@ function serializeLinks(entries) {
     out += `- [${(e.title || "").trim()}](${e.url})\n`;
     if (e.thumb) out += `  - thumb: ${e.thumb}\n`;
     if (e.added) out += `  - added: ${e.added}\n`;
+    if (e.tags && e.tags.length) out += `  - tags: ${e.tags.map(t => "#" + t).join(" ")}\n`;   // added 之後、_extra 之前（§6.2）
     const extra = e._extra || {};
     for (const k of Object.keys(extra)) out += `  - ${k}: ${extra[k]}\n`;
     out += "\n";
@@ -259,7 +261,7 @@ async function saveEditUrl(orig, { url, title, thumbBlob }) {
     toast("此條目已被外部修改或刪除，請確認後重做。已為你重新整理顯示。", true);
     await start(false); return false;
   }
-  entries[idx] = { url, title: title || "", thumb: thumbField, added: entries[idx].added || orig.added || todayStr(), _extra: entries[idx]._extra || {} };
+  entries[idx] = { url, title: title || "", thumb: thumbField, added: entries[idx].added || orig.added || todayStr(), tags: entries[idx].tags || [], _extra: entries[idx]._extra || {} };   // 保留手動 tag（編輯 UI 於第二期接上，§6.2）
   await writeText(dirHandle, "links.md", serializeLinks(entries));
   urls = entries.map(hydrateUrl);
   await persistUrls(urls);

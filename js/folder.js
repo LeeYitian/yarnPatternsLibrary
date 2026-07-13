@@ -70,6 +70,8 @@ async function start(forcePick, feedback) {
   // 讀 links.md → parse → urls（含災難復原，spec §6.3 步驟3、§7）
   status.textContent = "讀取 links.md…";
   urls = await loadUrls();
+  // 讀 files.md → parse → filesMap（本機檔案的手動 tag；只讀不寫，含災難復原，tag-spec §6.1）
+  filesMap = await loadFiles();
 
   showLibrary(); render();
   // O1：首次成功選資料夾、渲染一開始就同步進教學（不等封面跑完；只有 forcePick=首次親自選才觸發）

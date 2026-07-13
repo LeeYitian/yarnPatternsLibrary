@@ -12,6 +12,18 @@ const foldertagOn = () => foldertagPref() === "on";
 // 比對用正規化 key（§5）：小寫 + Unicode NFC。畫面顯示一律保留原樣。
 const tagKey = s => s.normalize("NFC").toLowerCase();
 
+// tag 欄位字串 → 陣列（links.md／files.md 共用，§5／§6）：空白分隔、strip 前導 #、去空、正規化 key 去重（保留原樣）。
+function parseTagField(val) {
+  const seen = new Set(), out = [];
+  for (const raw of String(val || "").split(/\s+/)) {
+    const t = raw.replace(/^#+/, "").trim();
+    if (!t) continue;
+    const k = tagKey(t);
+    if (!seen.has(k)) { seen.add(k); out.push(t); }
+  }
+  return out;
+}
+
 // path → 自動 tag：除檔名外每一層資料夾各成一個 tag（§4）；同一路徑重複的資料夾名去重（§3）。
 // 關閉開關＝不 parse 路徑、立即無 tag（§4a）；URL 條目無自動 tag。
 function autoTags(it) {
@@ -19,6 +31,21 @@ function autoTags(it) {
   const segs = (it.path || it.name).split("/").slice(0, -1);
   const seen = new Set(), out = [];
   for (const s of segs) { const k = tagKey(s); if (!seen.has(k)) { seen.add(k); out.push(s); } }
+  return out;
+}
+
+// 手動 tag（§6）：本機查 filesMap（key＝相對路徑，files.md 真相的顯示副本）、URL 讀條目的 tags（links.md）。
+// 與自動 tag 無耦合：自動現算、手動落地（§3）。
+function manualTags(it) {
+  if (it.kind === "url") return it.tags || [];
+  return filesMap.get(it.path || it.name) || [];
+}
+// 某項最終顯示的 tag ＝ union(自動, 手動)（§7.1）：正規化 key 去重、自動在前手動在後。
+// 純為「有哪些 tag」的清單；顯示樣式（自動綠框／手動藍實心、手動優先）由 tagsOfDetailed 分類（§11.6.4，第二期 UI）。
+function tagsOf(it) {
+  const seen = new Set(), out = [];
+  for (const t of autoTags(it))   { const k = tagKey(t); if (!seen.has(k)) { seen.add(k); out.push(t); } }
+  for (const t of manualTags(it)) { const k = tagKey(t); if (!seen.has(k)) { seen.add(k); out.push(t); } }
   return out;
 }
 

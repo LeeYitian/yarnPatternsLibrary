@@ -14,7 +14,8 @@ async function init() {
     return;
   }
   let meta = null,
-    cachedUrls = null;
+    cachedUrls = null,
+    cachedFiles = null;
   try {
     meta = await DB.get("kv", "items");
   } catch (e) {
@@ -26,12 +27,19 @@ async function init() {
     console.warn("[lib] 讀取 URL 快取失敗：", e);
   }
   try {
+    cachedFiles = await DB.get("kv", "files");
+  } catch (e) {
+    console.warn("[lib] 讀取 files 快取失敗：", e);
+  }
+  try {
     dirHandle = await DB.get("kv", "dir");
   } catch (e) {
     console.warn("[lib] 讀取資料夾把手失敗：", e);
   }
   items = meta && meta.length ? meta.map((m) => ({ ...m, kind: "local" })) : [];
   urls = Array.isArray(cachedUrls) ? cachedUrls.map(hydrateUrl) : [];
+  // cache-first 顯示本機檔案的手動 tag（免資料夾授權即可立即顯示、重整不閃掉，比照 kv.urls，tag-spec §6.1）
+  filesMap = Array.isArray(cachedFiles) ? new Map(cachedFiles.map((e) => [e.path, e.tags || []])) : new Map();
   if (items.length || urls.length) {
     showLibrary();
     render();

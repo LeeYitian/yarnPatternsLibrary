@@ -6,6 +6,7 @@
 const grid = $("grid"), intro = $("intro"), bar = $("bar"), empty = $("empty"), status = $("status"), dock = $("dock");
 let items = [];               // 本機檔案（About.md §5，唯讀）
 let urls = [];                // URL 條目（links.md，這次新增；與本機檔案並行、無耦合）
+let filesMap = new Map();     // 本機檔案的手動 tag：相對路徑 → tags[]（files.md，tag-spec §6.1；真相在 files.md，這只是顯示副本）
 let dirHandle = null;
 let sortMode = localStorage.getItem("wlib-sort") === "time" ? "time" : "name";   // "name"=檔名, "time"=時間
 let sourceMode = ["all","local","url"].includes(localStorage.getItem("wlib-source")) ? localStorage.getItem("wlib-source") : "all";
