@@ -80,7 +80,9 @@ function updateFoldertagUI() {
 $("foldertagSwitch").onclick = () => setFoldertag(!foldertagOn());
 
 // 設定下拉選單
+let obMenuLock = false;   // onboarding「資料夾標籤」spotlight 期間鎖住選單（onboarding.js 的 obSyncMenu 控制）
 function closeSettings() {
+  if (obMenuLock) return;
   $("settingsList").hidden = true;
   $("settingsBtn").setAttribute("aria-expanded", "false");
 }
