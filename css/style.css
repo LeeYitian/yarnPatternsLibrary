@@ -195,6 +195,11 @@
   .tag:hover { border-color: var(--accent); color: #d6f0e5; }
   .tag svg { width: 11px; height: 11px; color: var(--accent); flex: none; }
   .tag.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, transparent); color: #d6f0e5; }
+  /* 手動 tag（§11.1／§11.6.4）：藍實心、手動優先；篩選區純點選（× 只在編輯彈窗，第二期 UI） */
+  .tag.manual { border: none; background: var(--accent2); color: #0a1614; font-weight: 600; }
+  .tag.manual:hover { color: #0a1614; background: color-mix(in srgb, var(--accent2) 88%, #fff); }
+  .tag.manual svg { color: #0a1614; }
+  .tag.manual.sel { background: var(--accent2); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent2) 55%, #000); }
 
   /* 手機滿版篩選遮罩專用元素（標題列／「標籤」段標／底列）：桌面一律隱藏 */
   .fb-head, .fb-taglabel, .fb-foot { display: none; }
@@ -867,6 +872,9 @@
     border: 1px solid rgba(150,206,180,.6); font-family: var(--font-body); font-size: 11px;
     line-height: 1.35; color: #cdeadf; white-space: nowrap; }
   .ctag .more { color: #92c9b4; }
+  /* 手動 tag mini chip（§11.6.4）：藍實心，卡片／燈箱／長按工具列一律純顯示不帶 × */
+  .ctag.manual { border: none; background: var(--accent2); color: #0a1614; font-weight: 600; }
+  .ctag.manual .more { color: color-mix(in srgb, #0a1614 62%, var(--accent2)); }
   /* 分級顯示（§11.4）：標準／寬大展開整排（full）、緊湊一顆彙整（brief）；觸控裝置一律彙整 */
   .grid.size-compact .card-tags.full { display: none; }
   .grid.size-wide .card-tags.brief, .grid.size-std .card-tags.brief { display: none; }

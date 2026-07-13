@@ -48,6 +48,21 @@ function tagsOf(it) {
   for (const t of manualTags(it)) { const k = tagKey(t); if (!seen.has(k)) { seen.add(k); out.push(t); } }
   return out;
 }
+// 含來源分類的顯示清單（§7.3／§11.6.4）：回傳 [{name（原樣）, manual}]，自動在前手動在後、去重。
+// 同 key 既自動又手動 → 手動優先（manual:true，顯示藍實心，T25）。
+function tagsOfDetailed(it) {
+  const manualKeys = new Set(manualTags(it).map(tagKey));
+  const seen = new Set(), out = [];
+  for (const t of autoTags(it)) {
+    const k = tagKey(t); if (seen.has(k)) continue; seen.add(k);
+    out.push({ name: t, manual: manualKeys.has(k) });
+  }
+  for (const t of manualTags(it)) {
+    const k = tagKey(t); if (seen.has(k)) continue; seen.add(k);
+    out.push({ name: t, manual: true });
+  }
+  return out;
+}
 
 // 「有子資料夾」判準（§4a／T17）：掃描結果存在 path 含資料夾層的檔案（空子資料夾不算）
 const hasSubfolderFiles = () => items.some(it => (it.path || it.name).includes("/"));
@@ -55,12 +70,13 @@ const hasSubfolderFiles = () => items.some(it => (it.path || it.name).includes("
 // 卡片上的 tag（§11.4 分級顯示）：展開整排（full）與彙整一顆（brief）兩種 DOM 都渲染，
 // CSS 依 .size-* 與 (hover:none) 顯示其一，切換檢視大小時不重建卡片。
 function cardTagsHTML(it) {
-  const tags = autoTags(it);
+  const tags = tagsOfDetailed(it);           // union(自動, 手動)；自動綠框、手動藍實心，一律純顯示不帶 ×（T26）
   if (!tags.length) return "";
-  const full = tags.map(t => `<span class="ctag">#${escapeHtml(t)}</span>`).join("");
+  const chip = (t, extra = "") => `<span class="ctag${t.manual ? " manual" : ""}">#${escapeHtml(t.name)}${extra}</span>`;
+  const full = tags.map(t => chip(t)).join("");
   const more = tags.length > 1 ? ` <span class="more">+${tags.length - 1}</span>` : "";
   return `<div class="card-tags full">${full}</div>` +
-         `<div class="card-tags brief"><span class="ctag">#${escapeHtml(tags[0])}${more}</span></div>`;
+         `<div class="card-tags brief">${chip(tags[0], more)}</div>`;   // lead 取首顆（自動在前、手動在後）
 }
 
 // 開關切換後重算既有卡片的 chips（卡片 DOM 只建一次，見 gallery.js ensureCards）
@@ -80,19 +96,20 @@ let selectedTags = new Set();
 // 全庫 tag 統計：正規化 key → { display: 出現次數較多的原樣（平手取先掃到，T11）, count }
 function tagStats() {
   const m = new Map();
-  for (const it of items) {
-    for (const t of autoTags(it)) {
-      const k = tagKey(t);
+  for (const it of allItems()) {                    // 含 URL：手動 tag 上線後 URL 也可能有 tag（§11.6.4）
+    for (const d of tagsOfDetailed(it)) {
+      const k = tagKey(d.name);
       let e = m.get(k);
-      if (!e) { e = { count: 0, forms: new Map() }; m.set(k, e); }
+      if (!e) { e = { count: 0, forms: new Map(), manual: false }; m.set(k, e); }
       e.count++;
-      e.forms.set(t, (e.forms.get(t) || 0) + 1);
+      e.forms.set(d.name, (e.forms.get(d.name) || 0) + 1);
+      if (d.manual) e.manual = true;                // 任一項為手動 → badge 手動優先（藍實心，§11.6.4）
     }
   }
   return [...m.entries()].map(([key, e]) => {
     let display, best = -1;
     for (const [form, c] of e.forms) if (c > best) { best = c; display = form; }
-    return { key, display, count: e.count };
+    return { key, display, count: e.count, manual: e.manual };
   }).sort((a, b) => b.count - a.count || a.display.localeCompare(b.display, "zh-Hant"));   // 次數多→少（§11.3）
 }
 
@@ -107,7 +124,7 @@ function renderFilterbar() {
     const b = document.createElement("button");
     b.type = "button";
     const sel = selectedTags.has(s.key);
-    b.className = "tag" + (sel ? " sel" : "");
+    b.className = "tag" + (s.manual ? " manual" : "") + (sel ? " sel" : "");   // 手動優先藍實心（§11.6.4）
     b.innerHTML = (sel ? SVG_CHECK : "") + `#${escapeHtml(s.display)}`;
     b.onclick = () => {
       selectedTags.has(s.key) ? selectedTags.delete(s.key) : selectedTags.add(s.key);

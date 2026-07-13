@@ -17,9 +17,9 @@ function tbShow(it) {
   const isUrl = it.kind === "url";
   const leftEl  = $("touchToolbar").querySelector(".tb-left");
   const rightEl = $("touchToolbar").querySelector(".tb-right");
-  // 完整 tag 清單：工具列本體上方一列（tag-spec §11.4；無 tag 時為空，CSS :empty 收起）
+  // 完整 tag 清單：工具列本體上方一列（tag-spec §11.4；union 純顯示、自動綠框手動藍實心；無 tag 時空，CSS :empty 收起）
   $("touchToolbar").querySelector(".tb-tags").innerHTML =
-    autoTags(it).map(t => `<span class="ctag">#${escapeHtml(t)}</span>`).join("");
+    tagsOfDetailed(it).map(t => `<span class="ctag${t.manual ? " manual" : ""}">#${escapeHtml(t.name)}</span>`).join("");
   if (isUrl) {
     leftEl.innerHTML =
       `<button class="tb-edit" title="編輯">${SVG_EDIT}</button>` +

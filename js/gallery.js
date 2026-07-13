@@ -159,7 +159,7 @@ async function openFile(it) {
 }
 
 // 篩選：搜尋 ∩ 來源 ∩ 所有選中 tag（AND 疊加，tag-spec §7.1）；只加 .hidden，不重建 DOM。
-// URL 條目無自動 tag → 選中任一 tag 即被濾出，屬預期行為（T13）。
+// 比對用 tagsOf(it)=union(自動, 手動)（§7.1）：帶相符手動 tag 的 URL 條目會留下（T26 推翻原 T13）。
 function applyFilter() {
   const q = $("search").value.trim().toLowerCase();
   let shown = 0;
@@ -172,7 +172,7 @@ function applyFilter() {
       (sourceMode === "url" && it.kind === "url");
     let matchTags = true;
     if (selected.length) {
-      const ks = new Set(autoTags(it).map(tagKey));
+      const ks = new Set(tagsOf(it).map(tagKey));
       matchTags = selected.every((k) => ks.has(k));
     }
     const hit = matchSearch && matchSource && matchTags;

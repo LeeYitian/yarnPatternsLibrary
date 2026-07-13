@@ -16,8 +16,8 @@ function showSlide() {
   const it = vList[vIdx]; if (!it) return;
   $("vImg").src = it._thumbUrl || "";
   $("vTitle").textContent = displayName(it);
-  // 完整 tag 清單：標題下方置中（tag-spec §11.4；URL／無 tag 時為空，CSS :empty 收起）
-  $("vTags").innerHTML = autoTags(it).map(t => `<span class="ctag">#${escapeHtml(t)}</span>`).join("");
+  // 完整 tag 清單：標題下方置中（tag-spec §11.4；union 純顯示、自動綠框手動藍實心；無 tag 時空，CSS :empty 收起）
+  $("vTags").innerHTML = tagsOfDetailed(it).map(t => `<span class="ctag${t.manual ? " manual" : ""}">#${escapeHtml(t.name)}</span>`).join("");
   $("vCount").textContent = `${vIdx + 1} / ${vList.length}`;
   $("vOpen").textContent = it.kind === "url" ? "開啟連結" : "開啟檔案";
   $("vOpen").onclick = () => openFile(it);
