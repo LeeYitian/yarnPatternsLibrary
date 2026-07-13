@@ -848,8 +848,12 @@
   .ob-title { font-family: var(--font-head); font-size: 24px; font-weight: 600; margin: 0 0 10px; line-height: 1.25; }
   .ob-text { font-family: var(--font-body); font-size: 1rem; line-height: 1.62; color: var(--ink); margin: 0; white-space: pre-line; }
   #obPanel .ob-text { font-size: 1rem; line-height: 1.7; }
-  .ob-text .url-eg { display: inline-block; margin-top: 6px; font-family: var(--font-disp); font-size: 12px;
-    letter-spacing: .04em; color: var(--accent2); border: 1px solid var(--line); border-radius: 3px;
+  /* 看過就好步驟徽章隱藏 → 頂端文字／標題上移；替其右側留空間，免被右上角絕對定位的關閉 ✕（26px＋right:10）蓋住 */
+  #obBubble .ob-text { padding-right: 26px; }
+  #obPanel .ob-title { padding-right: 30px; }
+  /* 網址範例：用 body 字體（--font-disp＝Cinzel 為全大寫標題體，會把網址顯示成大寫），保留原本小寫 */
+  .ob-text .url-eg { display: inline-block; margin-top: 6px; font-family: var(--font-body); font-size: 13.5px;
+    color: var(--accent2); border: 1px solid var(--line); border-radius: 3px;
     padding: 4px 8px; background: color-mix(in srgb, var(--accent2) 8%, transparent); word-break: break-all; }
   .ob-foot { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
   .ob-dots { display: flex; gap: 6px; flex: 1; }

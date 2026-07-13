@@ -28,5 +28,7 @@ const DB = (() => {
   const tx = async (store, mode, fn) => { const db = await open();
     return new Promise((res, rej) => { const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
       t.oncomplete = () => res(req?.result); t.onerror = () => rej(t.error); }); };
-  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)), del: (s, k) => tx(s, "readwrite", o => o.delete(k)), clear: (s) => tx(s, "readwrite", o => o.clear()) };
+  // 關閉並清掉快取連線，讓 deleteDatabase 不會被本頁自己的連線擋住（onblocked）。
+  const close = async () => { if (!p) return; try { (await p).close(); } catch {} p = null; };
+  return { get: (s, k) => tx(s, "readonly", o => o.get(k)), set: (s, k, v) => tx(s, "readwrite", o => o.put(v, k)), del: (s, k) => tx(s, "readwrite", o => o.delete(k)), clear: (s) => tx(s, "readwrite", o => o.clear()), close };
 })();

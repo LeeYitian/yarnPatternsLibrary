@@ -33,11 +33,9 @@ const OB_SEE = "👀 看過就好", OB_DO = "🖱 換你試試";
 // 手動 tag 純說明文案（tag-spec §9a／T27）：sub／flat 兩形式都播，放在開關 spotlight 之後、篩選區 spotlight 之前。
 const OB_MANUAL_TAG_BODY =
 `除了資料夾自動變成的標籤，
-你也可以自己幫檔案或網址貼標籤（例如 #送禮、#未完成）：
-· 檔案在卡片的標籤鈕、網址在編輯視窗裡都能加。
+你也可以自己幫檔案或網址貼標籤，例如 #送禮、#未完成。
 
-這些自己貼的標籤會存在資料夾的 files.md（檔案）
-和 links.md（網址）裡，屬於你、可以自己搬或編輯。`;
+這些自己貼的標籤會存在資料夾的 files.md（檔案）和 links.md（網址）裡，屬於你、可以自己搬或編輯。`;
 // 「畫面」對應 8 大步（macro）；多子步的大步（4／5／6）以 sub 計位。文案逐字照 onboarding-spec.md §4／§9、tag-spec.md §9a。
 // when: "sub"＝有子資料夾檔案才播、"flat"＝平資料夾才播（onboarding-spec §9.1 兩形式；無 when＝一律播）。
 // menu: true＝該步設定選單保持展開並鎖住；targetM＝手機（≤600px）改指的 spotlight 目標；alt＝氣泡的次要鈕文字。
@@ -94,7 +92,7 @@ const OB_SCREENS = [
   //   手動 tag 純說明（純說明 👀；開關 spotlight 之後、篩選區 spotlight 之前，§9.1 子流程 ③）
   { macro: 4, when: "sub", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
   { macro: 4, when: "sub", kind: "spot", badge: OB_SEE, target: "#filterbar", targetM: "#filterBtn", side: "bottom", next: true,
-    text: "用標籤篩選收藏；選多個標籤會取交集（同時符合才顯示）。\n搜尋欄也在這一區，兩個都是用來縮小範圍。" },
+    text: "用標籤篩選收藏，也有搜尋欄可以使用。" },
   //   無子資料夾 → 純說明（不給開／關、不播篩選區 spotlight；跳過＝預設關）：開場 dialog → 手動 tag 純說明
   { macro: 4, when: "flat", kind: "dialog", badge: OB_SEE, title: "資料夾也能當標籤", body:
 `把檔案分到不同子資料夾裡，
@@ -128,11 +126,10 @@ const OB_SCREENS = [
     text: "全部 ／ 檔案 ／ 網址篩選檢視" },
   // ── Step 7／8 ──
   { macro: 7, kind: "dialog", badge: OB_SEE, title: "換資料夾 = 重新開始", body:
-`這個網頁一次只能呈現一個資料夾的內容（含底下的子資料夾）。
+`這個網頁一次只能呈現一個主資料夾與其底下資料夾的內容。
 
-選了新的資料夾，網頁會：
-✓ 把之前的封面「預覽圖」全清掉
-✓ 從新資料夾重新讀取 PDF ／ 圖片的「預覽圖」和網址收藏
+選了新的主資料夾，網頁會：
+把之前的封面「預覽圖」全清掉。從新資料夾重新讀取「預覽圖」和網址收藏
 
 🛟 舊資料夾的內容不會跟著消失：
 - 你的 PDF ／ 圖片本來就在那裡，不會被動

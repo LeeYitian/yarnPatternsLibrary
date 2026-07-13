@@ -370,8 +370,9 @@ function hideOverlay(id) {
 // 清除所有資料
 $("clearDataBtn").onclick = () => { closeSettings(); showOverlay("clearDataDialog"); };
 $("clearDataCancel").onclick = () => hideOverlay("clearDataDialog");
-$("clearDataOk").onclick = () => {
+$("clearDataOk").onclick = async () => {
   hideOverlay("clearDataDialog");
+  await DB.close();                                   // 先關掉本頁自己的連線，否則會被自己擋住（onblocked）
   const req = indexedDB.deleteDatabase("weaving-lib");
   req.onsuccess = () => location.reload();
   req.onerror = () => toast("清除失敗，請重新整理後再試。", true);
