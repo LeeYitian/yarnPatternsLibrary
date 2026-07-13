@@ -98,11 +98,9 @@
 app 之後會從新資料夾重新讀取要顯示什麼。
 
 🛟 舊資料夾裡的東西都還在,沒有跟著消失:
-- PDF / 圖片本來就是你的
 - 之前在 app 內收藏的 URL 都還在
   舊資料夾根目錄的 `links.md`
 - URL 縮圖在舊資料夾的 `thumbs/` 子資料夾
-- 這兩個是 app 幫你建的,但它們屬於你
 - 想把 URL 收藏帶到新資料夾?
   在檔案總管把 `links.md` 和 `thumbs/` 搬過去即可
 
@@ -136,6 +134,7 @@ app 之後會從新資料夾重新讀取要顯示什麼。
 | 錯誤順序 | 後果 |
 |---|---|
 | 先換 `dirHandle` → 後清 `kv/urls` | `loadUrls()` 中間執行的話會用新 dirHandle 配舊 `kv/urls` cache，`recoverUrls(false)` 把舊 URL 寫進新資料夾的 `links.md` |
+| 不清 `kv/files` | 換到沒有 `files.md` 的新資料夾時，`loadFiles()` fallback 讀舊 `kv/files`，記憶體 `filesMap` 帶著舊資料夾的手動 tag（同名相對路徑的新檔會誤顯示舊 tag；若新資料夾有壞 `files.md` 更會 `recoverFiles` 把舊 tag 寫進新資料夾）。與 `kv/urls` 同一風險（§1 point 2） |
 | 不清 `thumbs/` IndexedDB store | 新舊資料夾的封面快取混雜，若新舊資料夾恰巧有同名同 size 同 mtime 的檔案，新檔會用到舊縮圖 |
 
 ### 6.1 正確順序
@@ -147,6 +146,7 @@ confirm 之後的執行順序：
    - thumbs store 全清（包含本機檔案縮圖 + URL 縮圖兩種 key）
    - kv store 的 "items" key 清掉
    - kv store 的 "urls" key 清掉
+   - kv store 的 "files" key 清掉（本機檔案手動 tag 快取,tag-spec §6.1;與 "urls" 同理,見 §6.5）
    - kv store 的 "dir" key 「先不動」（馬上會被新 handle 覆蓋,中間出錯也只是停在舊 handle）
 
 2. 換 dirHandle:
@@ -158,9 +158,10 @@ confirm 之後的執行順序：
    - items = found.map(...)
    - persistItems()
 
-4. 讀新 URL 清單:
+4. 讀新 URL 清單 + 新手動 tag:
    - urls = await loadUrls()
-   - 此時 kv/urls cache 是空的,recoverUrls(false) 也不會污染
+   - filesMap = await loadFiles()
+   - 此時 kv/urls、kv/files cache 都是空的,recoverUrls(false)／loadFiles() fallback 都不會污染
 
 5. UI 更新:
    - showLibrary() / render()
@@ -200,6 +201,7 @@ clear: (s) => tx(s, "readwrite", o => o.clear())
 await DB.clear("thumbs");
 await DB.del("kv", "items");
 await DB.del("kv", "urls");
+await DB.del("kv", "files");
 ```
 
 ---
@@ -278,7 +280,7 @@ await DB.del("kv", "urls");
 |---|---|---|
 | F1 | Picker 時機 | confirm 之前（讓使用者看到資料夾名才確認） |
 | F2 | isSameEntry 分支 | 選到同一個資料夾不跳 confirm，直接走「重新整理」路徑 |
-| F3 | 清 IndexedDB 範圍 | `thumbs` 全清、`kv/items` + `kv/urls` 清、`kv/dir` 留到新 handle 寫入成功才覆蓋 |
+| F3 | 清 IndexedDB 範圍 | `thumbs` 全清、`kv/items` + `kv/urls` + `kv/files` 清、`kv/dir` 留到新 handle 寫入成功才覆蓋 |
 | F4 | 不清的東西 | `localStorage` 偏好不動、舊資料夾任何檔案不動 |
 | F5 | Confirm dialog 樣式 | 沿用既有 `.overlay` + `.dialog`，無 `backdrop-filter` |
 | F6 | 取消 confirm 後的狀態 | 舊狀態 intact（因為 step 1 還沒執行） |

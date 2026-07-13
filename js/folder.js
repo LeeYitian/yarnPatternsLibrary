@@ -168,10 +168,13 @@ async function rechooseFolder() {
   const oldHandle = dirHandle;
   status.textContent = "切換資料夾…";
   try {
-    // step 1：清 IndexedDB（thumbs 全清、kv/items、kv/urls；kv/dir 先不動，§6.1 / §6.2）
+    // step 1：清 IndexedDB（thumbs 全清、kv/items、kv/urls、kv/files；kv/dir 先不動，§6.1 / §6.2）
+    // kv/files（手動 tag 快取）必須跟 kv/urls 一起清：否則換到沒有 files.md 的新資料夾時，
+    // loadFiles() 會 fallback 讀到舊資料夾殘留的手動 tag，違反「換資料夾＝乾淨重來」（§1、tag-spec §6.1）。
     await DB.clear("thumbs");
     await DB.del("kv", "items");
     await DB.del("kv", "urls");
+    await DB.del("kv", "files");
     // step 2：換 dirHandle（記憶體 + kv/dir）
     dirHandle = newHandle;
     await DB.set("kv", "dir", newHandle);

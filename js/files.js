@@ -65,10 +65,12 @@ async function loadFiles() {
   let raw = null;
   try { raw = await readText(dirHandle, "files.md"); }
   catch (e) {
-    if (e && e.name === "NotFoundError") raw = null;    // 不存在＝正常（還沒加任何手動 tag）：用快取顯示、不建檔
+    if (e && e.name === "NotFoundError") raw = null;    // 不存在 → 走與 loadUrls 相同的復原路徑（見下）
     else { console.warn("[lib] 讀取 files.md 失敗：", e); return await recoverFiles(false); }
   }
-  if (raw === null) return await filesFromCache();       // 不寫回（避免無故建立 files.md、違反只讀）
+  // files.md 不存在＝比照 loadUrls 的 NotFound：recoverFiles(false) 在快取空時不建檔（維持「沒用過手動 tag 就不建檔」），
+  // 快取非空時才把 files.md 還原回來——否則外部刪掉 files.md 後，下一次 saveFileTags 讀到空磁碟會靜默丟掉其他檔案的手動 tag。
+  if (raw === null) return await recoverFiles(false);
   let parsed;
   try { parsed = parseFiles(raw); }
   catch (e) { console.warn("[lib] 解析 files.md 失敗：", e); return await recoverFiles(true); }
