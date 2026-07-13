@@ -56,8 +56,8 @@ const OB_SCREENS = [
 你什麼都不用做。
 如果發現有網址不見了，
 可以打開 .broken 那個檔，把不見的撿回來。` },
-  { macro: 3, kind: "dialog", badge: OB_SEE, title: "右上角的「重新整理」", body:
-`這個按鈕會一口氣做兩件事：
+  { macro: 3, kind: "dialog", badge: OB_SEE, title: "重新整理", body:
+`重新整理時會一口氣做兩件事：
 1. 重新看一次資料夾裡有哪些 PDF ／ 圖片
 2. 重新讀一次 links.md，把你改過的網址收藏內容讀進來
 
@@ -67,6 +67,8 @@ const OB_SCREENS = [
 - 打開網頁後，懷疑畫面跟資料夾裡實際的東西不一樣
 
 🛟 不會因為重新整理弄丟你的收藏。重新整理只讀取不寫入。` },
+  { macro: 3, kind: "spot", badge: OB_SEE, target: "#refresh", side: "left", menu: true, next: true,
+    text: "「重新整理」收在右上角的設定選單裡，就是這顆。" },
   // ── Step 4：資料夾標籤（onboarding-spec §9.1；依偵測結果二選一播放）──
   //   有子資料夾 → 互動：開場 dialog → 開關 spotlight（按開關或「先不開啟」推進）→ 篩選區 spotlight（純說明）
   { macro: 4, when: "sub", kind: "dialog", badge: OB_DO, title: "資料夾也能當標籤", body:
@@ -104,8 +106,6 @@ const OB_SCREENS = [
   // ── Step 6：其他常用按鈕（逐一 spotlight，純說明）──
   { macro: 6, kind: "spot", badge: OB_SEE, target: "#slideBtn", side: "bottom", next: true,
     text: "從第一張開始，全螢幕逐張看" },
-  { macro: 6, kind: "spot", badge: OB_SEE, target: "#settingsBtn", side: "bottom", next: true,
-    text: "設定選單裡有「重新整理」和「更換資料夾」。" },
   { macro: 6, kind: "spot", badge: OB_SEE, target: "#sizeBtn", side: "left", next: true,
     text: "卡片預覽可以切寬大 ／ 標準 ／ 緊湊" },
   { macro: 6, kind: "spot", badge: OB_SEE, target: "#sortBtn", side: "left", next: true,
@@ -114,7 +114,7 @@ const OB_SCREENS = [
     text: "全部 ／ 檔案 ／ 網址篩選檢視" },
   // ── Step 7／8 ──
   { macro: 7, kind: "dialog", badge: OB_SEE, title: "換資料夾 = 重新開始", body:
-`這個網頁一次只能呈現一個資料夾的內容。
+`這個網頁一次只能呈現一個資料夾的內容（含底下的子資料夾）。
 
 選了新的資料夾，網頁會：
 ✓ 把之前的封面「預覽圖」全清掉
@@ -126,6 +126,8 @@ const OB_SCREENS = [
 - 這兩個是網頁幫你建的，但它們屬於你
 - 想把網址收藏帶到新資料夾？
   在檔案總管把這兩個搬過去就行` },
+  { macro: 7, kind: "spot", badge: OB_SEE, target: "#rechoose", side: "left", menu: true, next: true,
+    text: "「更換資料夾」也在設定選單裡，想換的時候按這顆。" },
   { macro: 8, kind: "dialog", badge: OB_SEE, title: "準備好了！", last: true, body:
 `教學結束。
 之後想再看一次，點右上角的設定齒輪 →「重看使用教學」就行。

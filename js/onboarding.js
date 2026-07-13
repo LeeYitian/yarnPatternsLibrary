@@ -66,7 +66,8 @@ function obSyncDialog(sc) {
   if (sc.dialog && !open) openDialog("add");
   else if (!sc.dialog && open) hideOverlay("urlDialog");
 }
-// 維持設定選單狀態與當前畫面一致（sc.menu＝該步選單保持展開並鎖住，onboarding-spec §9.6 F1-②）；
+// 維持設定選單狀態與當前畫面一致（sc.menu＝該步選單保持展開並鎖住，onboarding-spec §9.7 F1-②；
+// 「重新整理」「更換資料夾」的選單項 spotlight 也復用此機制，§9.6）；
 // obMenuLock 讓 controls.js 的 closeSettings（外點／Esc／捲動收合）在鎖定期間不生效
 function obSyncMenu(sc) {
   if (sc.menu) {
@@ -213,11 +214,15 @@ document.addEventListener("wlib:foldertag", () => { const sc = OB_SCREENS[obIdx]
 // 「先不開啟」次要鈕：寫入 off（觸發 wlib:foldertag → 上面掛鉤推進）
 $("obBubbleAlt").onclick = () => setFoldertag(false);
 
-// 教學進行中：鎖死新增網址對話框（取消鈕／點遮罩不可關閉，spec 點 2）＋ Esc＝跳過教學（capture，不動原 handler）
+// 教學進行中：鎖死新增網址對話框（取消鈕／點遮罩不可關閉，spec 點 2）＋ Esc＝跳過教學（capture，不動原 handler）。
+// 「儲存」鈕也一併攔截——只有走到「儲存」那一步（advance:"save"）才放行，
+// 避免在貼網址／看縮圖步驟就提前寫入、對話框被關掉導致教學流程錯亂。
 document.addEventListener("click", (e) => {
   if (!obOn) return;
   const sc = OB_SCREENS[obIdx];
-  if (sc && sc.dialog && (e.target.id === "urlDialog" || (e.target.closest && e.target.closest("#dlgCancel")))) {
+  if (!sc || !sc.dialog || !e.target.closest) return;
+  const blockSave = sc.advance !== "save" && e.target.closest("#dlgSave");
+  if (e.target.id === "urlDialog" || e.target.closest("#dlgCancel") || blockSave) {
     e.stopImmediatePropagation(); e.preventDefault();
   }
 }, true);

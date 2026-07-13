@@ -27,7 +27,6 @@ async function generateThumbs() {
 async function makeThumb(it) {
   const file = await it._entry.getFile();
   it.size = file.size; it.lastModified = file.lastModified;
-  const sizeEl = it._card.querySelector(".size"); if (sizeEl) sizeEl.textContent = humanSize(file.size);
   const key = thumbKey(it);
   let blob = null; try { blob = await DB.get("thumbs", key); } catch (_) {}
   if (!blob) {

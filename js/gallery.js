@@ -52,7 +52,7 @@ function localCardHTML(it) {
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar"></span><div class="txt">` +
     `<div class="name">${escapeHtml(prettyTitle(it.name))}</div>` +
-    `<div class="size">${it.size ? humanSize(it.size) : ""}</div>${cardTagsHTML(it)}</div></div></div>`
+    `${cardTagsHTML(it)}</div></div></div>`
   );
 }
 function urlCardHTML(it) {
@@ -63,7 +63,7 @@ function urlCardHTML(it) {
     `<button class="expand" title="放大預覽">${SVG_EXPAND}</button>` +
     `<div class="label"><span class="bar url"></span><div class="txt">` +
     `<div class="name">${escapeHtml(displayName(it))}</div>` +
-    `<div class="size">${escapeHtml(it._host || hostOf(it.url))}</div></div></div></div>`
+    `</div></div></div>`
   );
 }
 
