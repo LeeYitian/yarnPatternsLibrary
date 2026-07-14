@@ -107,6 +107,7 @@
 - IndexedDB `weaving-lib` 的既有 `kv` store **新增一個 key** `files`＝`[{path, tags:[…]}]`，當顯示快取＋災難復原副本，角色與 `kv.urls` 完全對稱。
 - **只是加 key，不新增 object store、不升 IndexedDB 版本**（沿用 `About.md` §5「不指定版本開啟」的做法）。真相仍是 `files.md`。
 - 用途：cache-first 開 app 時沒有使用者手勢、拿不到資料夾授權，`kv.files` 讓本機卡片的手動 tag 免授權即可立即顯示、重整不閃掉（同 `kv.urls` 對 URL 縮圖的角色）。
+- **換資料夾時必須與 `kv.urls` 一起清掉**（`folder-switch-spec.md` §6.1 清 IndexedDB 清單）：`kv.files` 既然與 `kv.urls` 完全對稱，就必須套用同一條「換資料夾＝乾淨重來」保證。**漏清的後果**：換到沒有 `files.md` 的新資料夾時，`loadFiles()` 會 fallback 讀到舊資料夾殘留的 `kv.files`，記憶體 `filesMap` 帶著舊資料夾的手動 tag（同名相對路徑的新檔誤顯示舊 tag；若新資料夾有壞 `files.md` 更會被 `recoverFiles` 寫進新資料夾）——正是 `folder-switch-spec.md` §1 point 2 當初為 `kv.urls` 寫的那條外洩風險。**任何新增的「與資料夾綁定的 `kv` key」都要回頭補進 §6.1 清單。**
 
 ### 6.2 URL 條目：`links.md` 的 `tags` 欄位
 

@@ -198,6 +198,11 @@ yarn-patterns-library/
 - 把已產生的封面一鍵匯出成檔案。
 - 子資料夾遞迴掃描與「資料夾路徑轉自動 tag」＋tag 篩選皆**已實作**(見 §6「標籤篩選」、`spec/subfolder-spec.md`、`spec/tag-spec.md`)。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
+- **手動把 `links.md`／`files.md` 編輯壞掉時的實際行為(與 spec 宣稱的 `.broken` 復原不符)**。`parseLinks`／`parseFiles` 是**逐行、容錯**的解析器,**永遠不 throw**;所以真相檔壞掉時不會進入 `recoverUrls(true)`／`recoverFiles(true)`(改名成 `xxx.broken-{時間}`+從快取重建)那條路。實測兩檔行為一致,分兩種情況:
+  - **壞掉「一行／幾行」**(其餘仍合格式):壞的那行被**靜默丟棄**,其餘正常顯示。**無錯誤、無 toast、無 `.broken`**。載入當下不寫磁碟,但**下一次任何 CRUD**(新增／編輯／刪除)會 re-parse 磁碟→只把成功 parse 的部分寫回→**那幾行從此永久消失、沒有備份**。
+  - **整份壞到「沒有任何一行符合格式」**:`parse` 回傳**空陣列**(不是錯誤)。→ 顯示變成 0 筆,而且**這個空結果會覆蓋掉 `kv` 快取**(`persistUrls([])`／`persistFiles(empty)`),等於連快取副本也一起清空。壞掉的原檔**在載入當下仍原封不動留在磁碟**(raw 文字還在),所以理論上還能手動打開撿回來——但**只到下一次 CRUD 為止**,一旦 CRUD 就會被覆寫。
+  - 真正會觸發的復原只有「檔案**遺失／讀不到**(NotFound／權限)→ 從 `kv` 快取還原」那條(`recoverUrls(false)`／`recoverFiles(false)`,已驗證可用);「內容壞掉」不在其中。onboarding 原本描述 `.broken` 的 Step 2 已因此移除。
+  - **後續要嘛**:(a) 讓 `parseLinks`／`parseFiles` 對「非空但完全無法辨識」的內容做基本驗證並 throw,使 `.broken` 備份真的名副其實(並補「空 parse 結果不可覆蓋非空快取」的守門,比照 `recoverUrls` 的 `if (cached.length)`);**要嘛**(b) 接受容錯設計、把 `.broken` 這套敘述從所有 spec／UI 正式移除,不再宣稱有壞檔備份。兩條路都要 `links.md`／`files.md` 一致處理。
 
 > **已完成(不再列後續工作)**:
 > - **手動 tag**(標籤系統第二期,`spec/tag-spec.md` §6／§8／§11.6／決策 T20–T27)——本機 `files.md` sidecar＋`kv.files` 快取(孤兒保留、災難復原,`js/files.js`)、URL 的 `links.md` `tags` 升一級欄位、chip 輸入元件(Enter／blur commit、擋 IME、去重、建議列,`js/tagfield.js`)、本機「編輯標籤」彈窗＋URL 彈窗 tags 欄、卡片／篩選／燈箱吃 `union(auto,manual)`(自動綠框／手動藍實心、手動優先)、onboarding「也能自己貼標籤」純說明子畫面皆已落地。
