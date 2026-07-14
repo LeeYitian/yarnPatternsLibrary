@@ -42,6 +42,8 @@
 
 ⚠️ **首次選擇資料夾不走這條流程**：第一次的「選擇資料夾」按鈕（intro 畫面的 `#pickBtn`）走原本的初始化流程，因為沒有舊狀態要清。
 
+⚠️ **「找不到資料夾」的錯誤復原也復用這條流程**：`folderError()` toast 的「選擇新資料夾」動作改為委派 `rechooseFolder()`（原本直接 `start(true)`、**不清快取**，會讓舊資料夾的 `kv` 快取污染新資料夾）。「再試一次」仍是同資料夾重掃（`start(false)`，不清快取）。見 `broken-file-recovery-spec.md` §Phase6。
+
 ---
 
 ## 4. 流程
@@ -147,6 +149,7 @@ confirm 之後的執行順序：
    - kv store 的 "items" key 清掉
    - kv store 的 "urls" key 清掉
    - kv store 的 "files" key 清掉（本機檔案手動 tag 快取,tag-spec §6.1;與 "urls" 同理,見 §6.5）
+   - kv store 的 "urlsDir" / "filesDir" key 清掉（kv.urls／kv.files 的資料夾戳記,broken-file-recovery-spec §D3;由 clearFolderCache 一併清）
    - kv store 的 "dir" key 「先不動」（馬上會被新 handle 覆蓋,中間出錯也只是停在舊 handle）
 
 2. 換 dirHandle:
@@ -189,20 +192,20 @@ confirm 之後的執行順序：
 
 ### 6.5 實作備註
 
-目前 `DB` 模組（`index.html` line 717）沒有 `clear` 方法，需要新增一個：
+`DB.clear`（`js/db.js`）已存在。清快取集中在 `js/folder.js` 的 `clearFolderCache()`，`rechooseFolder` 與 `folderError`「選擇新資料夾」共用：
 
 ```js
-clear: (s) => tx(s, "readwrite", o => o.clear())
+async function clearFolderCache() {
+  await DB.clear("thumbs");
+  await DB.del("kv", "items");
+  await DB.del("kv", "urls");
+  await DB.del("kv", "files");
+  await DB.del("kv", "urlsDir");    // kv.urls 的資料夾戳記
+  await DB.del("kv", "filesDir");   // kv.files 的資料夾戳記
+}
 ```
 
-呼叫方式：
-
-```js
-await DB.clear("thumbs");
-await DB.del("kv", "items");
-await DB.del("kv", "urls");
-await DB.del("kv", "files");
-```
+⚠️ 任何新增「與資料夾綁定的 `kv` key」都要補進 `clearFolderCache()`（broken-file-recovery-spec §8）。
 
 ---
 
@@ -240,12 +243,12 @@ await DB.del("kv", "files");
 1. §6.1 step 1 清 IndexedDB（**只清 IndexedDB cache，不動磁碟上的任何檔案**）
 2. §6.1 step 4 `loadUrls()` 讀新資料夾的 `links.md`
    - 解析成功 → 新資料夾的 URL 寫進 `kv/urls` cache 顯示出來
-   - 解析失敗 → 走 `recoverUrls(true)`，原 `links.md` 改名成 `links.md.broken-{時間}` 完整保留（不會被空 cache 覆寫）
+   - **整份壞掉**（有內容卻 0 筆可解析）→ 走 `recoverUrls(true)`，原 `links.md` 改名成 `links.md.broken-{時間}` 完整保留；因為 step 1 已清空 cache（且戳記不符也視同空），**不會有任何資料寫回**，只留 `.broken`；備份失敗則中止不覆蓋原檔。**只壞一兩行**則容錯略過（broken-file-recovery-spec §D1／§D4）
 3. `paintAllUrlThumbs()` 從新資料夾的 `thumbs/` 讀縮圖檔，補進 IndexedDB cache
 
 **🔒 不變式（implementer 必讀）**：
 
-- **空的 `kv/urls` cache 不可寫回 `links.md`**。現有 `recoverUrls`（`index.html` line 1419）已用 `if (cached.length)` 守住這條；改 `recoverUrls` 時務必保留此判斷。
+- **空的 `kv/urls` cache（或戳記不符的外來 cache）不可寫回 `links.md`**。`recoverUrls`（`js/urls.js`）以 `if (cached.length)` + `cacheFolderMatches()` 資料夾戳記比對雙重守住；改 `recoverUrls` 時務必保留（broken-file-recovery-spec §D3）。
 - **`thumbs/` 子資料夾不可被 app 刪除或清空**。換資料夾流程只動 IndexedDB，磁碟檔案完全不碰。
 - 新資料夾若有「舊版 app 留下的 thumb 檔但新 `links.md` 沒引用到」的孤兒檔案，app 不主動清理（這是使用者的檔案，留給使用者自己處理）。
 
@@ -289,7 +292,7 @@ await DB.del("kv", "files");
 | F9 | 「換過去」按鈕配色 | 綠色 accent（沿用 `.btn.primary` 既有樣式）；不用 destructive 紅，理由見 §5.2 |
 | F10 | Confirm dialog 檔案計數 | **不顯示**。理由見 §5.2 |
 | F11 | 不做事前試掃 | confirm 前不預掃新資料夾；使用者確認 dialog 文案後即視為接受清快取。confirm 後直接清 → 掃 → 寫入 |
-| F12 | 新資料夾既有 `links.md` / `thumbs/` 的處理 | 直接讀進來、不覆寫、不刪除。**空 `kv/urls` cache 絕對不可寫回 `links.md`**（此不變式由 `recoverUrls` 的 `if (cached.length)` 守住）。詳見 §7.4 |
+| F12 | 新資料夾既有 `links.md` / `thumbs/` 的處理 | 直接讀進來、不覆寫、不刪除。**空／外來 `kv/urls` cache 絕對不可寫回 `links.md`**（由 `recoverUrls` 的 `if (cached.length)` + 資料夾戳記 `cacheFolderMatches` 守住）。新資料夾若有整份壞掉的 `links.md` 會備份成 `.broken` 不被覆蓋。詳見 §7.4、`broken-file-recovery-spec.md` |
 
 ---
 

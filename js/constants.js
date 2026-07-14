@@ -18,6 +18,7 @@ const SOURCES = [["全部","all"],["本機","local"],["網址","url"]];
 // ---------- 更新紀錄（urls.js 渲染進 #clList；點 footer 版號開啟）----------
 // 由新到舊排列；detail 可省略。
 const CHANGELOG = [
+  { ver: "1.8.2", title: "壞檔復原與資料保護", detail: "links.md／files.md 整份壞掉會自動備份成 .broken 並用副本救回；換資料夾不再把舊收藏帶進新資料夾。" },
   { ver: "1.8.1", title: "盤點文件對齊功能、修正 bug", detail: "暫緩壞檔復原功能。" },
   { ver: "1.8.0", title: "手動標籤系統" },
   { ver: "1.7.0", title: "自動標籤系統", detail: "資料夾路徑自動轉成 tag，並新增 tag 開關與篩選區。" },
@@ -54,7 +55,7 @@ const OB_MANUAL_TAG_BODY =
 你也可以自己幫檔案或網址貼標籤，例如 #送禮、#未完成。
 
 這些自己貼的標籤會存在資料夾的 files.md（檔案）和 links.md（網址）裡，屬於你、可以自己搬或編輯。`;
-// 「畫面」對應 8 大步（macro）；多子步的大步（4／5／6）以 sub 計位。文案逐字照 onboarding-spec.md §4／§9、tag-spec.md §9a。
+// 「畫面」對應 8 大步（macro）；多子步的大步（4／5／6＝資料夾標籤／新增網址／工具列）以 sub 計位。文案逐字照 onboarding-spec.md §4／§9、tag-spec.md §9a。
 // when: "sub"＝有子資料夾檔案才播、"flat"＝平資料夾才播（onboarding-spec §9.1 兩形式；無 when＝一律播）。
 // menu: true＝該步設定選單保持展開並鎖住；targetM＝手機（≤600px）改指的 spotlight 目標；alt＝氣泡的次要鈕文字。
 const OB_SCREENS = [
@@ -72,7 +73,15 @@ const OB_SCREENS = [
   用來存放網址清單和預覽圖（檔名會是一串英數字）
 → 平時用網頁裡的按鈕新增／編輯／刪除網址資料即可
 → 想的話也可以用記事本等文字編輯軟體直接打開 links.md 來改（要注意內容格式）` },
-  { macro: 2, kind: "dialog", badge: OB_SEE, title: "重新整理", body:
+  // ── Step 2：萬一 links.md 壞掉／不見（onboarding-spec §9.6；壞檔守門上線後寫回，broken-file-recovery-spec §Phase8）──
+  { macro: 2, kind: "dialog", badge: OB_SEE, title: "萬一 links.md 壞掉或不見", body:
+`你的網址收藏，網頁隨時留著一份副本。
+萬一 links.md 整個讀不到、或格式壞到完全認不得，網頁會自動用副本救回，並把壞掉的原檔改名成 links.md.broken-{時間} 完整保留，你不會兩頭空。
+
+小提醒：如果你自己用文字編輯器改 links.md，
+只改壞其中一兩行的話，那幾行可能會被安靜略過；改完記得按「重新整理」確認東西都在。` },
+  // ── Step 3：重新整理 ──
+  { macro: 3, kind: "dialog", badge: OB_SEE, title: "重新整理", body:
 `重新整理時會一口氣做兩件事：
 1. 重新看一次資料夾裡有哪些 PDF ／ 圖片
 2. 重新讀一次 links.md，把你改過的網址收藏內容讀進來
@@ -83,57 +92,57 @@ const OB_SCREENS = [
 - 打開網頁後，懷疑畫面跟資料夾裡實際的東西不一樣
 
 🛟 不會因為重新整理弄丟你的收藏。重新整理只讀取不寫入。` },
-  { macro: 2, kind: "spot", badge: OB_SEE, target: "#refresh", side: "left", menu: true, next: true,
+  { macro: 3, kind: "spot", badge: OB_SEE, target: "#refresh", side: "left", menu: true, next: true,
     text: "「重新整理」收在右上角的設定選單裡，就是這顆。" },
-  // ── Step 3：資料夾標籤（onboarding-spec §9.1；依偵測結果二選一播放）──
+  // ── Step 4：資料夾標籤（onboarding-spec §9.1；依偵測結果二選一播放）──
   //   有子資料夾 → 互動：開場 dialog → 開關 spotlight（按開關或「先不開啟」推進）→ 手動 tag 純說明 → 篩選區 spotlight
   //   無子資料夾 → 純說明：開場 dialog → 手動 tag 純說明（手動 tag 與子資料夾無關，故兩形式都播，§9.1／T27）
-  { macro: 3, when: "sub", kind: "dialog", badge: OB_DO, title: "資料夾也能當標籤", body:
+  { macro: 4, when: "sub", kind: "dialog", badge: OB_DO, title: "資料夾也能當標籤", body:
 `你的檔案有分資料夾放嗎？
 網頁可以把「資料夾名稱」自動變成標籤，
 讓你用標籤快速篩選（例如只看「圍巾」或「蕾絲」）。
 
 來決定要不要開啟吧！` },
-  { macro: 3, when: "sub", kind: "spot", badge: OB_DO, target: "#foldertagSwitch", side: "left",
+  { macro: 4, when: "sub", kind: "spot", badge: OB_DO, target: "#foldertagSwitch", side: "left",
     menu: true, interactive: true, advance: "foldertag", alt: "先不開啟",
     text: "按這顆開啟「資料夾標籤」。\n之後隨時能在右上角設定選單裡開／關。" },
   //   手動 tag 純說明（純說明 👀；開關 spotlight 之後、篩選區 spotlight 之前，§9.1 子流程 ③）
-  { macro: 3, when: "sub", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
-  { macro: 3, when: "sub", kind: "spot", badge: OB_SEE, target: "#filterbar", targetM: "#filterBtn", side: "bottom", next: true,
+  { macro: 4, when: "sub", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
+  { macro: 4, when: "sub", kind: "spot", badge: OB_SEE, target: "#filterbar", targetM: "#filterBtn", side: "bottom", next: true,
     text: "用標籤篩選收藏，也有搜尋欄可以使用。" },
   //   無子資料夾 → 純說明（不給開／關、不播篩選區 spotlight；跳過＝預設關）：開場 dialog → 手動 tag 純說明
-  { macro: 3, when: "flat", kind: "dialog", badge: OB_SEE, title: "資料夾也能當標籤", body:
+  { macro: 4, when: "flat", kind: "dialog", badge: OB_SEE, title: "資料夾也能當標籤", body:
 `把檔案分到不同子資料夾裡，
 網頁可以把資料夾名稱自動變成標籤，方便篩選。
 
 你這個資料夾目前還沒有子資料夾；
 之後有了，網頁會再問你要不要開啟。` },
-  { macro: 3, when: "flat", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
-  // ── Step 4：試試新增網址（互動步驟）──
-  { macro: 4, kind: "dialog", badge: OB_DO, title: "試試把一個網址收進來", body:
+  { macro: 4, when: "flat", kind: "dialog", badge: OB_SEE, title: "也能自己貼標籤", body: OB_MANUAL_TAG_BODY },
+  // ── Step 5：試試新增網址（互動步驟）──
+  { macro: 5, kind: "dialog", badge: OB_DO, title: "試試把一個網址收進來", body:
 `網頁右上角的「新增網址」鈕可以
 把網頁／影片連結收進你的資料夾。
 
 來試試吧！` },
-  { macro: 4, kind: "spot", badge: OB_DO, target: "#addUrlBtn", side: "bottom",
+  { macro: 5, kind: "spot", badge: OB_DO, target: "#addUrlBtn", side: "bottom",
     interactive: true, advance: "dialogopen", text: "按這顆，跳出新增視窗。" },
-  { macro: 4, kind: "ring", badge: OB_DO, target: "#fieldUrl", side: "right", dialog: true, advance: "urlinput",
+  { macro: 5, kind: "ring", badge: OB_DO, target: "#fieldUrl", side: "right", dialog: true, advance: "urlinput",
     text: "貼上任一網址試試。\n不知道貼什麼？可以複製這個 YouTube 首頁：", eg: "https://www.youtube.com/" },
-  { macro: 4, kind: "ring", badge: OB_DO, target: "#fieldThumb", side: "right", dialog: true, next: true,
+  { macro: 5, kind: "ring", badge: OB_DO, target: "#fieldThumb", side: "right", dialog: true, next: true,
     text: "YouTube 連結會自動產生縮圖。\n其他網站可以用檔案／拖拉／貼上自訂縮圖。\n這次不用真的上傳，看一下就好。" },
-  { macro: 4, kind: "ring", badge: OB_DO, target: "#dlgSave", side: "left", dialog: true, advance: "save",
+  { macro: 5, kind: "ring", badge: OB_DO, target: "#dlgSave", side: "left", dialog: true, advance: "save",
     text: "按下儲存，這筆網址就會真的寫進 links.md。" },
-  // ── Step 5：其他常用按鈕（逐一 spotlight，純說明）──
-  { macro: 5, kind: "spot", badge: OB_SEE, target: "#slideBtn", side: "bottom", next: true,
+  // ── Step 6：其他常用按鈕（逐一 spotlight，純說明）──
+  { macro: 6, kind: "spot", badge: OB_SEE, target: "#slideBtn", side: "bottom", next: true,
     text: "從第一張開始，全螢幕逐張看" },
-  { macro: 5, kind: "spot", badge: OB_SEE, target: "#sizeBtn", side: "left", next: true,
+  { macro: 6, kind: "spot", badge: OB_SEE, target: "#sizeBtn", side: "left", next: true,
     text: "卡片預覽可以切寬大 ／ 標準 ／ 緊湊" },
-  { macro: 5, kind: "spot", badge: OB_SEE, target: "#sortBtn", side: "left", next: true,
+  { macro: 6, kind: "spot", badge: OB_SEE, target: "#sortBtn", side: "left", next: true,
     text: "依檔名 ↔ 依修改時間切換；切到時間排序會用月份分組成時間軸" },
-  { macro: 5, kind: "spot", badge: OB_SEE, target: "#sourceBtn", side: "left", next: true,
+  { macro: 6, kind: "spot", badge: OB_SEE, target: "#sourceBtn", side: "left", next: true,
     text: "全部 ／ 檔案 ／ 網址篩選檢視" },
-  // ── Step 6／7 ──
-  { macro: 6, kind: "dialog", badge: OB_SEE, title: "換資料夾 = 重新開始", body:
+  // ── Step 7／8 ──
+  { macro: 7, kind: "dialog", badge: OB_SEE, title: "換資料夾 = 重新開始", body:
 `這個網頁一次只能呈現一個主資料夾與其底下資料夾的內容。
 
 選了新的主資料夾，網頁會：
@@ -145,13 +154,13 @@ const OB_SCREENS = [
 - 這兩個是網頁幫你建的，但它們屬於你
 - 想把網址收藏帶到新資料夾？
   在檔案總管把這兩個搬過去就行` },
-  { macro: 6, kind: "spot", badge: OB_SEE, target: "#rechoose", side: "left", menu: true, next: true,
+  { macro: 7, kind: "spot", badge: OB_SEE, target: "#rechoose", side: "left", menu: true, next: true,
     text: "「更換資料夾」也在設定選單裡，想換的時候按這顆。" },
-  { macro: 7, kind: "dialog", badge: OB_SEE, title: "準備好了！", last: true, body:
+  { macro: 8, kind: "dialog", badge: OB_SEE, title: "準備好了！", last: true, body:
 `教學結束。
 之後想再看一次，點右上角的設定齒輪 →「重看使用教學」就行。
 
 開始整理你的編織資料夾吧！` },
 ];
-const OB_TOTAL = 7;      // 大步總數（步驟指示器用）
-const OB_TAG_MACRO = 3;  // 「資料夾標籤」那一大步（單步播放／既有使用者詢問用，onboarding-spec §9.2）
+const OB_TOTAL = 8;      // 大步總數（步驟指示器用）
+const OB_TAG_MACRO = 4;  // 「資料夾標籤」那一大步（單步播放／既有使用者詢問用，onboarding-spec §9.2）

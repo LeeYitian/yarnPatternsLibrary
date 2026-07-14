@@ -290,24 +290,29 @@
 
 ## 7. 錯誤與重置機制
 
-### 7.1 Markdown 解析失敗 / 損毀
+> ✅ **已實作,行為真相見 `broken-file-recovery-spec.md`**。本節原以「parse 失敗會 throw → 走 `.broken`」為前提;實際上 `parseLinks` 逐行容錯、**永不 throw**。因此本節所有「解析失敗／損毀」一律指「**整份壞掉**」＝**磁碟有內容、卻 0 筆可解析**(`entries` 為空且 `dropped > 0`)這一種;**只壞一兩行不在此列**(容錯靜默略過、不備份、無 toast,§D2)。備份(改名 `.broken`)失敗則中止不覆蓋原檔(§D4);外來(別資料夾)快取靠 `kv.urlsDir` 戳記擋掉、不寫回(§D3)。
+
+### 7.1 Markdown 整份損毀 / 不存在
 
 - **本機檔案區照常顯示**——它們不依賴 markdown(直接掃資料夾就有)
 - **URL 區走自動還原**(見 §7.2),不彈對話框讓使用者選
+- **只壞一兩行不觸發還原**:該行容錯靜默略過、其餘正常顯示(手動改完 md 請按重新整理確認東西都在,§D2)
 
 ### 7.2 自動還原流程
 
-當 `links.md` 解析失敗(或不存在但 cache 非空)時,**自動執行**,不阻斷使用者:
+當 `links.md` **整份壞掉**(有內容卻 0 筆可解析)或**不存在但同資料夾 cache 非空**時,**自動執行**,不阻斷使用者:
 
 ```
-1. 若 links.md 存在但壞掉:改名為 links.md.broken-{timestamp}
+1. 若 links.md 存在(整份壞):改名為 links.md.broken-{timestamp}
+   改名失敗 → 中止,不覆蓋原檔,提示使用者手動複製一份(§D4)
    若 links.md 不存在:跳過這步
-2. 從 IndexedDB.kv.urls 拿上次成功 parse 的條目
-   - 有 → 用這份重建 links.md(temp + rename),渲染
-   - 無 → URL 區為空,等使用者重新開始
+2. 從 IndexedDB.kv.urls 拿上次成功 parse 的條目(先用 kv.urlsDir 戳記確認是「同資料夾」,§D3)
+   - 同資料夾且非空 → 用這份重建 links.md(temp + rename),渲染
+   - 空 / 外來 → 不寫回,URL 區為空(壞檔已留 .broken;外來快取不污染新資料夾)
 3. thumbs/ 內的縮圖檔保留(因為對應的 URL 條目從 cache 救回來了,sha1 仍對得上)
 4. 跳一個**非阻斷的通知**(toast / banner):
-   「`links.md` 解析失敗,已從快取自動還原。原檔備份於 `links.md.broken-{timestamp}`,如有遺漏可手動恢復。」
+   「`links.md` 無法正常讀取,已從快取自動還原。原檔備份於 `links.md.broken-{timestamp}`,如有遺漏可手動恢復。」
+   (無可用同資料夾快取時改述「目前沒有可用的快取可還原」)
 ```
 
 ⚠️ **已知 corner case**:使用者在 VS Code 改 markdown 時新增了 URL,那批新 URL **不在 cache 裡會永久失去**。只能救「上次 app 看到的那一份」。`.broken-` 備份檔保留,使用者可手動翻找。
@@ -374,7 +379,7 @@
 | Q3 | URL 條目要不要分組 | **不做**。flat list |
 | Q4 | 編輯 / 刪除 | URL 條目兩者都做;**本機檔案完全唯讀**,卡片不出現編輯 / 刪除按鈕 |
 | Q5 | 縮圖上傳 UI | 三種都做:檔案選擇、拖拉、剪貼簿貼上 |
-| Q6 | markdown 損毀的 UX | **自動**從 IndexedDB cache 還原 + 跳非阻斷通知 + 保留 `.broken-` 備份(見 §7.2)。不彈對話框讓使用者選 |
+| Q6 | markdown 損毀的 UX | **整份壞掉**(0 筆可解析)才自動從 IndexedDB **同資料夾** cache 還原 + 跳非阻斷通知 + 保留 `.broken-` 備份(見 §7.2、`broken-file-recovery-spec.md`);備份失敗則中止不覆蓋原檔。**只壞一兩行**容錯略過、不備份。不彈對話框讓使用者選 |
 | Q7 | 不認識網域要不要抓 favicon | 不抓第三方服務,直接用 repo 內的 `favicon.png` 當預設 |
 | Q8 | 本機檔案要不要進 markdown | **不要**。本機檔案沿用 About.md §5 既有的「掃資料夾直出 + `kv.items` 快取」設計,與 URL 完全解耦 |
 | Q9 | 何時掃描資料夾 | **只在使用者按「重新整理」或首次設定時**觸發,不在開 app 時自動掃。保留 cache-first 開 app 速度 |
@@ -435,5 +440,5 @@
 
 當 `links.md` 自動還原完成:
 - 跳**非阻斷的 toast / banner**(不擋使用者繼續操作)
-- 文案:「`links.md` 解析失敗,已從快取自動還原。原檔備份於 `links.md.broken-{timestamp}`,如有遺漏可手動恢復」
+- 文案:「`links.md` 無法正常讀取,已從快取自動還原。原檔備份於 `links.md.broken-{timestamp}`,如有遺漏可手動恢復」(整份壞掉才觸發;只壞一兩行不會跳,見 §7 說明與 `broken-file-recovery-spec.md`)
 - 通知可點開展開詳細說明(解釋什麼是 broken 備份、要怎麼手動恢復)

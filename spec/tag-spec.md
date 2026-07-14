@@ -91,7 +91,7 @@
 - **只存手動 tag**（自動 tag 現算，不寫進來，見 §3）。**沒有手動 tag 的檔案不進 `files.md`**，維持檔案精簡。
 - **重新整理只讀不寫 `files.md`**（比照 `links.md`，`About.md` §11）：重掃資料夾算自動 tag、同時讀 `files.md` 拿手動 tag，兩條線不寫在同一處、不互相覆蓋。
 - **CRUD 走讀-改-寫原子寫回**：只有使用者透過編輯彈窗（§11.6）改手動 tag 時才寫 `files.md`，比照 `urls.js` 的 `reparseForWrite()`（讀磁碟 → re-parse → 改記憶體單一條目 → temp+move 原子寫回 → 更新快取），順便吃進外部編輯器對其他條目的修改。
-- **災難復原**：`files.md` 壞掉／遺失時比照 `links.md`——從 `kv.files` 快取重建，原檔備份成 `files.md.broken-{timestamp}`，跳非阻斷 toast。解析器保留不認識的欄位原樣（比照 `parseLinks` 的 `_extra`），未來擴欄不破壞舊資料。
+- **災難復原**：`files.md`**遺失／讀不到**或**整份壞掉**（有內容卻 0 筆可解析）時比照 `links.md`——從**同資料夾**的 `kv.files` 快取重建，原檔（若在）備份成 `files.md.broken-{timestamp}`，跳非阻斷 toast；備份失敗則中止不覆蓋原檔。**只壞一兩行**則容錯靜默丟棄、不備份（parser 永不 throw，見 `broken-file-recovery-spec.md`）。外來（別資料夾）快取靠 `kv.filesDir` 戳記擋掉。解析器保留不認識的欄位原樣（比照 `parseLinks` 的 `_extra`），未來擴欄不破壞舊資料。
 - 解析器容錯同 `parseLinks`：`- path` 行是 flat list item（`- 相對路徑`），縮排的 `- tags: …` 是其欄位。
 
 #### 孤兒條目（T21）

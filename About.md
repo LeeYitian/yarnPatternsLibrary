@@ -105,7 +105,7 @@ yarn-patterns-library/
 
 > 標籤功能自動半邊的儲存結構(path、thumbKey、`wlib-foldertag`、`wlib-subfolder-toast`)皆**已實作**,見上方各段落;`thumbs`／`kv` store 結構未變,不需 IndexedDB 升版。手動 tag 半邊亦**已實作**(`js/files.js`、`js/tagfield.js`),真相見 `spec/tag-spec.md` §6:
 
-- **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):本機檔案手動 tag 的持久真相檔,key＝相對路徑、只存手動 tag,沿用 `links.md` 模式(讀-改-寫原子寫回＋災難復原、壞檔備份 `files.md.broken-{ts}`);孤兒條目保留不刪(`tag-spec.md` §6.1)。
+- **`files.md`**(資料夾根目錄的檔案,**非 IndexedDB**):本機檔案手動 tag 的持久真相檔,key＝相對路徑、只存手動 tag,沿用 `links.md` 模式(讀-改-寫原子寫回＋災難復原:**遺失／整份壞才**備份 `files.md.broken-{ts}`+同資料夾快取還原,只壞一行則靜默丟棄,見 `spec/broken-file-recovery-spec.md`);孤兒條目保留不刪(`tag-spec.md` §6.1)。
 - **`kv.files`**(既有 `kv` store **新增一個 key**,`[{path, tags:[]}]`):本機手動 tag 的顯示快取＋復原副本,角色同 `kv.urls`。**只是加 key,不新增 store、不升 IndexedDB 版本**。
 - **`links.md` 的 `tags` 欄位**:URL 手動 tag;`tags` 已從 `_extra` 升成一級欄位(`parseLinks`／`serializeLinks`／`hydrateUrl`／`stripUrl`,`tag-spec.md` §6.2)。
 
@@ -153,7 +153,7 @@ yarn-patterns-library/
   - **同時也存一份進 IndexedDB `thumbs` store**(key `urlthumb:<path>`)當顯示快取。原因:cache-first 開 app 時沒有使用者手勢,無法向 `dirHandle` 要授權去讀磁碟的 `thumbs/`,只靠磁碟會在重整後退成 favicon。`thumbs/` 仍是持久真相,IndexedDB 只是免授權的顯示快取(角色等同本機封面快取)。`paintUrlThumb()` 先吃 IndexedDB,沒有才(在有授權時)讀磁碟並順手補快取。
 - **cache-first**:開 app 從 `kv.urls` 直出不掃資料夾;按「重新整理」才重讀 `links.md` + 重掃本機檔案,完成跳 toast 回饋。
 - **CRUD 走讀-改-寫**:每次都先讀磁碟 `links.md`、re-parse、改記憶體中單一條目、原子寫回(temp + `move`)、更新 cache;順便吃進外部(VS Code)對其他條目的修改。
-- **災難復原**:`links.md` 壞掉／遺失時自動從 `kv.urls` 重建,原檔備份成 `links.md.broken-{timestamp}`,跳非阻斷 toast。
+- **災難復原**:`links.md`**遺失／讀不到**、或**整份壞掉**(有內容卻 0 筆可解析)時,自動從**同資料夾**的 `kv.urls` 快取重建,原檔(若在)備份成 `links.md.broken-{timestamp}`,跳非阻斷 toast;備份失敗則中止不覆蓋原檔。**只壞一兩行**則容錯靜默丟棄、不備份。外來(別資料夾)快取靠 `kv.urlsDir` 戳記擋掉、不寫回。詳見 `spec/broken-file-recovery-spec.md`。
 - **燈箱／幻燈片相容**:URL 卡片也能進燈箱放大;但**點擊分流**——點放大鏡進燈箱,點卡片其他地方／燈箱「開啟連結」一律 `window.open(url)`(本機則是 blob URL 開新分頁,見 `openFile()` 內分流)。
 - **找不到資料夾**:「重新整理」時若資料夾讀不到(外接硬碟拔了／被刪改名),跳 toast(「再試一次」「選擇新資料夾」兩個動作),**完全不動 `links.md` 與 cache**。
 - 解析器**保留不認識的欄位原樣**,未來 tag 系統可在 `links.md` 加 `- tags:` 而不破壞舊資料。
@@ -198,13 +198,9 @@ yarn-patterns-library/
 - 把已產生的封面一鍵匯出成檔案。
 - 子資料夾遞迴掃描與「資料夾路徑轉自動 tag」＋tag 篩選皆**已實作**(見 §6「標籤篩選」、`spec/subfolder-spec.md`、`spec/tag-spec.md`)。
 - 燈箱顯示「完整高解析」而非快取縮圖(需 hover 時重新高解析 render)。
-- **手動把 `links.md`／`files.md` 編輯壞掉時的實際行為(與 spec 宣稱的 `.broken` 復原不符)**。`parseLinks`／`parseFiles` 是**逐行、容錯**的解析器,**永遠不 throw**;所以真相檔壞掉時不會進入 `recoverUrls(true)`／`recoverFiles(true)`(改名成 `xxx.broken-{時間}`+從快取重建)那條路。實測兩檔行為一致,分兩種情況:
-  - **壞掉「一行／幾行」**(其餘仍合格式):壞的那行被**靜默丟棄**,其餘正常顯示。**無錯誤、無 toast、無 `.broken`**。載入當下不寫磁碟,但**下一次任何 CRUD**(新增／編輯／刪除)會 re-parse 磁碟→只把成功 parse 的部分寫回→**那幾行從此永久消失、沒有備份**。
-  - **整份壞到「沒有任何一行符合格式」**:`parse` 回傳**空陣列**(不是錯誤)。→ 顯示變成 0 筆,而且**這個空結果會覆蓋掉 `kv` 快取**(`persistUrls([])`／`persistFiles(empty)`),等於連快取副本也一起清空。壞掉的原檔**在載入當下仍原封不動留在磁碟**(raw 文字還在),所以理論上還能手動打開撿回來——但**只到下一次 CRUD 為止**,一旦 CRUD 就會被覆寫。
-  - 真正會觸發的復原只有「檔案**遺失／讀不到**(NotFound／權限)→ 從 `kv` 快取還原」那條(`recoverUrls(false)`／`recoverFiles(false)`,已驗證可用);「內容壞掉」不在其中。onboarding 原本描述 `.broken` 的 Step 2 已因此移除。
-  - **後續要嘛**:(a) 讓 `parseLinks`／`parseFiles` 對「非空但完全無法辨識」的內容做基本驗證並 throw,使 `.broken` 備份真的名副其實(並補「空 parse 結果不可覆蓋非空快取」的守門,比照 `recoverUrls` 的 `if (cached.length)`);**要嘛**(b) 接受容錯設計、把 `.broken` 這套敘述從所有 spec／UI 正式移除,不再宣稱有壞檔備份。兩條路都要 `links.md`／`files.md` 一致處理。
 
 > **已完成(不再列後續工作)**:
+> - **壞檔守門＋快取資料夾戳記**(`spec/broken-file-recovery-spec.md`,v1.8.2)——`links.md`／`files.md`「**整份壞掉**」(有內容卻 0 筆可解析)現在會**真的**觸發 `.broken` 備份＋從**同資料夾**快取還原;備份(改名 `.broken`)失敗則中止、不覆蓋原檔(共識:至少留下 `.broken`)。`kv.urls`／`kv.files` 加資料夾戳記 `kv.urlsDir`／`kv.filesDir`(`isSameEntry` 比對),**外來(別資料夾)快取視同空、絕不寫進當前真相檔**;換資料夾各路徑(含 `folderError`「選擇新資料夾」)一律清快取,舊使用者於 `init` 用 `kv.dir` 回填戳記。**「只壞一兩行」仍容錯靜默丟棄、不備份**(parser 無法區分刪除與打錯),onboarding 與各 spec 已誠實載明。前身的壞檔行為調查詳版見 `spec/broken-file-recovery-spec.md` §1。
 > - **手動 tag**(標籤系統第二期,`spec/tag-spec.md` §6／§8／§11.6／決策 T20–T27)——本機 `files.md` sidecar＋`kv.files` 快取(孤兒保留、災難復原,`js/files.js`)、URL 的 `links.md` `tags` 升一級欄位、chip 輸入元件(Enter／blur commit、擋 IME、去重、建議列,`js/tagfield.js`)、本機「編輯標籤」彈窗＋URL 彈窗 tags 欄、卡片／篩選／燈箱吃 `union(auto,manual)`(自動綠框／手動藍實心、手動優先)、onboarding「也能自己貼標籤」純說明子畫面皆已落地。
 > - **URL onboarding 教學精靈**——`spec/onboarding-spec.md` 規格已落地(controller 在 `js/onboarding.js`、教學文案在 `js/constants.js`;完整 8 步、混合對話框 + spotlight、「資料夾標籤」單步播放),設定選單「重看使用教學」入口已補回。
 
