@@ -142,9 +142,23 @@ async function scanDir(dir, prefix, found, isRoot) {
 }
 
 // 找不到資料夾：非阻斷通知 + 兩個動作；完全不動 md／cache（spec §11.2）
+// 「再試一次」＝同資料夾重掃（start(false)，不清快取）；「選擇新資料夾」＝走 rechooseFolder 的
+// 「pick → confirm → 清快取 → 換 handle」完整流程（含清 kv.urls/kv.files/戳記），
+// 避免舊資料夾的快取殘留寫進新資料夾（broken-file-recovery-spec §Phase6、folder-switch-spec §1）。
 function folderError() {
   toast("找不到資料夾，可能已被移除、改名，或所在磁碟未連接。<b>現有顯示與快取已保留。</b>", true,
-    [["再試一次", () => start(false)], ["選擇新資料夾", () => start(true)]], 12000);
+    [["再試一次", () => start(false)], ["選擇新資料夾", () => rechooseFolder()]], 12000);
+}
+
+// 換資料夾時清掉「與資料夾綁定」的 IndexedDB 快取（folder-switch-spec §6.1；kv/dir 先留到新 handle 寫入成功）。
+// 任何新增的「與資料夾綁定的 kv key」都要補進這裡（tag-spec §6.1）。
+async function clearFolderCache() {
+  await DB.clear("thumbs");
+  await DB.del("kv", "items");
+  await DB.del("kv", "urls");
+  await DB.del("kv", "files");
+  await DB.del("kv", "urlsDir");    // URL 快取的資料夾戳記
+  await DB.del("kv", "filesDir");   // 手動 tag 快取的資料夾戳記
 }
 
 // ---------- 更換資料夾（spec：folder-switch-spec.md） ----------
@@ -168,13 +182,10 @@ async function rechooseFolder() {
   const oldHandle = dirHandle;
   status.textContent = "切換資料夾…";
   try {
-    // step 1：清 IndexedDB（thumbs 全清、kv/items、kv/urls、kv/files；kv/dir 先不動，§6.1 / §6.2）
+    // step 1：清 IndexedDB（thumbs 全清、kv/items、kv/urls、kv/files 及其資料夾戳記；kv/dir 先不動，§6.1 / §6.2）
     // kv/files（手動 tag 快取）必須跟 kv/urls 一起清：否則換到沒有 files.md 的新資料夾時，
     // loadFiles() 會 fallback 讀到舊資料夾殘留的手動 tag，違反「換資料夾＝乾淨重來」（§1、tag-spec §6.1）。
-    await DB.clear("thumbs");
-    await DB.del("kv", "items");
-    await DB.del("kv", "urls");
-    await DB.del("kv", "files");
+    await clearFolderCache();
     // step 2：換 dirHandle（記憶體 + kv/dir）
     dirHandle = newHandle;
     await DB.set("kv", "dir", newHandle);

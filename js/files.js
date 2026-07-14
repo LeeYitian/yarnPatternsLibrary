@@ -8,30 +8,32 @@
 
 // ---- Markdown 解析／序列化（容錯 + 未知欄位原樣保留，比照 parseLinks §6.1）----
 // 格式：`- 相對路徑` 為 flat list item（頂格），縮排的 `  - tags: #a #b` 是其欄位。
+// 回傳 { entries, dropped }：dropped＝無法辨識的行數，供壞檔守門判定「整份壞」（broken-file-recovery-spec §D1，比照 parseLinks）。
 function parseFiles(text) {
-  const out = []; let cur = null;
+  const out = []; let cur = null; let dropped = 0;
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.replace(/\s+$/, "");
     if (!line.trim()) continue;
-    if (/^\s/.test(rawLine)) {                     // 縮排行 → 只當欄位；非欄位（雜訊）忽略
+    if (line.trim().startsWith("#")) continue;     // Markdown 標題／註解：合法忽略，不算壞行
+    if (/^\s/.test(rawLine)) {                     // 縮排行 → 只當欄位
       const field = line.match(/^\s+-\s*([A-Za-z][\w-]*)\s*:\s*(.*)$/);
       if (field && cur) {
         const key = field[1].toLowerCase(), val = field[2].trim();
         if (key === "tags") cur.tags = parseTagField(val);
         else cur._extra[field[1]] = val;           // 未知欄位保留原 key，寫回不丟
-      }
+      } else dropped++;                            // 縮排雜訊 / 無主欄位 → 無法辨識
       continue;
     }
     const item = line.match(/^-\s+(.+)$/);         // 頂格 `- path`
     if (item) {
       const path = item[1].trim();
       if (path) { cur = { path, tags: [], _extra: {} }; out.push(cur); }
-      else cur = null;
+      else { cur = null; dropped++; }
       continue;
     }
-    // 其餘行（# 標題、雜訊）忽略
+    dropped++;   // 非空、非標題，卻無法辨識的行（壞檔判定用；壞一行仍容錯靜默丟棄，§D2）
   }
-  return out;
+  return { entries: out, dropped };
 }
 function serializeFiles(entries) {
   let out = "# Yarn Library Files\n\n";
@@ -50,17 +52,15 @@ const mapToFileEntries = map => [...map.entries()].map(([path, tags]) => ({ path
 
 // ---- 快取（kv.files，T22：既有 kv store 加一個 key，比照 kv.urls）----
 async function persistFiles(map) {
-  try { await DB.set("kv", "files", [...map.entries()].map(([path, tags]) => ({ path, tags }))); }
+  try {
+    await DB.set("kv", "files", [...map.entries()].map(([path, tags]) => ({ path, tags })));
+    await DB.set("kv", "filesDir", dirHandle || null);    // 資料夾戳記，與快取同進同退（比照 kv.urlsDir）
+  }
   catch (e) { console.warn("[lib] 無法寫入 files 快取：", e); }
 }
-async function filesFromCache() {
-  let cached = [];
-  try { cached = (await DB.get("kv", "files")) || []; } catch (_) {}
-  return new Map(cached.map(e => [e.path, e.tags || []]));
-}
 
-// ---- 載入 / 災難復原（比照 loadUrls／recoverUrls，§6.1）----
-// 重新整理對 files.md「只讀不寫」：正常路徑純解析、不寫回；只有解析失敗／讀取錯誤的災難復原才寫。
+// ---- 載入 / 災難復原（比照 loadUrls／recoverUrls，§6.1；壞檔守門見 broken-file-recovery-spec）----
+// 重新整理對 files.md「只讀不寫」：正常路徑純解析、不寫回；只有整份壞掉／讀取錯誤的災難復原才寫。
 async function loadFiles() {
   let raw = null;
   try { raw = await readText(dirHandle, "files.md"); }
@@ -71,43 +71,63 @@ async function loadFiles() {
   // files.md 不存在＝比照 loadUrls 的 NotFound：recoverFiles(false) 在快取空時不建檔（維持「沒用過手動 tag 就不建檔」），
   // 快取非空時才把 files.md 還原回來——否則外部刪掉 files.md 後，下一次 saveFileTags 讀到空磁碟會靜默丟掉其他檔案的手動 tag。
   if (raw === null) return await recoverFiles(false);
-  let parsed;
-  try { parsed = parseFiles(raw); }
-  catch (e) { console.warn("[lib] 解析 files.md 失敗：", e); return await recoverFiles(true); }
-  const map = new Map(parsed.map(e => [e.path, e.tags]));
+  const { entries, dropped } = parseFiles(raw);           // parser 容錯永不 throw；「整份壞」靠 dropped 判定
+  if (entries.length === 0 && dropped > 0) {
+    try { return await recoverFiles(true); }
+    catch (e) {
+      if (e instanceof BrokenBackupError) {
+        toast(`<b>files.md</b> 內容異常，且<b>自動備份失敗</b>，為避免蓋掉原始檔案，網頁沒有改動它。<br>請先用檔案總管手動複製一份 <b>files.md</b> 再處理。`, true, [], 12000);
+        return new Map();
+      }
+      throw e;
+    }
+  }
+  const map = new Map(entries.map(e => [e.path, e.tags]));
   await persistFiles(map);
   return map;
 }
 async function recoverFiles(brokenExists) {
-  const cachedMap = await filesFromCache();
+  let cachedArr = [];
+  try { cachedArr = (await DB.get("kv", "files")) || []; } catch (_) {}
+  let stamp = null;
+  try { stamp = await DB.get("kv", "filesDir"); } catch (_) {}
+  // 外來快取（戳記屬於別資料夾）→ 視同空：不把別資料夾的手動 tag 寫進當前 files.md（tag-spec §6.1 / folder-switch-spec §1）
+  const cachedMap = (await cacheFolderMatches(stamp)) ? new Map(cachedArr.map(e => [e.path, e.tags || []])) : new Map();
+
   let backupName = null;
   if (brokenExists) {
+    // §D4：壞檔一律「先安全備份」，備份失敗＝寧可不動原檔也不無備份覆蓋 → 丟 BrokenBackupError 中止（比照 recoverUrls）。
     backupName = "files.md.broken-" + new Date().toISOString().replace(/[:.]/g, "-");
     try { await renameInDir(dirHandle, "files.md", backupName); }
-    catch (e) { console.warn("[lib] 備份壞檔失敗：", e); backupName = null; }
+    catch (e) {
+      console.warn("[lib] 備份壞檔失敗，中止自動還原以免覆蓋無備份原檔：", e);
+      throw new BrokenBackupError("files.md 內容異常且自動備份失敗，為保住原始檔案已中止；請先手動複製一份 files.md。");
+    }
   }
   if (cachedMap.size) {
     try { await writeText(dirHandle, "files.md", serializeFiles(mapToFileEntries(cachedMap))); }
     catch (e) { console.warn("[lib] 還原寫回 files.md 失敗：", e); }
   }
   if (brokenExists || cachedMap.size) {
+    const restored = cachedMap.size ? "已從快取自動還原。" : "目前沒有可用的同資料夾快取可還原。";
     const detail = backupName
       ? `原檔已備份為 <b>${escapeHtml(backupName)}</b>，如有遺漏可用編輯器打開該檔手動恢復。`
       : "偵測到 files.md 遺失，已用上次成功讀取的快取重建。";
-    toast(`<b>files.md</b> 無法正常讀取，已從快取自動還原。<br>${detail}`, true, [], 9000);
+    toast(`<b>files.md</b> 無法正常讀取，${restored}<br>${detail}`, true, [], 9000);
   }
   await persistFiles(cachedMap);
   return cachedMap;
 }
 
 // ---- CRUD（讀-改-寫原子寫回，比照 urls.js reparseForWrite，§6.1）----
-// 讀磁碟 files.md → re-parse（順便吃進外部對其他條目的修改）。回傳可序列化的 entries。
+// 讀磁碟 files.md → re-parse；整份壞掉 → 先 .broken 備份 + 同資料夾快取還原再套用本次編輯（broken-file-recovery-spec §Phase4）。
 async function reparseFilesForWrite() {
-  let raw = "", existed = true;
+  let raw = "";
   try { raw = await readText(dirHandle, "files.md"); }
-  catch (e) { if (e && e.name === "NotFoundError") { existed = false; raw = ""; } else throw e; }
-  try { return { entries: parseFiles(raw) }; }
-  catch (e) { return { entries: mapToFileEntries(await recoverFiles(existed)), recovered: true }; }
+  catch (e) { if (!(e && e.name === "NotFoundError")) throw e; }
+  const { entries, dropped } = parseFiles(raw);
+  if (entries.length === 0 && dropped > 0) return { entries: mapToFileEntries(await recoverFiles(true)), recovered: true };
+  return { entries };
 }
 
 // 儲存某本機檔的手動 tag（§6.1）：讀-改-寫 files.md、更新 kv.files。

@@ -8,15 +8,18 @@ const stripUrl = u => ({ url: u.url, title: u.title || "", thumb: u.thumb || "",
 const hydrateUrl = u => ({ kind: "url", url: u.url, title: u.title || "", thumb: u.thumb || "", added: u.added || "", tags: u.tags || [], _extra: u._extra || {}, _host: hostOf(u.url) });
 
 // ---- Markdown（容錯 + 未知欄位原樣保留，spec §4.2） ----
+// 回傳 { entries, dropped }：dropped＝「非空、非 # 標題，卻既不成條目也不成欄位」的行數，
+// 供壞檔守門判定「有內容卻 0 筆能解析＝整份壞」（broken-file-recovery-spec §D1）。
 function parseLinks(text) {
-  const out = []; let cur = null;
+  const out = []; let cur = null; let dropped = 0;
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.replace(/\s+$/, "");
     if (!line.trim()) continue;
+    if (line.trim().startsWith("#")) continue;      // Markdown 標題／註解：合法忽略，不算壞行
     const link = line.match(/^\s*-\s*\[([^\]]*)\]\(\s*([^)]+?)\s*\)\s*$/);
     if (link) {
       const url = link[2].trim();
-      if (!url.includes("://")) { console.warn("[lib] 略過無效 URL 行：", rawLine); cur = null; continue; }
+      if (!url.includes("://")) { console.warn("[lib] 略過無效 URL 行：", rawLine); cur = null; dropped++; continue; }
       cur = { url, title: link[1].trim(), thumb: "", added: "", tags: [], _extra: {} };
       out.push(cur); continue;
     }
@@ -29,9 +32,9 @@ function parseLinks(text) {
       else cur._extra[field[1]] = val;      // 未知欄位：保留原 key，再寫回時不丟（未來 tag 系統可平滑擴充）
       continue;
     }
-    // 其餘行（# 標題、空白、雜訊）忽略
+    dropped++;   // 非空、非標題，卻無法辨識的行（壞檔判定用；壞一行仍容錯靜默丟棄，§D2）
   }
-  return out;
+  return { entries: out, dropped };
 }
 function serializeLinks(entries) {
   let out = "# Yarn Library URLs\n\n";
@@ -180,57 +183,94 @@ async function removeThumbFile(dir, path) {
   catch (e) { console.warn("[lib] 刪除縮圖檔失敗（忽略）：", e); }
 }
 
-// ---- 載入 / 災難復原（spec §6.3 步驟3、§7.2） ----
+// ---- 壞檔備份失敗的哨兵錯誤：無法安全備份就中止，絕不無備份覆蓋原檔（共識 1.3 / broken-file-recovery-spec §D4）----
+class BrokenBackupError extends Error { constructor(m) { super(m); this.name = "BrokenBackupError"; } }
+
+// 快取資料夾戳記比對：true＝這份快取可信任屬於當前資料夾（含「無戳記」的舊快取＝相容信任，見 main.js 回填）；
+// false＝有戳記且確定非同一資料夾（外來）→ recover 時視同空快取，不寫回真相檔（folder-switch-spec §1 / broken-file-recovery-spec §D3）。
+async function cacheFolderMatches(stampHandle) {
+  if (!stampHandle) return true;
+  if (!dirHandle) return false;
+  try { return await stampHandle.isSameEntry(dirHandle); }
+  catch (e) { console.warn("[lib] 快取資料夾戳記比對失敗，保守視為外來：", e); return false; }
+}
+
+// ---- 載入 / 災難復原（spec §6.3 步驟3、§7.2；壞檔守門見 broken-file-recovery-spec）----
 async function persistUrls(arr) {
-  try { await DB.set("kv", "urls", arr.map(stripUrl)); }
+  try {
+    await DB.set("kv", "urls", arr.map(stripUrl));
+    await DB.set("kv", "urlsDir", dirHandle || null);    // 資料夾戳記，與快取同進同退
+  }
   catch (e) { console.warn("[lib] 無法寫入 URL 快取：", e); }
 }
 async function loadUrls() {
   let raw = null;
   try { raw = await readText(dirHandle, "links.md"); }
   catch (e) {
-    if (e && e.name === "NotFoundError") raw = null;     // 不存在 → 視同解析失敗同路徑
+    if (e && e.name === "NotFoundError") raw = null;     // 不存在 → 走遺失復原（recoverUrls(false)）
     else { console.warn("[lib] 讀取 links.md 失敗：", e); return await recoverUrls(false); }
   }
   if (raw === null) return await recoverUrls(false);
-  let parsed;
-  try { parsed = parseLinks(raw); }
-  catch (e) { console.warn("[lib] 解析 links.md 失敗：", e); return await recoverUrls(true); }
-  const arr = parsed.map(hydrateUrl);
+  const { entries, dropped } = parseLinks(raw);            // parser 容錯永不 throw；「整份壞」靠 dropped 判定
+  // 有內容卻 0 筆能解析＝整份壞 → 走 .broken 備份 + 同資料夾快取還原（§D1）。備份失敗則中止、原檔留著。
+  if (entries.length === 0 && dropped > 0) {
+    try { return await recoverUrls(true); }
+    catch (e) {
+      if (e instanceof BrokenBackupError) {
+        toast(`<b>links.md</b> 內容異常，且<b>自動備份失敗</b>，為避免蓋掉原始檔案，網頁沒有改動它。<br>請先用檔案總管手動複製一份 <b>links.md</b> 再處理。`, true, [], 12000);
+        return [];
+      }
+      throw e;
+    }
+  }
+  const arr = entries.map(hydrateUrl);
   await persistUrls(arr);
   return arr;
 }
 async function recoverUrls(brokenExists) {
-  let cached = [];
-  try { cached = (await DB.get("kv", "urls")) || []; } catch (_) {}
-  cached = cached.map(hydrateUrl);
+  let cachedRaw = [];
+  try { cachedRaw = (await DB.get("kv", "urls")) || []; } catch (_) {}
+  let stamp = null;
+  try { stamp = await DB.get("kv", "urlsDir"); } catch (_) {}
+  // 外來快取（戳記屬於別的資料夾）→ 視同空：絕不把別資料夾的收藏寫進當前 links.md（folder-switch-spec §1）
+  const cached = (await cacheFolderMatches(stamp)) ? cachedRaw.map(hydrateUrl) : [];
+
   let backupName = null;
   if (brokenExists) {
+    // §D4：壞檔一律「先安全備份」。備份失敗＝寧可不動原檔，也不無備份覆蓋 → 丟 BrokenBackupError 中止。
     backupName = "links.md.broken-" + new Date().toISOString().replace(/[:.]/g, "-");
     try { await renameInDir(dirHandle, "links.md", backupName); }
-    catch (e) { console.warn("[lib] 備份壞檔失敗：", e); backupName = null; }
+    catch (e) {
+      console.warn("[lib] 備份壞檔失敗，中止自動還原以免覆蓋無備份原檔：", e);
+      throw new BrokenBackupError("links.md 內容異常且自動備份失敗，為保住原始檔案已中止；請先手動複製一份 links.md。");
+    }
   }
+  // 只把「同資料夾、非空」的快取寫回真相檔（空／外來快取都不寫，沿用 if(cached.length) 不變式）
   if (cached.length) {
     try { await writeText(dirHandle, "links.md", serializeLinks(cached.map(stripUrl))); }
     catch (e) { console.warn("[lib] 還原寫回 links.md 失敗：", e); }
   }
   if (brokenExists || cached.length) {
+    const restored = cached.length ? "已從快取自動還原。" : "目前沒有可用的同資料夾快取可還原。";
     const detail = backupName
       ? `原檔已備份為 <b>${escapeHtml(backupName)}</b>，如有遺漏可用編輯器打開該檔手動恢復。`
       : "偵測到 links.md 遺失，已用上次成功讀取的快取重建。";
-    toast(`<b>links.md</b> 無法正常讀取，已從快取自動還原。<br>${detail}`, true, [], 9000);
+    toast(`<b>links.md</b> 無法正常讀取，${restored}<br>${detail}`, true, [], 9000);
   }
   await persistUrls(cached);
   return cached;
 }
 
 // 讀磁碟 links.md → re-parse（順便吃進外部對其他條目的修改）。回傳可序列化的 entries。
+// CRUD 當下若磁碟已整份壞掉 → 先 .broken 備份 + 同資料夾快取還原，再讓呼叫端在還原結果上套用本次編輯，
+// 否則這次寫回會把壞檔覆蓋成只剩剛編那筆、無備份（broken-file-recovery-spec §Phase4）。
 async function reparseForWrite() {
-  let raw = "", existed = true;
+  let raw = "";
   try { raw = await readText(dirHandle, "links.md"); }
-  catch (e) { if (e && e.name === "NotFoundError") { existed = false; raw = ""; } else throw e; }
-  try { return { entries: parseLinks(raw) }; }
-  catch (e) { return { entries: (await recoverUrls(existed)).map(stripUrl), recovered: true }; }
+  catch (e) { if (!(e && e.name === "NotFoundError")) throw e; }    // 不存在＝空 raw，走全新建檔
+  const { entries, dropped } = parseLinks(raw);
+  if (entries.length === 0 && dropped > 0) return { entries: (await recoverUrls(true)).map(stripUrl), recovered: true };
+  return { entries };
 }
 
 // ---- CRUD（讀-改-寫，spec §6.4 / §6.5 / §6.6） ----

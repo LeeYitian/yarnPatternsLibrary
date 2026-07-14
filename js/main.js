@@ -36,6 +36,17 @@ async function init() {
   } catch (e) {
     console.warn("[lib] 讀取資料夾把手失敗：", e);
   }
+  // 遷移：既有使用者的 kv.urls／kv.files 沒有資料夾戳記 → 用當時的 kv.dir 回填。
+  // 歷史上這兩份快取必然寫於 kv.dir 那個資料夾，回填必為正確；只加戳記 key，不動快取內容、不碰任何 md 檔，
+  // 讓壞檔守門／換資料夾保護對舊使用者立即生效（broken-file-recovery-spec §Phase7、問題3）。
+  try {
+    if (dirHandle) {
+      if (Array.isArray(cachedUrls) && cachedUrls.length && !(await DB.get("kv", "urlsDir"))) await DB.set("kv", "urlsDir", dirHandle);
+      if (Array.isArray(cachedFiles) && cachedFiles.length && !(await DB.get("kv", "filesDir"))) await DB.set("kv", "filesDir", dirHandle);
+    }
+  } catch (e) {
+    console.warn("[lib] 快取資料夾戳記回填失敗（忽略）：", e);
+  }
   items = meta && meta.length ? meta.map((m) => ({ ...m, kind: "local" })) : [];
   urls = Array.isArray(cachedUrls) ? cachedUrls.map(hydrateUrl) : [];
   // cache-first 顯示本機檔案的手動 tag（免資料夾授權即可立即顯示、重整不閃掉，比照 kv.urls，tag-spec §6.1）
