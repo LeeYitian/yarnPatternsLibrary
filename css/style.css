@@ -276,6 +276,9 @@
   .social-link svg { width: 20px; height: 20px; opacity: .85; transition: opacity var(--t-base) ease-out; }
   .social-link:hover { color: var(--accent); }
   .social-link:hover svg { opacity: 1; }
+  footer.site-footer .version-number {position: absolute; bottom: 1px; right: 5px; letter-spacing: 3px;
+    cursor: pointer; transition: color var(--t-base) ease-out;}
+  footer.site-footer .version-number:hover { color: var(--accent); }
 
   /* ---------- 首頁說明（重點裝飾區） ---------- */
   .intro { max-width: 640px; margin: 0 auto; text-align: center; }
@@ -752,6 +755,19 @@
   .switch-body .switch-merge { margin-top: 14px; padding: 12px 14px; color: var(--muted);
     border: 1px solid var(--line); border-left: 3px solid var(--accent2); border-radius: 4px;
     background: color-mix(in srgb, var(--accent2) 8%, transparent); }
+
+  /* 更新紀錄彈窗：時間軸式版本歷程，版號在左、說明在右，重閱讀舒適度 */
+  .changelog-dialog { width: min(600px, 100%); }
+  .cl-scroll { max-height: 60vh; overflow: auto; margin: 0 -30px; padding: 2px 30px; }
+  .cl-list { list-style: none; margin: 0; padding: 0; }
+  .cl-item { display: grid; grid-template-columns: 62px 1fr; gap: 18px;
+    padding: 17px 0; border-top: 1px solid var(--line); }
+  .cl-item:first-child { border-top: none; padding-top: 2px; }
+  .cl-item:last-child { padding-bottom: 2px; }
+  .cl-ver { font-family: var(--font-disp); font-size: 14px; font-weight: 600; letter-spacing: .04em;
+    color: var(--accent); padding-top: 4px; white-space: nowrap; }
+  .cl-title { font-family: var(--font-head); font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1.4; }
+  .cl-detail { font-family: var(--font-body); font-size: 14.5px; line-height: 1.75; color: var(--muted); margin-top: 5px; }
 
   /* ④ 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11） */
   .toast {

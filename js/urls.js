@@ -379,7 +379,18 @@ $("clearDataOk").onclick = async () => {
   req.onblocked = () => { toast("請關閉其他開著本頁的分頁後再試。", true); };
 };
 
-["urlDialog", "confirmDialog", "clearDataDialog", "fileTagDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
+// 更新紀錄（點 footer 版號開啟；role=button 需支援鍵盤 Enter／Space）
+// 版本歷程資料在 constants.js 的 CHANGELOG，這裡渲染成清單。
+// footer 版號直接吃 CHANGELOG 最新一筆，不再手動維護。
+$("versionBadge").textContent = `v${CHANGELOG[0].ver}`;
+$("clList").innerHTML = CHANGELOG.map(c =>
+  `<li class="cl-item"><span class="cl-ver">${escapeHtml(c.ver)}</span><div class="cl-text"><div class="cl-title">${escapeHtml(c.title)}</div>${c.detail ? `<div class="cl-detail">${escapeHtml(c.detail)}</div>` : ""}</div></li>`
+).join("");
+$("versionBadge").onclick = () => showOverlay("changelogDialog");
+$("versionBadge").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showOverlay("changelogDialog"); } });
+$("changelogClose").onclick = () => hideOverlay("changelogDialog");
+
+["urlDialog", "confirmDialog", "clearDataDialog", "fileTagDialog", "changelogDialog"].forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) hideOverlay(id); }));
 document.addEventListener("keydown", e => { if (e.key !== "Escape") return; const o = document.querySelector(".overlay.show"); if (!o) return; if (o.id === "switchDialog") closeSwitch(false); else hideOverlay(o.id); });
 
 // 非阻斷 toast（重新整理回饋 / 災難復原 / 找不到資料夾，spec §11）

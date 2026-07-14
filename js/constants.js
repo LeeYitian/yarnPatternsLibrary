@@ -15,6 +15,24 @@ const SIZES = [["寬大","size-wide"],["標準","size-std"],["緊湊","size-comp
 // 來源篩選選項：全部 ／ 本機 ／ 網址（controls.js 使用）
 const SOURCES = [["全部","all"],["本機","local"],["網址","url"]];
 
+// ---------- 更新紀錄（urls.js 渲染進 #clList；點 footer 版號開啟）----------
+// 由新到舊排列；detail 可省略。
+const CHANGELOG = [
+  { ver: "1.8.1", title: "盤點文件對齊功能、修正 bug", detail: "暫緩壞檔復原功能。" },
+  { ver: "1.8.0", title: "手動標籤系統" },
+  { ver: "1.7.0", title: "自動標籤系統", detail: "資料夾路徑自動轉成 tag，並新增 tag 開關與篩選區。" },
+  { ver: "1.6.0", title: "子資料夾遞迴掃描", detail: "item 帶 path、快取 key 遷移，偵測「移動」時不再誤報刪除。" },
+  { ver: "1.5.2", title: "架構重構（patch）", detail: "單一 index.html 拆成 css/style.css 與 14 個功能別 JS 檔。" },
+  { ver: "1.5.1", title: "相容性與版面修正（patch）", detail: "File System API 警語、footer、手機 layout、社群圖標 SVG。" },
+  { ver: "1.5.0", title: "觸控裝置操作改善" },
+  { ver: "1.4.0", title: "Onboarding 教學與 PWA", detail: "引導教學（對話框加 spotlight）。" },
+  { ver: "1.3.0", title: "更換資料夾流程" },
+  { ver: "1.2.0", title: "URL 收藏功能" },
+  { ver: "1.1.1", title: "SEO" },
+  { ver: "1.1.0", title: "瀏覽與介面改善", detail: "時間軸排序、側邊浮動按鈕、頂欄與燈箱改版、加深配色、快取持久化修正。" },
+  { ver: "1.0.0", title: "初始版本", detail: "選資料夾後，以 PDF 首頁與圖片做封面，畫廊瀏覽、IndexedDB 快取；純前端、零後端、免建置。" },
+];
+
 // ---------- SVG 圖示 ----------
 const SVG_EXPAND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
 const SVG_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
