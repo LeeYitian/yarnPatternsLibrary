@@ -191,7 +191,7 @@
   /* 篩選 tag badge（§11.1）：框線綠（未選）／勾 + accent 底（選中） */
   .tag { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 4px;
     font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: var(--t-fast) ease-out;
-    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line)); background: transparent; color: #a9d8c6; }
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line)); background: transparent; color: #a9d8c6; line-height: 1.5; }
   .tag:hover { border-color: var(--accent); color: #d6f0e5; }
   .tag svg { width: 11px; height: 11px; color: var(--accent); flex: none; }
   .tag.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, transparent); color: #d6f0e5; }
