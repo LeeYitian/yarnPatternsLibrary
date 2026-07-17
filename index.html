@@ -188,9 +188,10 @@
 
 <!-- 新增／編輯網址對話框 -->
 <div class="overlay" id="urlDialog">
-  <div class="dialog">
+  <div class="dialog dialog-form">
     <h3 id="dlgTitle">新增網址</h3>
 
+    <div class="dialog-scroll">
     <div class="field" id="fieldUrl">
       <label>網址</label>
       <input type="url" id="fUrl" placeholder="https://…" autocomplete="off" spellcheck="false">
@@ -221,6 +222,7 @@
         <div class="wl-tag-suggest"></div>
       </div>
     </div>
+    </div>
 
     <div class="dialog-foot">
       <button class="btn ghost-danger lg" id="dlgDelete" style="display:none">刪除</button>
@@ -233,8 +235,9 @@
 
 <!-- 本機檔案「編輯標籤」對話框（tag-spec §11.6.2）：沿用 .overlay/.dialog 骨架，欄位只有一組 chip 輸入 -->
 <div class="overlay" id="fileTagDialog">
-  <div class="dialog">
+  <div class="dialog dialog-form">
     <h3>編輯標籤</h3>
+    <div class="dialog-scroll">
     <div class="field">
       <label>檔案</label>
       <div class="ft-filename" id="ftName"></div>
@@ -247,6 +250,7 @@
       </div>
     </div>
     <p class="ft-orphan-note">標籤是依檔名和位置記住的，之後改檔名或搬資料夾會對不上；舊標籤仍留在資料夾的 <span class="nm">files.md</span> 裡。</p>
+    </div>
     <div class="dialog-foot">
       <div class="spacer"></div>
       <button class="btn lg" id="fileTagCancel">取消</button>

@@ -660,6 +660,11 @@
     background: var(--card-solid); border: 1px solid var(--line); border-radius: 4px;
     box-shadow: var(--shadow-lg); padding: 30px 30px 26px;
   }
+  /* 表單型彈窗（新增網址／編輯標籤）：花邊四角固定在 .dialog 框上，欄位過長時只捲動內層 .dialog-scroll，
+     花邊那層維持不動（.dialog 本身不再是捲動容器，故 ::before/::after 不會跟著內容跑掉） */
+  .dialog.dialog-form { display: flex; flex-direction: column; overflow: hidden; }
+  .dialog-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    margin: 0 -30px; padding: 2px 30px; } /* 抵銷 .dialog 的 30px 橫向 padding，捲動條貼框邊、輸入框 focus 環不被裁 */
   .dialog::before, .dialog::after {
     content: ""; position: absolute; width: 34px; height: 34px; pointer-events: none;
     background: var(--sprig) center / contain no-repeat; opacity: .85;
@@ -709,7 +714,9 @@
   /* 特異度需壓過 .field input[type=text]／:focus（否則 input 自帶的框＋focus 環＝內層雙框） */
   .wl-chips input.wl-tag-input { flex: 1; min-width: 120px; width: auto; border: none; border-radius: 0;
     background: transparent; outline: none; box-shadow: none;
-    color: var(--ink); font-family: var(--font-body); font-size: 15px; padding: 3px 2px; }
+    color: var(--ink); font-family: var(--font-body); font-size: 15px; padding: 3px 2px;
+    /* 高度對齊 chip（.tag.manual：line-height 19.5 + 上下 padding 4×2）＝ 27.5px；空框與含 chip 同高，輸入完版面不跳動 */
+    min-height: 27.5px; box-sizing: border-box; }
   .wl-chips input.wl-tag-input:focus { border: none; box-shadow: none; }
   .wl-chips .tag.manual { cursor: default; padding: 4px 6px 4px 11px; gap: 6px; }
   .wl-chips .tag.manual .x { display: inline-flex; align-items: center; justify-content: center;
